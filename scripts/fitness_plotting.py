@@ -66,8 +66,9 @@ def MaxFraction(needle_length=30,slicer=1,O=3,mu=4):
     needle=np.array([1]*needle_length,dtype=np.float64)
     t=0
     for r in xrange(RUNS):
-        subfile_name='Modular{}_T20_C200_N1000_Mu{}{}_B5000_Run{}'.format(RUN_TYPE,Mu_Sets[mu],additional,r)
-        fitness_import=np.genfromtxt('/scratch/asl47/Data_Runs/Dynamic/T{}{}{}/{}_Fitness.txt'.format(RUN_TYPE,additional[1:],Mu_Files[mu],subfile_name),dtype=np.float64)
+        #subfile_name='Modular{}_T20_C200_N1000_Mu{}{}_B5000_Run{}'.format(RUN_TYPE,Mu_Sets[mu],additional,r)
+        #fitness_import=np.genfromtxt('/scratch/asl47/Data_Runs/Dynamic/T{}{}{}/{}_Fitness.txt'.format(RUN_TYPE,additional[1:],Mu_Files[mu],subfile_name),dtype=np.float64)
+        fitness_import=np.genfromtxt('/rscratch/asl47/Bulk_Run/Modular/Modular3_T20_C200_N500_Mu{}_B10000_Run{}_Fitness.txt'.format(Mu_Sets[mu],r),dtype=np.float64)
         maxes.append(max(fitness_import[:,1]))
         if max(fitness_import[:,slicer])>=1:
             haystack=search_sequence_numpy(fitness_import[:,slicer],needle)
@@ -98,7 +99,7 @@ def Expo(x,a,b):
 def PlotHistogram(data,bins='empty',c_in='hotpink',mark_in='o',label_in='Default'):
     if bins=='empty':
         bins=int(np.sqrt(len(data)+0.5))
-    hist,bins=np.histogram(data,bins=np.logspace(2,np.log10(5000),bins))#np.log10(min(data)*0.9)
+    hist,bins=np.histogram(data,bins=np.logspace(2,np.log10(10000),bins))#np.log10(min(data)*0.9)
 
     xs=np.mean(zip(bins,bins[1:]),axis=1)
     histC=np.cumsum(hist)/(1.*RUNS)
@@ -109,7 +110,7 @@ def PlotHistogram(data,bins='empty',c_in='hotpink',mark_in='o',label_in='Default
     
     opt_parms, parm_cov = sp.optimize.curve_fit(Expo, xs[8:],histC[8:], maxfev=1000)
     #plt.plot(xs,[Expo(x,*opt_parms) for x in xs],'r--',label='{:.2f} + {:.2f}*log(x)'.format(*opt_parms))
-    plt.plot([5000,5000],[-1,2],'k-',lw=3)
+    plt.plot([10000,10000],[-1,2],'k-',lw=3)
     plt.ylim([-0.05,1.05])
 
     plt.xlabel(r'Generation')
@@ -138,7 +139,7 @@ def PlotManyHistograms(data_dict,bins=35):
         data_dict=LoadExistingData(needle)
         
     SetRuns(1000)
-    needle_list=[1,10,25,50,75,100,300]
+    needle_list=[50]#1,10,25,50,75,100,300]
 
     plot_params={'T3':{'mark_in':'o','c_in':'firebrick','label_in':'Static'},
                  'T4O1':{'mark_in':'s','c_in':'darkgreen','label_in':r'Dynamic ($\Omega$ 1)'},

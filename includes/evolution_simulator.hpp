@@ -24,6 +24,9 @@ void Fitness_Evolution3();
 void Evolve_Fitness4(std::string Run_Details,double Mu);
 void Fitness_Evolution4();
 
+void Evolve_Fitness5(std::string Run_Details,double Mu);
+void Fitness_Evolution5();
+
 /*
 void Evolve_Fitness2(std::string Run_Details,double Mu);
 void Fitness_Evolution2();

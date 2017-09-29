@@ -122,10 +122,10 @@ int Find_Percentile_of_Vector(std::vector<int>& vec,double percentile) {
 
 
 void Fitness_Evolution3() {
-  double mu=1.0/(Num_Tiles*4*mutation_cofactor);
+  double mu=1.0/(Num_Tiles*mutation_cofactor);
 #pragma omp parallel for schedule(dynamic)
   for(int r=0;r<Num_Runs;++r) {
-    std::string runN="T"+std::to_string(Num_Tiles)+"_C"+std::to_string(Colour_Space+1)+"_N"+std::to_string(Num_Genomes)+"_Mu"+std::to_string(mu)+"_B"+std::to_string(burn_in_period)+"_Run"+std::to_string(r+RUN);
+    std::string runN="T"+std::to_string(Num_Tiles)+"_C"+std::to_string(Colour_Space+1)+"_N"+std::to_string(Num_Genomes)+"_Mu"+std::to_string(mu)+"_K"+std::to_string(GENERATION_LIMIT)+"_Run"+std::to_string(r+RUN);
     Evolve_Fitness3(runN,mu);
   }
 }
@@ -144,8 +144,7 @@ void Evolve_Fitness3(std::string Run_Details,double Mu) {
   std::vector<std::vector<int> > Genome_Pool(Num_Genomes,Initial_Genome), Temporary_Pool(Num_Genomes);
   std::vector<double> Phenotype_Fitness_Sizes(Num_Genomes),target_fitnesses{0,0,0};
 
-  for(int g=0;g<GENERATION_LIMIT+burn_in_period;++g) {
-    int Num_Maximally_Fit=0;
+  for(int g=1;g<=GENERATION_LIMIT;++g) {
     for(int n=0;n<Num_Genomes;++n) {
       std::vector<int> Evolving_Genome=Genome_Pool[n];
       for(int t=0;t<Num_Tiles*4;++t) {
@@ -166,28 +165,20 @@ void Evolve_Fitness3(std::string Run_Details,double Mu) {
       }
       else 
         Phenotype_Fitness_Sizes[n]=0;
-      
-      
-      
-      //if(!discovered && Phenotype_Fitness_Sizes[n]>1.0-MINIMUM_FITNESS_THRESHOLD) {
-      //  std::cout<<"Discovered at generation "<<g<<" run("<<Run_Details.back()<<")"<<std::endl;
-      //  discovered=true;
-      //}      
+         
       Genome_Pool[n]=Evolving_Genome;
     } //END GENOME LOOP
-    
-    out_file_f << std::accumulate(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end(),0.0)/Num_Genomes<<" "<<*std::max_element(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end())<<"\n";
-    if(g>=burn_in_period) {
-      //std::cout<<"Avg fitness: "<<std::accumulate(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end(),0.0)/Num_Genomes<<" Max: "<<*std::max_element(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end())<<std::endl;
-      //out_file_f << std::accumulate(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end(),0.0)/Num_Genomes<<" "<<*std::max_element(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end())<<"\n";
-      //for(int b: Genome_Pool[std::max_element(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end())-Phenotype_Fitness_Sizes.begin()])
-      //  std::cout<<b<<" ";
-      //std::cout<<std::endl;
-      out_file_g << "g: "<<g-burn_in_period<<"\n";
+
+    double max_fitness=*std::max_element(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end());
+    out_file_f << max_fitness << " " << std::count(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end(),max_fitness) << "\n";
+    if(g%5000==0) {
+      out_file_g << "g: "<<g<<"\n";
       for(int nth_genome=0;nth_genome<Num_Genomes;++nth_genome) {
         if(Phenotype_Fitness_Sizes[nth_genome]>1.0-MINIMUM_FITNESS_THRESHOLD) {
           std::vector<int> dup_g(Genome_Pool[nth_genome]);
           Clean_Genome(dup_g);
+          if(Disjointed_Check(dup_g))
+             dup_g.erase(std::find(dup_g.begin(),dup_g.end(),-1),dup_g.end());
           for(int base : dup_g) {
             out_file_g << base <<" ";
           }
@@ -206,10 +197,10 @@ void Evolve_Fitness3(std::string Run_Details,double Mu) {
 }
 
 void Fitness_Evolution4() {
-  double mu=1.0/(Num_Tiles*4*mutation_cofactor);
+  double mu=1.0/(Num_Tiles*mutation_cofactor);
 #pragma omp parallel for schedule(dynamic)
   for(int r=0;r<Num_Runs;++r) {
-    std::string runN="T"+std::to_string(Num_Tiles)+"_C"+std::to_string(Colour_Space+1)+"_N"+std::to_string(Num_Genomes)+"_Mu"+std::to_string(mu)+"_O"+std::to_string(Fitness_Oscillation_Rate)+"_B"+std::to_string(burn_in_period)+"_Run"+std::to_string(r+RUN);
+    std::string runN="T"+std::to_string(Num_Tiles)+"_C"+std::to_string(Colour_Space+1)+"_N"+std::to_string(Num_Genomes)+"_Mu"+std::to_string(mu)+"_O"+std::to_string(Fitness_Oscillation_Rate)+"_K"+std::to_string(GENERATION_LIMIT)+"_Run"+std::to_string(r+RUN);
     Evolve_Fitness4(runN,mu);
   }
 }
@@ -220,18 +211,16 @@ void Evolve_Fitness4(std::string Run_Details,double Mu) {
   std::ofstream out_file_g(out_name_g, std::ios_base::out);
   std::ofstream out_file_f(out_name_f, std::ios_base::out);
 
-  const double COMPLETED_FITNESS=5;
-  const int NUM_TARGETS=2;
+  //const double COMPLETED_FITNESS=5;
+  //const int NUM_TARGETS=2;
   
   std::uniform_int_distribution<int> Mutated_Colour(0,Colour_Space);
   std::bernoulli_distribution Mutation_Chance(Mu);
-  std::vector<int> Initial_Genome(Num_Tiles*4,0),target_types(NUM_TARGETS+1);
+  std::vector<int> Initial_Genome(Num_Tiles*4,0),target_types(3);
   std::vector<std::vector<int> > Genome_Pool(Num_Genomes,Initial_Genome), Temporary_Pool(Num_Genomes);
-  std::vector<double> Phenotype_Fitness_Sizes(Num_Genomes), Phenotype_Fitness_Sizes_Full(Num_Genomes),target_fitnesses(NUM_TARGETS+1);
-  bool discovered=false;
+  std::vector<double> Phenotype_Fitness_Sizes(Num_Genomes), Phenotype_Fitness_Sizes_Full(Num_Genomes),target_fitnesses(3);
 
-  for(int g=0;g<GENERATION_LIMIT+burn_in_period;++g) {
-    int Num_Maximally_Fit=0, Num_Minimally_Fit=0;
+  for(int g=1;g<=GENERATION_LIMIT;++g) {
     switch((g/Fitness_Oscillation_Rate)%3) {
     case 0:
       target_types={4,5,6};
@@ -255,9 +244,9 @@ void Evolve_Fitness4(std::string Run_Details,double Mu) {
       }      
       
       if(GetMultiplePhenotypeFitness(Evolving_Genome,target_types,target_fitnesses)) {    
-        Phenotype_Fitness_Sizes[n]=std::accumulate(target_fitnesses.begin(),target_fitnesses.begin()+NUM_TARGETS,0.0,[](double cum,double nex){return cum+Fitness_Function(nex);})/(NUM_TARGETS*4);
-        Phenotype_Fitness_Sizes_Full[n]=std::accumulate(target_fitnesses.begin(),target_fitnesses.end(),0.0,[](double cum,double nex){return cum+Fitness_Function(nex);})/(NUM_TARGETS+1);
-        for(int nth=0;nth<NUM_TARGETS;++nth) {
+        Phenotype_Fitness_Sizes[n]=std::accumulate(target_fitnesses.begin(),target_fitnesses.begin()+2,0.0,[](double cum,double nex){return cum+Fitness_Function(nex);})/(4.);
+        Phenotype_Fitness_Sizes_Full[n]=std::accumulate(target_fitnesses.begin(),target_fitnesses.end(),0.0,[](double cum,double nex){return cum+Fitness_Function(nex);})/(3.);
+        for(int nth=0;nth<2;++nth) {
          if(target_fitnesses[nth]>1.0-MINIMUM_FITNESS_THRESHOLD)
            Phenotype_Fitness_Sizes[n]*=2;
         }
@@ -266,24 +255,107 @@ void Evolve_Fitness4(std::string Run_Details,double Mu) {
         Phenotype_Fitness_Sizes[n]=0;
         Phenotype_Fitness_Sizes_Full[n]=0;
       }
-      //if(!discovered && Phenotype_Fitness_Sizes[n]>1.0-MINIMUM_FITNESS_THRESHOLD) {
-      //  std::cout<<"Discovered at generation "<<g<<" run("<<Run_Details.back()<<")"<<std::endl;
-      //  discovered=true;
-      //}      
+ 
       Genome_Pool[n]=Evolving_Genome;
     } //END GENOME LOOP
-    
-    out_file_f << std::accumulate(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end(),0.0)/Num_Genomes<<" "<<*std::max_element(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end())<<" "<<std::accumulate(Phenotype_Fitness_Sizes_Full.begin(),Phenotype_Fitness_Sizes_Full.end(),0.0)/Num_Genomes<<" "<<*std::max_element(Phenotype_Fitness_Sizes_Full.begin(),Phenotype_Fitness_Sizes_Full.end())   <<"\n";
-    if(g>=burn_in_period) {
-      //std::cout<<"Avg fitness: "<<std::accumulate(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end(),0.0)/Num_Genomes<<" Max: "<<*std::max_element(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end())<<std::endl;
-      //for(int b: Genome_Pool[std::max_element(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end())-Phenotype_Fitness_Sizes.begin()])
-      //  std::cout<<b<<" ";
-      //std::cout<<std::endl;
-      out_file_g << "g: "<<g-burn_in_period<<"\n";
+
+
+    double max_fitness=*std::max_element(Phenotype_Fitness_Sizes_Full.begin(),Phenotype_Fitness_Sizes_Full.end());
+    out_file_f << max_fitness << " " << std::count(Phenotype_Fitness_Sizes_Full.begin(),Phenotype_Fitness_Sizes_Full.end(),max_fitness) << "\n";
+    if(g%5000==0) {
+      out_file_g << "g: "<<g<<"\n";
       for(int nth_genome=0;nth_genome<Num_Genomes;++nth_genome) {
-        if(Phenotype_Fitness_Sizes[nth_genome]>1.0-MINIMUM_FITNESS_THRESHOLD) {
+        if(Phenotype_Fitness_Sizes_Full[nth_genome]>1.0-MINIMUM_FITNESS_THRESHOLD) {
           std::vector<int> dup_g(Genome_Pool[nth_genome]);
           Clean_Genome(dup_g);
+          if(Disjointed_Check(dup_g))
+             dup_g.erase(std::find(dup_g.begin(),dup_g.end(),-1),dup_g.end());
+          for(int base : dup_g) {
+            out_file_g << base <<" ";
+          }
+          out_file_g << "\n";
+        }
+      }
+    }
+    std::vector<int> Index_Selections=Roulette_Wheel_Selection(Phenotype_Fitness_Sizes,Num_Genomes);
+    for(int nth_select=0;nth_select<Num_Genomes;++nth_select) {
+      Temporary_Pool[nth_select]=Genome_Pool[Index_Selections[nth_select]];
+    }   
+    Genome_Pool.assign(Temporary_Pool.begin(),Temporary_Pool.end());
+  }
+  out_file_g.close();
+  out_file_f.close();
+}
+
+void Fitness_Evolution5() {
+  double mu=1.0/(Num_Tiles*mutation_cofactor);
+#pragma omp parallel for schedule(dynamic)
+  for(int r=0;r<Num_Runs;++r) {
+    std::string runN="T"+std::to_string(Num_Tiles)+"_C"+std::to_string(Colour_Space+1)+"_N"+std::to_string(Num_Genomes)+"_Mu"+std::to_string(mu)+"_O"+std::to_string(Fitness_Oscillation_Rate)+"_K"+std::to_string(GENERATION_LIMIT)+"_Run"+std::to_string(r+RUN);
+    Evolve_Fitness4(runN,mu);
+  }
+}
+
+void Evolve_Fitness5(std::string Run_Details,double Mu) {
+  std::string out_name_g="//rscratch//asl47//Bulk_Run//Modular//Modular5_"+Run_Details+"_Genotype.txt";
+  std::string out_name_f="//rscratch//asl47//Bulk_Run//Modular//Modular5_"+Run_Details+"_Fitness.txt";
+  std::ofstream out_file_g(out_name_g, std::ios_base::out);
+  std::ofstream out_file_f(out_name_f, std::ios_base::out);
+
+  //const double COMPLETED_FITNESS=5;
+  //const int NUM_TARGETS=1;
+  
+  std::uniform_int_distribution<int> Mutated_Colour(0,Colour_Space);
+  std::bernoulli_distribution Mutation_Chance(Mu);
+  std::vector<int> Initial_Genome(Num_Tiles*4,0),target_types(3);
+  std::vector<std::vector<int> > Genome_Pool(Num_Genomes,Initial_Genome), Temporary_Pool(Num_Genomes);
+  std::vector<double> Phenotype_Fitness_Sizes(Num_Genomes), Phenotype_Fitness_Sizes_Full(Num_Genomes),target_fitnesses(3);
+
+  for(int g=1;g<=GENERATION_LIMIT;++g) {
+    switch((g/Fitness_Oscillation_Rate)%3) {
+    case 0:
+      target_types={4,5,6};
+      break;
+    case 1:
+      target_types={5,6,4};
+      break;
+    case 2:
+      target_types={6,4,5};
+      break;
+    }
+    for(int n=0;n<Num_Genomes;++n) {
+      std::vector<int> Evolving_Genome=Genome_Pool[n];
+      for(int t=0;t<Num_Tiles*4;++t) {
+        if(Mutation_Chance(RNG_Engine)) {
+          int previousFace=Evolving_Genome[t];
+          do {
+            Evolving_Genome[t]=Mutated_Colour(RNG_Engine);
+          }while(Evolving_Genome[t]==previousFace);
+        }
+      }      
+      
+      if(GetMultiplePhenotypeFitness(Evolving_Genome,target_types,target_fitnesses)) {    
+        Phenotype_Fitness_Sizes[n]=std::accumulate(target_fitnesses.begin(),target_fitnesses.begin()+1,0.0,[](double cum,double nex){return cum+Fitness_Function(nex);});
+        Phenotype_Fitness_Sizes_Full[n]=std::accumulate(target_fitnesses.begin(),target_fitnesses.end(),0.0,[](double cum,double nex){return cum+Fitness_Function(nex);})/(3.);
+      }
+      else {
+        Phenotype_Fitness_Sizes[n]=0;
+        Phenotype_Fitness_Sizes_Full[n]=0;
+      }
+       Genome_Pool[n]=Evolving_Genome;
+    } //END GENOME LOOP
+
+
+    double max_fitness=*std::max_element(Phenotype_Fitness_Sizes_Full.begin(),Phenotype_Fitness_Sizes_Full.end());
+    out_file_f << max_fitness << " " << std::count(Phenotype_Fitness_Sizes_Full.begin(),Phenotype_Fitness_Sizes_Full.end(),max_fitness) << "\n";
+    if(g%5000==0) {
+      out_file_g << "g: "<<g<<"\n";
+      for(int nth_genome=0;nth_genome<Num_Genomes;++nth_genome) {
+        if(Phenotype_Fitness_Sizes_Full[nth_genome]>1.0-MINIMUM_FITNESS_THRESHOLD) {
+          std::vector<int> dup_g(Genome_Pool[nth_genome]);
+          Clean_Genome(dup_g);
+          if(Disjointed_Check(dup_g))
+             dup_g.erase(std::find(dup_g.begin(),dup_g.end(),-1),dup_g.end());
           for(int base : dup_g) {
             out_file_g << base <<" ";
           }
@@ -619,97 +691,17 @@ int main(int argc, char* argv[]) {
   if(argc>3) {
     Set_Runtime_Configurations(argc,argv);
   }
-
-  std::string in;
-  switch(Num_Genomes) {
-  case 10:
-    in="Logspace_Config_10_Genome";
-    break;
-  case 100:
-    in="Logspace_Config_80_Genome";
-    break;
-  case 640:
-    in="Logspace_Config_640_Genome";
-    break;
-  default:
-    in="Logspace_Config_10_Genome";
-    break;
-  }
-  std::vector<int> qq,gg;
-  std::vector<double> ff;
   if(argc>1) {
     switch(argv[1][1]) {
-    case 'Z':
-      //Fitness_Evolution2();
+    case '3':
+      Fitness_Evolution3();
       break;
-    case 'X':
-       Fitness_Evolution3();
-      break;
-    case 'Q':
+    case '4':
       Fitness_Evolution4();
       break;
-    case 'A':
-      //Fitness_Evolution5();
-      break;
-    case 'B':
-      //Fitness_Evolution6();
-      break;
-    case 'Y':
-      qq={0,57,88,83,59,65,89,80,0,37,0,58,0,0,0,90,0,0,5,59,0,61,84,65,0,98,20,65,0,38,0,79,0,19,0,62,0,0,0,97,0,0,0,60,0,15,0,18,0,17,0,87,6,16,65,16,0,0,0,66};
-        //{9,28,0,24,17,11,25,17,17,32,1,31,16,0,23,22,12,9,16,33,23,30,23,6,20,29,17,38,17,20,7,3,36,21,6,13,20,16,12,6,33,28,31,34,21,16,14,4,34,28,31,28,36,37,1,8,11,9,25,32};
-        //{1,3,4,0, 0,5,7,5, 0,0,6,0, 0,2,0,8};
-        //{86, 9, 67, 60, 18, 53, 63, 20, 79, 90, 48, 16, 87, 13, 69, 40, 66, 18, 40, 71, 0, 62, 50, 11, 21, 25, 59, 74, 32, 8, 27, 94, 9, 60, 91, 64, 2, 11, 8, 34, 20, 85, 95, 77, 36, 2, 28, 44, 78, 99, 92, 97, 81, 97, 43, 32, 48, 14, 13, 32};
-        
-        //{0,7,6,7, 0,0,0,8, 5,0,4,0, 3,2,0,0, 0,9,15,1, 0,21,0,10, 11,0,0,22, 13,0,12,0, 0,7,14,0, 16,0,17,0, 18,0,0,19, 0,20,0,7};
-      std::cout<<"F1: "<<Get_Phenotype_Fitness(qq,1,true)<<std::endl;
-      std::cout<<"F2: "<<Get_Phenotype_Fitness(qq,2,true)<<std::endl;
-      std::cout<<"F3: "<<Get_Phenotype_Fitness(qq,3,true)<<std::endl;
-      std::cout<<"F4: "<<Get_Phenotype_Fitness(qq,4,true)<<std::endl;
-      Clean_Genome(qq);
-      Disjointed_Check(qq);
-      
-      for(int i :qq)
-        std::cout<<i<<" ";
-      std::cout<<std::endl;
-      break;
-    case 'J':
-      //Evolve_Fitness7(1./(Num_Tiles*40));
-      break;
-    case 'I':
-      qq={0,1,0,0, 0,3,0,2, 2,5,2,4, 0,7,0,6, 0,0,9,8, 10,2,0,0};
-        //{0,1,0,0, 0,3,0,2, 2,4,2,4}; //target 5
-        
-        //{0,1,0,0, 0,3,0,2, 2,4,2,4};
-        //{0,8,0,0, 0,0,6,7, 5,4,0,0, 0,2,0,3, 0,0,0,1};
-        //{22, 0, 0, 0, 0, 10, 0, 20, 21, 0, 0, 9, 0, 0, 10, 19};
-        //{0,8,0,0, 0,0,6,7, 5,4,0,0, 0,2,0,3, 0,0,0,1};
-        //{3,1,2,0, 0,0,0,4};
-      std::cout<<"fit "<<Get_Phenotype_Fitness(qq,4,true)<<std::endl;
-      gg={4,5,6};
-      ff={0,0,0};
-      GetMultiplePhenotypeFitness(qq,gg,ff);
-      std::cout<<"**Target 5**\n"<<ff[0]<<"\n"<<ff[1]<<"\n"<<ff[2]<<std::endl;
-
-      std::cout<<std::accumulate(ff.begin(),ff.begin()+2,0.0,[](double cum,double nex){return cum+Fitness_Function(nex);})/(2)<<"     ";
-      std::cout<<std::accumulate(ff.begin(),ff.end(),0.0,[](double cum,double nex){return cum+Fitness_Function(nex);})/(3)<<std::endl;
-
-      //qq={3,1,2,0, 0,0,0,4}; //target 4
-      gg={5,6,4};
-      GetMultiplePhenotypeFitness(qq,gg,ff);
-      std::cout<<"**Target 4**\n"<<ff[0]<<"\n"<<ff[1]<<"\n"<<ff[2]<<std::endl;
-
-      std::cout<<std::accumulate(ff.begin(),ff.begin()+2,0.0,[](double cum,double nex){return cum+Fitness_Function(nex);})/(2)<<"     ";
-      std::cout<<std::accumulate(ff.begin(),ff.end(),0.0,[](double cum,double nex){return cum+Fitness_Function(nex);})/(3)<<std::endl;
-      
-      //qq={0,0,1,0, 2,3,0,0, 0,0,5,4, 6,7,0,0, 0,0,2,8}; //target 7
-      gg={6,4,5};
-      GetMultiplePhenotypeFitness(qq,gg,ff);
-      std::cout<<"**Target 7**\n"<<ff[0]<<"\n"<<ff[1]<<"\n"<<ff[2]<<std::endl;
-
-      std::cout<<std::accumulate(ff.begin(),ff.begin()+2,0.0,[](double cum,double nex){return cum+Fitness_Function(nex);})/(2)<<"     ";
-      std::cout<<std::accumulate(ff.begin(),ff.end(),0.0,[](double cum,double nex){return cum+Fitness_Function(nex);})/(3)<<std::endl;
-      
-      break;
+    case '5':
+      Fitness_Evolution5();
+      break;      
     case 'H':
       std::cout<<"\n**Evolution running options**\n -Z for oscillating\n -X for summed\n -Q for sequential\n -A for 5\n -B for 6\n"<<std::endl;
       break;
@@ -717,17 +709,7 @@ int main(int argc, char* argv[]) {
       std::cout<<"Unknown Parameter Flag: "<<argv[1][1]<<std::endl;
       break;
     }
-  }
-
-
-  //in="Logspace_Config_80_Genome2";
-  //in="Logspace_Config_80_Genome3";
-  //in="Logspace_Gradient_Flat";
-  //Run_Evolution_Simulation_Over_Range2(in);
-  //Fitness_Evolution();
-                  
-  
-
+  }               
 }
 
 
