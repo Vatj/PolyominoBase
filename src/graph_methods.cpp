@@ -1,7 +1,10 @@
 #include "graph_methods.hpp"
 
+
+//Provides the conjugate face
+//Positive interfaces: odd<-->even
+//Negative interfaces: self-interaction 
 int Interaction_Matrix(int input_face) {
-  //Return odd<-->even interactions for positive interfaces, self-interaction for negatives
   return input_face>0 ?  (1-input_face%2)*(input_face-1)+(input_face%2)*(input_face+1) : input_face;
 }
 
@@ -122,9 +125,9 @@ void Trim_Topology(std::vector<int> genome,std::vector<int>& looping_genome) {
     if((std::unique(face_iter, face_iter+4)-face_iter)<(3-zero_count_offset)) {
       replacements.emplace_back(Interaction_Matrix(*std::find_if(face_iter,face_iter+4,[](int x) { return x != 0; })));
       looping_genome.insert(looping_genome.end(),{0,0,0,0});
-      continue;
     }
-    looping_genome.insert(looping_genome.end(),tile.begin(),tile.end());
+    else
+      looping_genome.insert(looping_genome.end(),tile.begin(),tile.end());
   }
   for(std::vector<int>::iterator replace_iter=replacements.begin();replace_iter!=replacements.end();replace_iter++) {
     int dead_replace=*replace_iter;
@@ -135,7 +138,7 @@ void Trim_Topology(std::vector<int> genome,std::vector<int>& looping_genome) {
 int loop_Analysis(std::vector<int>& genome, int& Bound_Limit) {
   std::vector<int> looping_genome;
   Trim_Topology(genome,looping_genome);
-  int rank1=0, rank2=0, rank4=0, rankInf=0;
+  int rank1=0, rank2=0, rank4=0;
 
   int NUM_TILES=looping_genome.size()/4;
   for(std::vector<int>::iterator tile_iter=looping_genome.begin();tile_iter!=looping_genome.end();tile_iter+=4) {
@@ -167,11 +170,16 @@ int loop_Analysis(std::vector<int>& genome, int& Bound_Limit) {
     }
   }
 
+  
+
   if((rank4+rank2)>=2) //Can reject as multiple internal H.O. loops
     return -7;
 
   if(NUM_TILES==1)
     return BP_Check(genome) ? -8 : 1;
+
+  if(rank2+rank4>0)
+    SIF_Elimination(looping_genome,false);
 
   bool found_harmful_loop=false;
   
@@ -191,54 +199,62 @@ int loop_Analysis(std::vector<int>& genome, int& Bound_Limit) {
       //std::cout<<"Found "<<temp_rank2<<","<<temp_rank4<<","<<temp_rankInf<<std::endl;
       if(temp_rank2>=999)
         found_harmful_loop=true;
-      else {
-        rank2+=temp_rank2;
-        rank4+=temp_rank4;
-        rankInf+=temp_rankInf;
+      bool simplified_R1=false;
+      if(temp_rankInf>0) {
+        if(NUM_TILES<4) 
+          return -9; //Can reject as found true rank infinity loop
+        else {
+          for(std::vector<int>::iterator it = temp_loop_Histories.begin();it!=temp_loop_Histories.end(); ) {
+            std::vector<int>::iterator endIter=std::find(it,temp_loop_Histories.end()-1, -1);
+            if(*it==0) { //INFINITE LOOP
+              std::vector<int> partial_History(it+1,endIter);
+              if(!Loop_Rank_One_Check(partial_History))
+                return -9; //Reject as infinite loop
+              else {
+                //--rankInf;
+                ++rank1;
+                if(!Cut_Rank_One_Loop(genome,partial_History))
+                  return -10;
 
-        //Found a rank infinity loop, check if it is really a rank one loop
-        if(temp_rankInf>0) {
-          if(NUM_TILES<4) //Can reject as found true rank infinity loop
-            return -9;
-          //Must check if rank one loop
-          else {
-            for(std::vector<int>::iterator it = temp_loop_Histories.begin();it!=temp_loop_Histories.end(); ) {
-              std::vector<int>::iterator endIter=std::find(it,temp_loop_Histories.end()-1, -1);
-              if(*it==0) { //INFINITE LOOP
-                std::vector<int> partial_History(it+1,endIter);
-                if(Loop_Rank_One_Check(partial_History)) {
-                  --rankInf;
-                  ++rank1;
-                  if(!Cut_Rank_One_Loop(genome,partial_History))
-                    return -10;
 
-                  Cut_Rank_One_Loop(looping_genome,partial_History);
-                  SIF_Elimination(looping_genome,false);
-                  SIF_Elimination(genome,false);
+                SIF_Elimination(genome,false);
 
-                }
-                else
-                  return -9; //Reject as infinite loop
-              }
-              else
-                if(*it!=-1)
-                  loop_Histories.insert(loop_Histories.end(),it,endIter+1);
-              it=endIter+1;
+
+                Cut_Rank_One_Loop(looping_genome,partial_History);
+ 
+                SIF_Elimination(looping_genome,false);
+
+                simplified_R1=true;
+                //std::cout<<"breaking out"<<std::endl;
+                break;
+                  
+              }                  
             }
+            it=endIter+1;
           }
         }
-        else
-          loop_Histories.insert(loop_Histories.end(),temp_loop_Histories.begin(),temp_loop_Histories.end());
-        int replacing_main=looping_genome[tile*4+face];
-        if(replacing_main==0)
-          continue;
-        std::replace(looping_genome.begin(),looping_genome.end(),replacing_main,0);
-        std::replace(looping_genome.begin(),looping_genome.end(),Interaction_Matrix(replacing_main),0);
+      }
+
+      if(temp_rankInf==0 && ((temp_rank2>1 && temp_rank4==0) || (temp_rank4>1 && temp_rank2==0))) {
+        //std::cout<<"skip it "<<std::endl;
+        continue;
+      }
+
+      //Zero the current step
+      int replacing_main=looping_genome[tile*4+face];
+      if(replacing_main==0)
+        continue;
+      std::replace(looping_genome.begin(),looping_genome.end(),replacing_main,0);
+      std::replace(looping_genome.begin(),looping_genome.end(),Interaction_Matrix(replacing_main),0);
+
+      if(!simplified_R1 || temp_rankInf==0) {
+        rank2+=temp_rank2;
+        rank4+=temp_rank4;
+        loop_Histories.insert(loop_Histories.end(),temp_loop_Histories.begin(),temp_loop_Histories.end());
       }
       
     }
   } //END i iterations
-
   if(found_harmful_loop) {
     if((genome.size()-std::count(genome.begin(),genome.end(),0))<=2)
       return 1;
@@ -247,7 +263,7 @@ int loop_Analysis(std::vector<int>& genome, int& Bound_Limit) {
   }
   
   
-  //std::cout<<"RANKS "<<rank1<<","<<rank2<<","<<rank4<<","<<rankInf<<std::endl;
+  //std::cout<<"RANKS "<<rank1<<","<<rank2<<","<<rank4<<","<<std::endl;
   if(rank1==0 && (rank2+rank4)<=1) {
     if((rank2+rank4)==0)
       return -12;
@@ -258,8 +274,11 @@ int loop_Analysis(std::vector<int>& genome, int& Bound_Limit) {
   if(rank1>0 && (rank2+rank4)==0)
     return 1;
 
-  
+
+
+
   for(std::vector<int>::iterator HO_iterator=loop_Histories.begin(); HO_iterator!=loop_Histories.end();) {
+
     bool Duplicate_Loop=false;
     std::vector<int>::iterator end_iter=std::find(HO_iterator,loop_Histories.end(), -1);
     if(end_iter==loop_Histories.end())
@@ -275,115 +294,16 @@ int loop_Analysis(std::vector<int>& genome, int& Bound_Limit) {
     HO_iterator=end_iter+1;
   }
   Trim_Zero_Tiles(genome);
+
+  //std::cout<<"final"<<std::endl;
+  //for(int g: genome)
+  //  std::cout<<g<<" ";
+  //std::cout<<std::endl;
+  //std::cout<<"B "<<Bound_Limit+(Bound_Limit >0 ? genome.size()/4 : genome.size()/2)<<std::endl;
   return 0;
 }
 
-int FastLoopAnalysis(std::vector<int>& genome) {
-  std::vector<int> looping_genome;
-  Trim_Topology(genome,looping_genome);
-  int rank1=0, rank2=0, rank4=0, rankInf=0;
 
-  int NUM_TILES=looping_genome.size()/4;
-  for(std::vector<int>::iterator tile_iter=looping_genome.begin();tile_iter!=looping_genome.end();tile_iter+=4) {
-    for(int face=0;face<4;++face) {
-      if(*(tile_iter+face)==0)
-        continue;
-      int conjugate_Face=Interaction_Matrix(*(tile_iter+face));
-      if(conjugate_Face>0) {
-        int found_Internal_Index=std::find(tile_iter+face+1,tile_iter+4,conjugate_Face)-tile_iter;
-        while(found_Internal_Index!=4) {
-          if(found_Internal_Index==face+2) //infite loop
-            return -11;
-          if((std::count(looping_genome.begin(),looping_genome.end(),*(tile_iter+face))+std::count(looping_genome.begin(),looping_genome.end(),*(tile_iter+found_Internal_Index)))>2) //internal BP
-            return -12;
-          else {
-            *(tile_iter+face)=0;
-            *(tile_iter+found_Internal_Index)=0;
-          }
-          ++rank4;
-          found_Internal_Index=std::find(tile_iter+found_Internal_Index+1,tile_iter+4,conjugate_Face)-tile_iter;
-        }
-      }
-      else {
-        ++rank2;
-        *(tile_iter+face)=0;
-      }
-    }
-  }
-
-  if((rank4+rank2)>=2) //Can reject as multiple internal H.O. loops
-    return -10;
-
-  if(NUM_TILES==1)
-    return BP_Check(genome) ? -13 : 1;
-
-  std::vector<int> loop_Path;
-  std::vector<int> loop_Histories;
-
-  for(int tile=0;tile<NUM_TILES;++tile) {
-    for(int face=0;face<4;++face) {
-      if(looping_genome[tile*4+face]==0) 
-        continue;
-      
-      int temp_rank2=0,temp_rank4=0,temp_rankInf=0;
-      std::vector<int> temp_loop_Histories;
-      std::tie(temp_rank2,temp_rank4,temp_rankInf)=Take_Loop_Step(looping_genome,tile,face,0,{},temp_loop_Histories,false);
-      if(temp_rank2>=999)
-        return -1;
-      else {
-        rank2+=temp_rank2;
-        rank4+=temp_rank4;
-        rankInf+=temp_rankInf;
-        if(temp_rankInf>0) {
-          if(NUM_TILES<4) 
-            return -111;
-          else {
-            for(std::vector<int>::iterator it = temp_loop_Histories.begin();it!=temp_loop_Histories.end(); ) {
-              std::vector<int>::iterator endIter=std::find(it,temp_loop_Histories.end()-1, -1);
-              if(*it==0) { //INFINITE LOOP
-                std::vector<int> partial_History(it+1,endIter);
-                if(Loop_Rank_One_Check(partial_History)) {
-                  --rankInf;
-                  ++rank1;
-                  if(!Cut_Rank_One_Loop(genome,partial_History))
-                    return -20;
-                  Cut_Rank_One_Loop(looping_genome,partial_History);
-                  SIF_Elimination(looping_genome,false);
-                  SIF_Elimination(genome,false);
-                }
-                else
-                  return -111; //Reject as infinite loop
-              }
-              else
-                if(*it!=-1)
-                  loop_Histories.insert(loop_Histories.end(),it,endIter+1);
-              it=endIter+1;
-            }
-          }
-        }
-        else
-          loop_Histories.insert(loop_Histories.end(),temp_loop_Histories.begin(),temp_loop_Histories.end());
-        int replacing_main=looping_genome[tile*4+face];
-        if(replacing_main==0)
-          continue;
-        std::replace(looping_genome.begin(),looping_genome.end(),replacing_main,0);
-        std::replace(looping_genome.begin(),looping_genome.end(),Interaction_Matrix(replacing_main),0);
-      }
-      
-    }
-  } //END i iterations
-  
-  
-  if(rank1==0 && (rank2+rank4)<=1) {
-    if((rank2+rank4)==0)
-      return -101;
-    return 1;
-  }
-  if(rank1>0 && (rank2+rank4)==0)
-    return 1;
-  else
-    return -1;
-}
 
 bool Cut_Rank_One_Loop(std::vector<int>& genome, std::vector<int>& loopR1_Path) {
   for(std::vector<int>::iterator cutting_iter = loopR1_Path.begin(); cutting_iter!=loopR1_Path.end(); cutting_iter+=4 ) {
@@ -626,4 +546,113 @@ void Search_Next_Tile(std::vector<int>& genome, std::vector<int>& Unvisited, std
       conjugate_iter=std::find(conjugate_iter+1,genome.end(),conjugate_Face);
     }
   }
+}
+
+
+
+int FastLoopAnalysis(std::vector<int>& genome) {
+  std::vector<int> looping_genome;
+  Trim_Topology(genome,looping_genome);
+  int rank1=0, rank2=0, rank4=0, rankInf=0;
+
+  int NUM_TILES=looping_genome.size()/4;
+  for(std::vector<int>::iterator tile_iter=looping_genome.begin();tile_iter!=looping_genome.end();tile_iter+=4) {
+    for(int face=0;face<4;++face) {
+      if(*(tile_iter+face)==0)
+        continue;
+      int conjugate_Face=Interaction_Matrix(*(tile_iter+face));
+      if(conjugate_Face>0) {
+        int found_Internal_Index=std::find(tile_iter+face+1,tile_iter+4,conjugate_Face)-tile_iter;
+        while(found_Internal_Index!=4) {
+          if(found_Internal_Index==face+2) //infite loop
+            return -11;
+          if((std::count(looping_genome.begin(),looping_genome.end(),*(tile_iter+face))+std::count(looping_genome.begin(),looping_genome.end(),*(tile_iter+found_Internal_Index)))>2) //internal BP
+            return -12;
+          else {
+            *(tile_iter+face)=0;
+            *(tile_iter+found_Internal_Index)=0;
+          }
+          ++rank4;
+          found_Internal_Index=std::find(tile_iter+found_Internal_Index+1,tile_iter+4,conjugate_Face)-tile_iter;
+        }
+      }
+      else {
+        ++rank2;
+        *(tile_iter+face)=0;
+      }
+    }
+  }
+
+  if((rank4+rank2)>=2) //Can reject as multiple internal H.O. loops
+    return -10;
+
+  if(NUM_TILES==1)
+    return BP_Check(genome) ? -13 : 1;
+
+  std::vector<int> loop_Path;
+  std::vector<int> loop_Histories;
+
+  for(int tile=0;tile<NUM_TILES;++tile) {
+    for(int face=0;face<4;++face) {
+      if(looping_genome[tile*4+face]==0) 
+        continue;
+      
+      int temp_rank2=0,temp_rank4=0,temp_rankInf=0;
+      std::vector<int> temp_loop_Histories;
+      std::tie(temp_rank2,temp_rank4,temp_rankInf)=Take_Loop_Step(looping_genome,tile,face,0,{},temp_loop_Histories,false);
+      if(temp_rank2>=999)
+        return -1;
+      else {
+        rank2+=temp_rank2;
+        rank4+=temp_rank4;
+        rankInf+=temp_rankInf;
+        if(temp_rankInf>0) {
+          if(NUM_TILES<4) 
+            return -111;
+          else {
+            for(std::vector<int>::iterator it = temp_loop_Histories.begin();it!=temp_loop_Histories.end(); ) {
+              std::vector<int>::iterator endIter=std::find(it,temp_loop_Histories.end()-1, -1);
+              if(*it==0) { //INFINITE LOOP
+                std::vector<int> partial_History(it+1,endIter);
+                if(Loop_Rank_One_Check(partial_History)) {
+                  --rankInf;
+                  ++rank1;
+                  if(!Cut_Rank_One_Loop(genome,partial_History))
+                    return -20;
+                  Cut_Rank_One_Loop(looping_genome,partial_History);
+                  SIF_Elimination(looping_genome,false);
+                  SIF_Elimination(genome,false);
+                }
+                else
+                  return -111; //Reject as infinite loop
+              }
+              else
+                if(*it!=-1)
+                  loop_Histories.insert(loop_Histories.end(),it,endIter+1);
+              it=endIter+1;
+            }
+          }
+        }
+        else
+          loop_Histories.insert(loop_Histories.end(),temp_loop_Histories.begin(),temp_loop_Histories.end());
+        int replacing_main=looping_genome[tile*4+face];
+        if(replacing_main==0)
+          continue;
+        std::replace(looping_genome.begin(),looping_genome.end(),replacing_main,0);
+        std::replace(looping_genome.begin(),looping_genome.end(),Interaction_Matrix(replacing_main),0);
+      }
+      
+    }
+  } //END i iterations
+  
+  
+  if(rank1==0 && (rank2+rank4)<=1) {
+    if((rank2+rank4)==0)
+      return -101;
+    return 1;
+  }
+  if(rank1>0 && (rank2+rank4)==0)
+    return 1;
+  else
+    return -1;
 }

@@ -2,7 +2,7 @@
 
 namespace Brute_Force
 {
-  std::vector<int> Brute_Force_Polyomino_Builder(std::vector<int> genome, int THRESHOLD_SIZE,int initial_Tile,int initial_Rotation);
+  std::vector<int> Brute_Force_Polyomino_Builder(std::vector<int> genome, unsigned int THRESHOLD_SIZE,int initial_Tile,int initial_Rotation);
   void Brute_Force_Interacting_Adjacency(std::vector<int>& Interacting_Faces, int interacting_Face, int face_index, int X, int Y);
 
   int Analyse_Genotype_Outcome(std::vector<int> genome, int N_Repeated_Checks);
@@ -22,8 +22,8 @@ namespace Brute_Force
 
   void Brute_vs_Graph_Methods_Comparison(int MAX_C, int K_Repetions);
 
-  void Brute_vs_Graph_Methods_Comparison_Random_Sample(int genome_Length,int MAX_C,int num_Samples, int K_Repetitions);
-  void Brute_vs_Brute_Comparison_Random_Sample(int genome_Length,int MAX_C,int num_Samples, int K_Repetitions);
+  void Brute_vs_Graph_Methods_Comparison_Random_Sample(unsigned int genome_Length,int MAX_C,int num_Samples, int K_Repetitions);
+  void Brute_vs_Brute_Comparison_Random_Sample(unsigned int genome_Length,int MAX_C,int num_Samples, int K_Repetitions);
 
   void Enumerate_Topologies(int MAX_C);
   void Compare_Topology_Classes();

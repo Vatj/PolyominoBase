@@ -9,7 +9,7 @@ namespace Brute_Force
   xorshift RNG_Generator(rd());
   //xorshift RNG_Generator(214316743);
   
-  std::vector<int> Brute_Force_Polyomino_Builder(std::vector<int> genome, int THRESHOLD_SIZE, int initial_Tile,int initial_Rotation) {
+  std::vector<int> Brute_Force_Polyomino_Builder(std::vector<int> genome, unsigned int THRESHOLD_SIZE, int initial_Tile,int initial_Rotation) {
     Clean_Genome(genome,-1); 
     std::vector<int> Placed_Tiles{0,0,initial_Tile,initial_Rotation}; //DEFINED AS (X,Y,Tile Type Number, Tile Rotation[in CW rotation])
     std::vector<int> Interacting_Faces; //DEFINED AS (X,Y,Target Face colour, Target Face Index) 
@@ -98,7 +98,6 @@ namespace Brute_Force
    
     const int THRESHOLD_SIZE=(genome.size()*genome.size())/2;
     bool UND_Check=false;
-    bool Steric=false;
     std::vector<int> Placed_Tiles_Check=Brute_Force_Polyomino_Builder(genome,THRESHOLD_SIZE,0,0);
     
     if(Placed_Tiles_Check.empty()) //STERIC
@@ -255,7 +254,7 @@ namespace Brute_Force
 
 
   
-  void Brute_vs_Graph_Methods_Comparison_Random_Sample(int genome_Length,int MAX_C,int num_Samples, int K_Repetitions) {
+  void Brute_vs_Graph_Methods_Comparison_Random_Sample(unsigned int genome_Length,int MAX_C,int num_Samples, int K_Repetitions) {
     std::cout<<"Running for tile size of "+std::to_string(genome_Length/4)+" for "+std::to_string(num_Samples)+" iterations"<<std::endl;
     std::string outFile_Title="/rscratch/asl47/Method_Comparisons_Sample_T"+std::to_string(genome_Length/4)+"_Trial.txt";
     std::ofstream Mismatch_outFile(outFile_Title,std::ios_base::app | std::ios_base::out);
@@ -289,8 +288,8 @@ namespace Brute_Force
         G_result=-5;
       }
       else {
-        //G_result=Graph_Analysis(genome);
-        G_result=FastGraphAnalysis(genome);
+        G_result=Graph_Analysis(genome);
+        //G_result=FastGraphAnalysis(genome);
         if(G_result>0) {
           G_result=Steric_Check(genome,-1);
         }
@@ -341,7 +340,7 @@ namespace Brute_Force
     Mismatch_outFile.close();
   }
 
-  void Brute_vs_Brute_Comparison_Random_Sample(int genome_Length,int MAX_C,int num_Samples, int K_Repetitions) {
+  void Brute_vs_Brute_Comparison_Random_Sample(unsigned int genome_Length,int MAX_C,int num_Samples, int K_Repetitions) {
 
     std::cout<<"Running BvB for tile size of "+std::to_string(genome_Length/4)+" for "+std::to_string(num_Samples)+" iterations"<<std::endl;
     
@@ -349,8 +348,7 @@ namespace Brute_Force
     std::ofstream Mismatch_outFile(outFile_Title,std::ios_base::app | std::ios_base::out);
     
     Mismatch_outFile<<"N_t:"<<genome_Length/4<<", C="<<MAX_C<<" ||  K="<<K_Repetitions<<", N:"<<num_Samples<<"\n";
-    
-    bool print_detailed=true;
+   
     int numRun=0, numDelB=0, numDelG=0;
 #pragma omp parallel for  schedule(dynamic)
     for(int n=0;n<num_Samples;++n) { 
@@ -423,6 +421,8 @@ double get_cpu_time(){
 int main(int argc, char* argv[]) {
 
   std::vector<std::vector<int> > GENOME_VECTOR(100000000);
+  std::vector<int> test_genome;
+  int graph_result;
   if(argc>1) {
     switch(argv[1][1]) {
     case 'R':
@@ -442,6 +442,16 @@ int main(int argc, char* argv[]) {
     case 'X':
       Generate_Random_Genotypes(std::stoi(argv[2])*4,GENOME_VECTOR,false,2);
       Timing_Mode(GENOME_VECTOR,{-1,-2});
+      break;
+    case 'T':
+      test_genome={0, 0, 2, 19,   0, 14, 20, 18,   0, 0, 17, 5,   0, 0, 6, 1,   0, 20, 18, 13};
+        //{0, 4, 8, 7,   0, 9, 3, 2,   0, 10, 0, 13,   0, 0, 1, 14};
+        //{0, 11, 6, 4, 0, 0, 3, 7,      0, 0, 8, 14,   0, 13, 5, 12};
+        //{0, 1, 3, 16,   0, 0, 6, 9,   0, 0, 15, 5,   0, 2, 10, 4};
+        //{27, 61, 93, 90, 0, 0, 28, 176, 0, 175, 109, 184, 0, 110, 89, 197, 0, 198, 3, 183, 0, 0, 4, 94, 0, 38, 0, 62, 0, 37, 124, 123};
+      graph_result=Graph_Analysis(test_genome);
+      //std::cout<<"GPF "<<Get_Phenotype_Fitness(test_genome,-1,true)<<std::endl;
+      std::cout<<"GR "<<graph_result<<std::endl;
       break;
     case 'H':
       std::cout<<"Brute Tile running options\n -R [# runs] [run #] for topology robustness\n -C [# tiles] [# runs] for brute v graph comparison\n -S [# tiles] [# runs] for run selection\n"<<std::endl;
@@ -491,7 +501,7 @@ void Generate_Random_Genotypes(int genome_Length,std::vector<std::vector<int> >&
   //std::cout<<"Note, running this for a fixed seed"<<std::endl;
   const int COLOUR_SPACE= C>0 ? C : genome_Length+1;
 #pragma omp parallel for schedule(dynamic) 
-  for(int t=0;t<GENOME_VECTOR.size();++t) {
+  for(unsigned int t=0;t<GENOME_VECTOR.size();++t) {
     std::random_device rd;
     xorshift RNG_Genotype(rd());
     std::vector<int> genome(genome_Length);
@@ -537,7 +547,7 @@ void Timing_Mode(std::vector<std::vector<int> >& GENOME_VECTOR, std::vector<int>
   std::cout<<"Running \"Timing\""<<std::endl;
   cpu_start= get_cpu_time();
 #pragma omp parallel for  schedule(dynamic)
-  for(int t=0;t<GENOME_VECTOR.size();++t) {
+  for(unsigned int t=0;t<GENOME_VECTOR.size();++t) {
     std::vector<int> genome=GENOME_VECTOR[t];
   }
   cpu_finish  = get_cpu_time();
@@ -578,7 +588,7 @@ void Accuracy_Mode(std::vector<std::vector<int> >& GENOME_VECTOR, std::vector<in
   std::map<int,int> Under_Results;
   const bool PRINTER=false;
 #pragma omp parallel for  schedule(dynamic)
-  for(int t=0;t<GENOME_VECTOR.size();++t) {
+  for(unsigned int t=0;t<GENOME_VECTOR.size();++t) {
     std::vector<int> genome=GENOME_VECTOR[t];
     int TRUTH_RESULT=0;//Brute_Force::Analyse_Genotype_Outcome(genome,150);
     std::vector<int> G_genome2(genome);
@@ -665,7 +675,7 @@ void BD_Fractional_Occupation(int genome_Length,int C,int N_Cases) {
   Generate_Random_Genotypes(genome_Length,GENOME_VECTOR,false,-1,C);
   int BD=0, BD2=0;
 #pragma omp parallel for  schedule(dynamic,100) reduction(+:BD,BD2)
-  for(int t=0;t<GENOME_VECTOR.size();++t) {
+  for(unsigned int t=0;t<GENOME_VECTOR.size();++t) {
     std::vector<int> genome=GENOME_VECTOR[t];
     if(Get_Phenotype_Fitness(genome,false)>0)
       ++BD2;
@@ -735,7 +745,7 @@ void Purify_Topologies() {
   infile.close();
   std::cout<<"Read "<<BUFFER_READ.size()<<" genotypes"<<std::endl;
   std::cout<<"running"<<std::endl;
-  for(int n=0;n<BUFFER_READ.size();++n) {
+  for(unsigned int n=0;n<BUFFER_READ.size();++n) {
     if(n%100000==0) {
       std::cout<<"on "<<n<<std::endl;
     }

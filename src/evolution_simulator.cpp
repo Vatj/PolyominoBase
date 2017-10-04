@@ -244,7 +244,7 @@ void Evolve_Fitness4(std::string Run_Details,double Mu) {
       }      
       
       if(GetMultiplePhenotypeFitness(Evolving_Genome,target_types,target_fitnesses)) {    
-        Phenotype_Fitness_Sizes[n]=std::accumulate(target_fitnesses.begin(),target_fitnesses.begin()+2,0.0,[](double cum,double nex){return cum+Fitness_Function(nex);})/(4.);
+        Phenotype_Fitness_Sizes[n]=std::accumulate(target_fitnesses.begin(),target_fitnesses.begin()+2,0.0,[](double cum,double nex){return cum+Fitness_Function(nex);})/(2*4.);
         Phenotype_Fitness_Sizes_Full[n]=std::accumulate(target_fitnesses.begin(),target_fitnesses.end(),0.0,[](double cum,double nex){return cum+Fitness_Function(nex);})/(3.);
         for(int nth=0;nth<2;++nth) {
          if(target_fitnesses[nth]>1.0-MINIMUM_FITNESS_THRESHOLD)
@@ -292,7 +292,7 @@ void Fitness_Evolution5() {
 #pragma omp parallel for schedule(dynamic)
   for(int r=0;r<Num_Runs;++r) {
     std::string runN="T"+std::to_string(Num_Tiles)+"_C"+std::to_string(Colour_Space+1)+"_N"+std::to_string(Num_Genomes)+"_Mu"+std::to_string(mu)+"_O"+std::to_string(Fitness_Oscillation_Rate)+"_K"+std::to_string(GENERATION_LIMIT)+"_Run"+std::to_string(r+RUN);
-    Evolve_Fitness4(runN,mu);
+    Evolve_Fitness5(runN,mu);
   }
 }
 
