@@ -62,7 +62,7 @@ namespace Brute_Force
   }
 
   void Brute_Force_Interacting_Adjacency(std::vector<int>& Interacting_Faces, int interacting_Face, int face_index, int X, int Y) {
-    int X_OFFSET,Y_OFFSET;
+    int X_OFFSET=0,Y_OFFSET=0;
     switch(face_index) {
     case 0:
       X_OFFSET=0;
@@ -96,7 +96,7 @@ namespace Brute_Force
     // 4 = BD       //
     //////////////////
    
-    const int THRESHOLD_SIZE=(genome.size()*genome.size())/2;
+    const unsigned int THRESHOLD_SIZE=(genome.size()*genome.size())/2;
     bool UND_Check=false;
     std::vector<int> Placed_Tiles_Check=Brute_Force_Polyomino_Builder(genome,THRESHOLD_SIZE,0,0);
     
@@ -170,7 +170,7 @@ namespace Brute_Force
     DELTA_Y_Check=*TOP_Y_Check-*BOTTOM_Y_Check+1;
     std::vector<int> Spatial_Occupancy_Check(DELTA_X_Check*DELTA_Y_Check);
 
-    for(int tileIndex=0;tileIndex<X_Locs_Check.size();++tileIndex) {
+    for(unsigned int tileIndex=0;tileIndex<X_Locs_Check.size();++tileIndex) {
       if(generate_mode==0) {
         Spatial_Occupancy_Check[(*TOP_Y_Check-Y_Locs_Check[tileIndex])*DELTA_X_Check + (X_Locs_Check[tileIndex]-*LEFT_X_Check)]=1;
       }
@@ -267,7 +267,7 @@ namespace Brute_Force
       std::vector<int> genome(genome_Length);
       do {
         genome.assign(genome_Length,0);
-        for(int i=0;i<genome_Length;++i)
+        for(unsigned int i=0;i<genome_Length;++i)
           genome[i]=Color(RNG_Generator);
   
         Clean_Genome(genome);
@@ -356,7 +356,7 @@ namespace Brute_Force
       do {
         genome.assign(genome_Length,0);
         int upper=1;
-        for(int i=0;i<genome_Length;++i) { 
+        for(unsigned int i=0;i<genome_Length;++i) { 
           if(*std::max_element(genome.begin(),genome.begin()+i)==upper) 
             upper=std::min(upper+2,MAX_C-1);
           std::uniform_int_distribution<int> Color(0,upper);
@@ -433,10 +433,10 @@ int main(int argc, char* argv[]) {
       Brute_Force::Brute_vs_Graph_Methods_Comparison_Random_Sample(std::stoi(argv[2])*4,std::stoi(argv[2])*4+2,std::stoi(argv[3]),25);
       break;
     case 'S':
-      for(int i=0;i<15;++i) {
-        std::cout<<"STARTING RUN "<<std::to_string(i)<<std::endl;
+      for(int i=0;i<10;++i) {
+        //std::cout<<"STARTING RUN "<<std::to_string(i)<<std::endl;
         Run_Selection(std::stoi(argv[2])*4,std::stoi(argv[3]));
-        std::cout<<"Safe exit"<<std::endl;
+        //std::cout<<"Safe exit"<<std::endl;
       }
       break;
     case 'X':
@@ -453,6 +453,16 @@ int main(int argc, char* argv[]) {
       //std::cout<<"GPF "<<Get_Phenotype_Fitness(test_genome,-1,true)<<std::endl;
       std::cout<<"GR "<<graph_result<<std::endl;
       break;
+      /*
+    case 'Q':
+      for(int y=4;y>=-4;--y) {
+        for(int x=-4;x<=4;++x) {
+          std::cout<<SpiralCoordinate(x,y)<<" ";
+        }
+        std::cout<<std::endl;
+      }
+      break;
+      */
     case 'H':
       std::cout<<"Brute Tile running options\n -R [# runs] [run #] for topology robustness\n -C [# tiles] [# runs] for brute v graph comparison\n -S [# tiles] [# runs] for run selection\n"<<std::endl;
     }
@@ -466,26 +476,27 @@ int main(int argc, char* argv[]) {
 
 
 void Run_Selection(int genome_length,int Test_Cases) {
-  std::vector<int> K_s{0,10};//,5,10,20};
-  std::cout<<"Running for T "<<std::to_string(genome_length/4)<<" for "<<std::to_string(Test_Cases)<<" cases, with Ks: ";
-  for(int k:K_s) {
-    std::cout<<k<<" ";
-  }
-  std::cout<<std::endl;
+  std::vector<int> K_s{0};//,10};//,5,10,20};
+  //std::cout<<"Running for T "<<std::to_string(genome_length/4)<<" for "<<std::to_string(Test_Cases)<<" cases, with Ks: ";
+  //for(int k:K_s) {
+  //  std::cout<<k<<" ";
+  //}
+  //std::cout<<std::endl;
 
   double cpu_start,cpu_finish;
-  for(int G_C=2;G_C<3; ++G_C) {
+  for(int G_C=0;G_C<1; ++G_C) {
     if(genome_length>28 && G_C==0) //skip B/D for T>7
       continue;
-    int modified_cases= G_C==0 ? 1500000 : 5000000;//Test_Cases; //* pow(5,G_C);
+    int modified_cases= G_C==0 ? 1000000 : 5000000;//Test_Cases; //* pow(5,G_C);
     std::vector<std::vector<int> > GENOME_VECTOR(modified_cases);
-    std::cout<<"Generating "+std::to_string(modified_cases)+" with condition "+std::to_string(G_C)+" ...";
+    //std::cout<<"Generating "+std::to_string(modified_cases)+" with condition "+std::to_string(G_C)+" ...";
     cpu_start= get_cpu_time();
     Generate_Random_Genotypes(genome_length,GENOME_VECTOR,false,G_C);
     cpu_finish  = get_cpu_time();
     double LOAD_TIME=cpu_finish-cpu_start;
     std::cout<<"Generated after "<<LOAD_TIME<<" seconds"<<std::endl;
     Timing_Mode(GENOME_VECTOR,K_s);
+    continue;
     if(G_C==0) {
       for(auto& k:K_s) {
         std::cout<<"K: "<<k<<" Over: "<<0<<" Under: "<<0<<std::endl;
@@ -544,7 +555,7 @@ bool Generating_Condition(std::vector<int>& genome,int condition) {
 
 void Timing_Mode(std::vector<std::vector<int> >& GENOME_VECTOR, std::vector<int> k_repeats) {  
   double cpu_start,cpu_finish;
-  std::cout<<"Running \"Timing\""<<std::endl;
+  //std::cout<<"Running \"Timing\""<<std::endl;
   cpu_start= get_cpu_time();
 #pragma omp parallel for  schedule(dynamic)
   for(unsigned int t=0;t<GENOME_VECTOR.size();++t) {
@@ -552,14 +563,18 @@ void Timing_Mode(std::vector<std::vector<int> >& GENOME_VECTOR, std::vector<int>
   }
   cpu_finish  = get_cpu_time();
   double LOAD_TIME=cpu_finish-cpu_start;
-  std::cout<<"Load time was "<<LOAD_TIME<<std::endl;
+  //std::cout<<"Load time was "<<LOAD_TIME<<std::endl;
   for(int k:k_repeats) {
     int BD=0;
-    std::cout<<"Running for K: "<<k<<" ------> ";
+    //std::cout<<"Running for K: "<<k<<" ------> ";
     cpu_start= get_cpu_time();
 #pragma omp parallel for  schedule(dynamic,100) reduction(+:BD)
-    for(int t=0;t<GENOME_VECTOR.size();++t) {
+    for(unsigned int t=0;t<GENOME_VECTOR.size();++t) {
       std::vector<int> genome=GENOME_VECTOR[t];
+      Steric_Check(genome,-1);
+      
+      continue; /*TEMPORARY*/
+      
       if(k>0) {
         if(Brute_Force::Analyse_Genotype_Outcome(genome,k)>0)
           ++BD;
@@ -577,8 +592,8 @@ void Timing_Mode(std::vector<std::vector<int> >& GENOME_VECTOR, std::vector<int>
       }
     }
     cpu_finish  = get_cpu_time();
-    std::cout<<"Runtime taken: "<<cpu_finish-cpu_start<<" seconds"<<std::endl;
-    std::cout<<"B/D: "<<BD<<" and UND: "<<GENOME_VECTOR.size()-BD<<std::endl;
+    std::cout<<"Runtime taken: "<<cpu_finish-cpu_start-LOAD_TIME<<" seconds"<<std::endl;
+    //std::cout<<"B/D: "<<BD<<" and UND: "<<GENOME_VECTOR.size()-BD<<std::endl;
   }
 }
 
@@ -737,7 +752,6 @@ void Purify_Topologies() {
   int a,b,c,d,e,f,g,h;//,i,j,k,l;
   std::vector<std::vector<int> > BUFFER_READ;
   std::vector<std::vector<int> > Uniques;
-  int Num_Shapes=0;
   std::cout<<"reading"<<std::endl;
   while (infile >>a>>b>>c>>d>>e>>f>>g>>h) {//>>i>>j>>k>>l) {
     BUFFER_READ.push_back({a,b,c,d,e,f,g,h});//,i,j,k,l});

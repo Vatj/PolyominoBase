@@ -918,21 +918,31 @@ def Z2(x,y):
         else:
             n=max(x,y)
     D=4*n*n-2*n
-    print D
+    #print D
     if x+y>0:
-        if x>y:
-            return D+(y-x)
-        else:
-            return D+(y-x)
+        return D+(y-x)
         
     elif x+y<0:
-        if x>y:
-            return D+(x-y)
-        else:
-            return D+(x-y)
+        return D+(x-y)
+
     else:
         if x>y:
             return D+(x-y)
         else:
             return D+(y-x)
-            
+
+def Tikz(m,n):
+    plt.figure()
+    while((m!=0) or (n!=0)):
+        if((n>m) and (n>=-m)):
+            m+=1
+        elif((n>=m) and (n < -m)):
+            n+=1
+        elif((n<=m) and (n > -m+1)):
+            n-=1
+        else:
+            m-=1
+        plt.text(m,n,"{}".format(Z2(m,n)))
+
+    plt.show(block=False)
+    

@@ -146,11 +146,13 @@ bool Bounded_Loop_Growth_Check(std::vector<int>& genome,int Bound_Limit) {
   return std::all_of(Tile_Use.begin(),Tile_Use.end(),[](bool v) { return v; });
 }
 
+
 double Steric_Check(std::vector<int>& genome,int Shape_Based_Fitness) {
   std::vector<int> phenotype_Shape;
   int DELTA_X=0, DELTA_Y=0;
   std::vector<int> tilesInformation{0,0,0,0,-1};
   std::vector<int> processingQueue{0,0,0,0,-10};
+  std::vector<int> occupied_spiral(genome.size()*genome.size()/4);occupied_spiral[0]=1;
   int currentX=0, currentY=0, currentTile=0, currentOrientation=0, comingFrom=-1;
   bool superBREAK=false;
   while(!processingQueue.empty()) {
@@ -198,6 +200,8 @@ double Steric_Check(std::vector<int>& genome,int Shape_Based_Fitness) {
         Y_OFFSET=0;
         break;
       }
+      
+      //occupied_spiral[SpiralCoordinate(currentX+X_OFFSET,currentY+Y_OFFSET)]==1) { //spot is already occupied
       for(std::vector<int>::const_iterator it = tilesInformation.begin();it!=tilesInformation.end();it+=5) {
         if(*it==currentX+X_OFFSET && *(it+1)==currentY+Y_OFFSET) {
           if(*(it+2)==tileN) {
@@ -218,9 +222,11 @@ double Steric_Check(std::vector<int>& genome,int Shape_Based_Fitness) {
             return -1;
         }
       }
+      
       if(superBREAK)
         continue;
       tilesInformation.insert(tilesInformation.end(),{currentX+X_OFFSET,currentY+Y_OFFSET,tileN,tileO,f});
+      //occupied_spiral[SpiralCoordinate(currentX+X_OFFSET,currentY+Y_OFFSET)]=1;
       processingQueue.insert(processingQueue.end(),{currentX+X_OFFSET,currentY+Y_OFFSET,tileN,tileO,f});
       if(tilesInformation.size()>1.25*genome.size()*genome.size()) {
 #pragma omp critical(ster)
@@ -865,11 +871,64 @@ double Shape_Matching_Fitness_Function(std::vector<int>& Spatial_Occupation,int&
     std::swap(Target_Delta_X,Target_Delta_Y);
   }
   if(Size_Penalty_On) {
-    //double Size_Cofactor=1-std::abs(std::accumulate(Spatial_Occupation.begin(),Spatial_Occupation.end(),0.0)-std::accumulate(Target_Occupation.begin(),Target_Occupation.end(),0.0))/std::accumulate(Target_Occupation.begin(),Target_Occupation.end(),0.0);
-    //return *std::max_element(Fitness_Overlaps.begin(), Fitness_Overlaps.end())*Size_Cofactor;
       return *std::max_element(Fitness_Overlaps.begin(), Fitness_Overlaps.end())*std::min(1.,std::accumulate(Spatial_Occupation.begin(),Spatial_Occupation.end(),0.0)/std::count(Target_Occupation.begin(),Target_Occupation.end(),1));
   }
   else
     return *std::max_element(Fitness_Overlaps.begin(), Fitness_Overlaps.end());
   
 }
+
+/*
+int SpiralCoordinate(int x, int y) {
+  int diag_coord;
+  if(abs(x) > abs(y))
+    diag_coord=x;
+  else {
+    if(abs(y) > abs(x))
+      diag_coord=y;
+    else
+      diag_coord= x>0? std::min(x,y) : std::max(x,y);
+  }
+  int diag_offset=4*diag_coord*diag_coord-2*diag_coord;
+  if(x+y>0)
+    return diag_offset+(y-x);
+  else {
+    if(x+y<0)
+      return diag_offset-(y-x);
+    else {
+      return x>y? diag_offset+(x-y) : diag_offset+(y-x); 
+    }      
+  }    
+}
+double StericNew(std::vector<int>& genome) {
+  std::vector<int> tilesInformation{0,0,0,0};
+  std::vector<int> processing_queue{0,0,0};
+  int new_x=0, new_y=0, new_interaction=0,
+  //initial check
+  int X_OFFSET,Y_OFFSET;
+  for(int face=0; face<4;++face) {
+    if(genome[face]) {
+      switch(face) {
+      case 0:
+        X_OFFSET=0;Y_OFFSET=1;
+        break;
+      case 1:
+        X_OFFSET=1;Y_OFFSET=0;
+        break;
+      case 2:
+        X_OFFSET=0;Y_OFFSET=-1;
+        break;
+      case 3:
+        X_OFFSET=-1;Y_OFFSET=0;
+        break;
+      }
+      processing_queue.insert(processing_queue.end(),{X_OFFSET,Y_OFFSET,Interaction_Matrix(genome[face])})l
+    }
+    while(!proccessing_queue.empty()) {
+      new_interaction=processing_queue.back();processing_queue.pop_back();
+      new_y=processing_queue.back();processing_queue.pop_back();
+      new_x=processing_queue.back();processing_queue.pop_back();
+    }
+  }
+}
+*/
