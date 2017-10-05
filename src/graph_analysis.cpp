@@ -152,7 +152,7 @@ double Steric_Check(std::vector<int>& genome,int Shape_Based_Fitness) {
   std::vector<int> tilesInformation{0,0,0,0,-1};
   std::vector<int> processingQueue{0,0,0,0,-10};
   int currentX=0, currentY=0, currentTile=0, currentOrientation=0, comingFrom=-1;
-  bool superBREAK=false;//, advanced_Steric_Check=false;
+  bool superBREAK=false;
   while(!processingQueue.empty()) {
     comingFrom=processingQueue.back();
     processingQueue.pop_back();

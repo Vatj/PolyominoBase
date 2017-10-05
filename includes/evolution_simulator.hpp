@@ -1,14 +1,6 @@
-#include "graph_analysis.hpp"
+#include "evolution_methods.hpp"
 
 
-//////////////////////////////////////
-//FITNESS FUNCTION RELATED FUNCTIONS//
-//////////////////////////////////////
-double Fitness_Function(double Phenotype_Size);
-std::vector<int> Random_Selection(int Num_Genomes,int K_Samples);
-std::vector<int> Stochastic_Acceptance_Selection(std::vector<double>& Fitness_Weights,int K_Samples);
-std::vector<int> Roulette_Wheel_Selection(std::vector<double>& Fitness_Weights,int K_Samples);
-int Find_Percentile_of_Vector(std::vector<int>& vec,double percentile);
 ///////////////////////////////////////
 //GENOME EVOLTUTION RELATED FUNCTIONS//
 ///////////////////////////////////////
@@ -44,7 +36,6 @@ void Evolve_Fitness7(double Mu);
 //UTILITY FUNCTIONS//
 /////////////////////
 
-void Set_Runtime_Configurations(int argc, char* argv[]);
 
 void Run_Evolution_Simulation_Over_Range2(std::string inFileName);
 void Evolution_Simulation2(const double Mu,std::vector<int>& adaptation);

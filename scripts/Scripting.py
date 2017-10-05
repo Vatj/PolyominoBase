@@ -905,3 +905,34 @@ def roul():
     z=x*990+y*10
     return z
     
+
+def Z2(x,y):
+    n=y if abs(y) > abs(x) else x
+    if abs(y) > abs(x):
+        n=y
+    elif abs(x) > abs(y):
+        n=x
+    else:
+        if x>=0:
+            n=min(x,y)
+        else:
+            n=max(x,y)
+    D=4*n*n-2*n
+    print D
+    if x+y>0:
+        if x>y:
+            return D+(y-x)
+        else:
+            return D+(y-x)
+        
+    elif x+y<0:
+        if x>y:
+            return D+(x-y)
+        else:
+            return D+(x-y)
+    else:
+        if x>y:
+            return D+(x-y)
+        else:
+            return D+(y-x)
+            
