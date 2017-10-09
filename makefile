@@ -62,6 +62,7 @@ Pr: $(PR_OBJECTS) $(COMMON_OBJECTS)
 #Compile
 $(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 	@mkdir -p $(dir $@)
+	@mkdir -p $(dir $(TARGETDIR))
 	$(CXX) $(CXXFLAGS) $(INC) -c -o $@ $<
 	@$(CXX) $(CXXFLAGS) $(INCDEP) -MM $(SRCDIR)/$*.$(SRCEXT) > $(BUILDDIR)/$*.$(DEPEXT)
 	@cp -f $(BUILDDIR)/$*.$(DEPEXT) $(BUILDDIR)/$*.$(DEPEXT).tmp
