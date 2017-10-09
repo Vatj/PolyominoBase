@@ -15,22 +15,27 @@ void DoShape(std::string sub_file,std::string folder_base,std::vector<int> runs)
 
   std::vector<int> component_lengths;
 
-  
+  //std::cout<<"//scratch//asl47//Data_Runs//Dynamic_2//"+folder_base+"//"+sub_file+"_Run"+std::to_string(0)+"_Genotype.txt"<<std::endl;
   for(int run : runs) {
-    std::cout<<"Merging for run "<<run<<std::endl;
-    std::string in_file_name="//scratch//asl47//Data_Runs//Dynamic//"+folder_base+"//"+sub_file+"_Run"+std::to_string(run)+"_Genotype.txt";
+    //std::cout<<"Merging for run "<<run<<std::endl;
+    std::string in_file_name="//scratch//asl47//Data_Runs//Dynamic_2//"+folder_base+"//"+sub_file+"_Run"+std::to_string(run)+"_Genotype.txt";
     std::ifstream in_file(in_file_name);
     std::string line_input;
-    bool first_line=true;
+    bool collect_input=false;
     while (std::getline(in_file, line_input)) {
-      if(first_line) {
-        first_line=false;
+      if(line_input[0]=='g') {
+        if(line_input.find("10000")!=std::string::npos) {
+            collect_input=true;
+          }
         continue;
       }
-      std::string line_buffer(line_input,line_input.find('x')+1,std::string::npos);
-      std::istringstream string_stream(line_buffer);
+      if(!collect_input)  
+        continue;
+      
+      std::istringstream string_stream(line_input);
       std::vector<int> genome{std::istream_iterator<int>(string_stream), std::istream_iterator<int>()};
       if(Disjointed_Check(genome)) {
+        std::cout<<"disjoined"<<std::endl;
         std::vector<int> shape_keys;
         std::vector<int>::iterator found_at=std::find(genome.begin(),genome.end(),-1);
         std::vector<int> partial_genome(genome.begin(),found_at);
@@ -42,7 +47,8 @@ void DoShape(std::string sub_file,std::string folder_base,std::vector<int> runs)
         component_lengths.emplace_back(partial_genome.size());
       }
       else {
-        int steric_result=Steric_Check_Table(genome,shape_table,num_shapes);
+        Steric_Check_Table(genome,shape_table,num_shapes);
+        component_lengths.emplace_back(genome.size());
       }
     }
   }
@@ -50,13 +56,7 @@ void DoShape(std::string sub_file,std::string folder_base,std::vector<int> runs)
 
   std::string out_file_name;
   std::string out_file_name_lengths;
-  if(folder_base=="T3")
-    out_file_name ="//rscratch//asl47//Bulk_Run//Modular//Shape_Data_T3";
-  else {
-    out_file_name ="//rscratch//asl47//Bulk_Run//Modular//Shape_Data_T4_O";
-    for(int s=3;s<folder_base.size();++s)
-      out_file_name+=folder_base[s];
-  }
+  out_file_name ="//rscratch//asl47//Processed/Dynamic//"+folder_base+"Shape_Data";
   out_file_name_lengths=out_file_name+"_L.txt";
   std::ofstream out_file_lengths(out_file_name_lengths);
   for(int length :component_lengths)
@@ -118,8 +118,6 @@ void DoShape(std::string sub_file,std::string folder_base,std::vector<int> runs)
     }
  
     
-    
-    
     if(total_match)
       out_file<<" *total* 1";
     else
@@ -153,9 +151,6 @@ void DoShape(std::string sub_file,std::string folder_base,std::vector<int> runs)
 
 
 
-
-
-
 int main(int argc, char* argv[]) {
   int N=1000;
   if(argc>2) {
@@ -164,28 +159,30 @@ int main(int argc, char* argv[]) {
   
   std::vector<int> runs(N);
   std::iota(runs.begin(),runs.end(),0);
-  std::string file_base;
-  std::string folder_base;
-  std::string temp_input;
+  std::string file_base, folder_base,mu_t, mu,run_t, temp_input;
+  std::map<int,std::string> Mu_map ={{1, "0.050000"}, {4, "0.012500"}, {8, "0.006250"}, {16, "0.003125"}, {32,"0.001563"}};
+
   if(argc>1) {
     switch(argv[1][1]) {
     case '3':
-      file_base="Modular3_T20_C200_N1000_Mu0.003125_B5000";
-      folder_base="T3";
+      mu=Mu_map[std::stoi(argv[3])];
+      mu_t=argv[3];
+      file_base="Modular3_T20_C200_N500_Mu"+mu+"_K15000";
+      folder_base="T3Mu"+mu_t;
       DoShape(file_base,folder_base,runs);
       break;
     case '4':
-      temp_input=argv[3];
-      file_base="Modular4_T20_C200_N1000_Mu0.003125_O"+temp_input+"_B5000";
-      folder_base="T4O"+temp_input;
+    case '5':
+      run_t=argv[1][1];
+      mu=Mu_map[std::stoi(argv[3])];
+      mu_t=argv[3];
+      temp_input=argv[4];
+      file_base="Modular"+run_t+"_T20_C200_N500_Mu"+mu+"_O"+temp_input+"_K15000";
+      folder_base="T"+run_t+"Mu"+mu_t+"O"+temp_input;
       //std::cout<<file_base<<std::endl;
       DoShape(file_base,folder_base,runs);
       break;
-    case '5':
-      //DoShape("Modular4_T20_C200_N1000_Mu0.003125_O1_B5000",runs);
-      break;
-    case '6':
-      //DoShape("Modular4_T20_C200_N1000_Mu0.003125_O10_B5000",runs);
+
       break;
     default:
       std::cout<<"unknown"<<std::endl;
