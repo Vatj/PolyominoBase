@@ -3,6 +3,9 @@ notifications:
 
 language: cpp
 compiler: g++
+os:
+  - linux
+  - osx
 
 matrix:
   include:
