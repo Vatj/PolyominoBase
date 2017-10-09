@@ -51,18 +51,20 @@ clean:
 #	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(TARGET) $^
 
 Ev: $(EV_OBJECTS) $(COMMON_OBJECTS)
+	@mkdir -p $(TARGETDIR)	
 	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(EV_TARGET) $^
 
 Br: $(BR_OBJECTS) $(COMMON_OBJECTS)
+	@mkdir -p $(TARGETDIR)
 	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(BR_TARGET) $^
 
 Pr: $(PR_OBJECTS) $(COMMON_OBJECTS)
+	@mkdir -p $(TARGETDIR)
 	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(PR_TARGET) $^
 
 #Compile
 $(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 	@mkdir -p $(dir $@)
-	@mkdir -p $(dir $(TARGETDIR))
 	$(CXX) $(CXXFLAGS) $(INC) -c -o $@ $<
 	@$(CXX) $(CXXFLAGS) $(INCDEP) -MM $(SRCDIR)/$*.$(SRCEXT) > $(BUILDDIR)/$*.$(DEPEXT)
 	@cp -f $(BUILDDIR)/$*.$(DEPEXT) $(BUILDDIR)/$*.$(DEPEXT).tmp
