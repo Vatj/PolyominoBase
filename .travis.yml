@@ -3,22 +3,19 @@ notifications:
 
 language: cpp
 compiler: g++
-os:
-  - linux
-  - osx
 
 matrix:
   include:
     # works on Precise and Trusty
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-5
-      env:
-         - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
+    #- os: linux
+    #  addons:
+    #    apt:
+    #      sources:
+    #        - ubuntu-toolchain-r-test
+    #      packages:
+    #        - g++-5
+    #  env:
+    #     - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
 
     - os: osx
       osx_image: xcode8
