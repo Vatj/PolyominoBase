@@ -4,6 +4,10 @@ build/*
 # Ignore any executables
 bin/*
 
+#
+Ignore any pyc from imports
+scripts/*.pyc
+
 # Ignore Mac specific files
 .DS_Store
-.pyc
+

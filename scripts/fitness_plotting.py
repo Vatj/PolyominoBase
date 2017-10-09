@@ -8,7 +8,7 @@ icy.Use_Seaborn()
 
 from matplotlib.animation import FuncAnimation,ImageMagickWriter
 
-RUNS=250
+RUNS=500
 RUN_TYPE=3
 
 def SetRuns(sr):
@@ -38,7 +38,7 @@ def AddNewDataToFile(classifier,data_in,needle,mu):
 
 def AddBulkDataToFile(Ts,Os,needle,mu):
     keys=['T{}{}'.format(t,'' if t==3 else 'O{}'.format(o)) for (t,o) in zip(Ts,Os)]
-    SetRuns(250)
+    SetRuns(500)
     
     for key in keys:
         SetType(int(key[1]))
@@ -58,7 +58,7 @@ def MaxFraction(needle_length=30,mu=4,O=3,slicer=0):
     if RUN_TYPE==4 or RUN_TYPE==5:
         additional='_O{}'.format(O)
 
-    Mu_Sets={32:'0.001563',16:'0.003125',8:'0.006250',4:'0.012500',1:'0.05000'}
+    Mu_Sets={32:'0.001563',16:'0.003125',8:'0.006250',4:'0.012500',1:'0.050000'}
     #Mu_Files={4:'',2:'Mu2',1:'Mu1'}
     
     
@@ -117,9 +117,9 @@ def PlotPartialHistogram(data,bins='empty',c_in='hotpink',mark_in='o',label_in='
         bins=int(np.sqrt(len(data)+0.5))
     hist,bins=np.histogram(data,bins=np.logspace(2,np.log10(15000),bins))#np.log10(min(data)*0.9)
     if label_on:
-        return plt.scatter(np.mean(zip(bins,bins[1:]),axis=1),np.cumsum(hist)/(1.*RUNS),c=c_in,marker=mark_in,s=50,label=label_in)
+        return plt.scatter(np.mean(zip(bins,bins[1:]),axis=1),np.cumsum(hist)/(1.*RUNS),c=c_in,marker=mark_in,s=50,label=label_in,zorder=10)
     else:
-        return plt.scatter(np.mean(zip(bins,bins[1:]),axis=1),np.cumsum(hist)/(1.*RUNS),c=c_in,marker=mark_in,s=50)
+        return plt.scatter(np.mean(zip(bins,bins[1:]),axis=1),np.cumsum(hist)/(1.*RUNS),c=c_in,marker=mark_in,s=50,zorder=10)
 
 def GetHistCoords(data,bins):
     hist,bin_edges=np.histogram(data,bins=np.logspace(2,np.log10(15000),bins))
@@ -137,7 +137,7 @@ plot_params={
     'T4O250':{'mark_in':'+','c_in':'olive','label_in':r'Dynamic ($\Omega$ = 250)'},
 }
 
-def PlotFilledFractions(needles,mu):
+def PlotFilledFractions(mu,needles=[5,25,50,100,500]):
     bins=30
     plt.figure()
     data_frame_low={}
@@ -155,15 +155,11 @@ def PlotFilledFractions(needles,mu):
 
             elif needle==needles[-1]:
                 data_frame_locs,data_frame_high[run_t]=zip(*GetHistCoords(data_dict[run_t],bins))
-                plt.fill_between(data_frame_locs,data_frame_low[run_t],data_frame_high[run_t],alpha=0.5,label=plot_params[run_t]['label_in'],color=plot_params[run_t]['c_in'])
-
-
-        
-
-        
+                plt.fill_between(data_frame_locs,data_frame_low[run_t],data_frame_high[run_t],alpha=0.5,label=plot_params[run_t]['label_in'],color=plot_params[run_t]['c_in'],zorder=1)
 
     plt.plot([15000,15000],[-1,2],'k-',lw=3)
     plt.ylim([-0.05,1.05])
+    plt.xlim([100,16000])
     plt.xlabel(r'Generation')
     plt.ylabel('Solution CDF')
     plt.xscale('log')
@@ -179,7 +175,7 @@ def PlotManyHistograms(needle,mu,bins=35):
         needle=data_dict
         data_dict=LoadExistingData(needle,mu)
         
-    SetRuns(250)
+    SetRuns(500)
     needle_list=[5,25,50,100,500]#1,10,25,50,75,100,300]
 
     

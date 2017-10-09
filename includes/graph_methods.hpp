@@ -8,6 +8,8 @@
 #include <map>
 #include <iostream>
 #include <set>
+#include <numeric>
+#include <tuple>
 
 ////////////
 //Edge Set//

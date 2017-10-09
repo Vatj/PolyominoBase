@@ -24,7 +24,7 @@ void Evolve_Fitness3(std::string Run_Details,double Mu) {
 
   std::uniform_int_distribution<int> Mutated_Colour(0,Colour_Space);
   std::bernoulli_distribution Mutation_Chance(Mu);
-  std::vector<int> Initial_Genome(Num_Tiles*4,0),target_types{4,5,6};
+  std::vector<int> Initial_Genome(Num_Tiles*4,0),target_types{4,5,6}, Index_Selections(Num_Genomes);
   std::vector<std::vector<int> > Genome_Pool(Num_Genomes,Initial_Genome), Temporary_Pool(Num_Genomes);
   std::vector<double> Phenotype_Fitness_Sizes(Num_Genomes),target_fitnesses{0,0,0};
 
@@ -70,7 +70,7 @@ void Evolve_Fitness3(std::string Run_Details,double Mu) {
         }
       }
     }
-    std::vector<int> Index_Selections=Roulette_Wheel_Selection(Phenotype_Fitness_Sizes,Num_Genomes);
+    Index_Selections=Roulette_Wheel_Selection(Phenotype_Fitness_Sizes,Num_Genomes);
     for(int nth_select=0;nth_select<Num_Genomes;++nth_select) {
       Temporary_Pool[nth_select]=Genome_Pool[Index_Selections[nth_select]];
     }   
@@ -100,7 +100,7 @@ void Evolve_Fitness4(std::string Run_Details,double Mu) {
   
   std::uniform_int_distribution<int> Mutated_Colour(0,Colour_Space);
   std::bernoulli_distribution Mutation_Chance(Mu);
-  std::vector<int> Initial_Genome(Num_Tiles*4,0),target_types(3);
+  std::vector<int> Initial_Genome(Num_Tiles*4,0),target_types(3), Index_Selections(Num_Genomes);
   std::vector<std::vector<int> > Genome_Pool(Num_Genomes,Initial_Genome), Temporary_Pool(Num_Genomes);
   std::vector<double> Phenotype_Fitness_Sizes(Num_Genomes), Phenotype_Fitness_Sizes_Full(Num_Genomes),target_fitnesses(3);
 
@@ -161,7 +161,7 @@ void Evolve_Fitness4(std::string Run_Details,double Mu) {
         }
       }
     }
-    std::vector<int> Index_Selections=Roulette_Wheel_Selection(Phenotype_Fitness_Sizes,Num_Genomes);
+    Index_Selections=Roulette_Wheel_Selection(Phenotype_Fitness_Sizes,Num_Genomes);
     for(int nth_select=0;nth_select<Num_Genomes;++nth_select) {
       Temporary_Pool[nth_select]=Genome_Pool[Index_Selections[nth_select]];
     }   
@@ -191,7 +191,7 @@ void Evolve_Fitness5(std::string Run_Details,double Mu) {
   
   std::uniform_int_distribution<int> Mutated_Colour(0,Colour_Space);
   std::bernoulli_distribution Mutation_Chance(Mu);
-  std::vector<int> Initial_Genome(Num_Tiles*4,0),target_types(3);
+  std::vector<int> Initial_Genome(Num_Tiles*4,0),target_types(3), Index_Selections(Num_Genomes);
   std::vector<std::vector<int> > Genome_Pool(Num_Genomes,Initial_Genome), Temporary_Pool(Num_Genomes);
   std::vector<double> Phenotype_Fitness_Sizes(Num_Genomes), Phenotype_Fitness_Sizes_Full(Num_Genomes),target_fitnesses(3);
 
@@ -247,7 +247,7 @@ void Evolve_Fitness5(std::string Run_Details,double Mu) {
         }
       }
     }
-    std::vector<int> Index_Selections=Roulette_Wheel_Selection(Phenotype_Fitness_Sizes,Num_Genomes);
+    Index_Selections=Roulette_Wheel_Selection(Phenotype_Fitness_Sizes,Num_Genomes);
     for(int nth_select=0;nth_select<Num_Genomes;++nth_select) {
       Temporary_Pool[nth_select]=Genome_Pool[Index_Selections[nth_select]];
     }   

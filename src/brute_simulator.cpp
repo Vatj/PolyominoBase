@@ -7,7 +7,6 @@ namespace Brute_Force
 {
   std::random_device rd;
   xorshift RNG_Generator(rd());
-  //xorshift RNG_Generator(214316743);
   
   std::vector<int> Brute_Force_Polyomino_Builder(std::vector<int> genome, unsigned int THRESHOLD_SIZE, int initial_Tile,int initial_Rotation) {
     Clean_Genome(genome,-1); 
@@ -450,19 +449,8 @@ int main(int argc, char* argv[]) {
         //{0, 1, 3, 16,   0, 0, 6, 9,   0, 0, 15, 5,   0, 2, 10, 4};
         //{27, 61, 93, 90, 0, 0, 28, 176, 0, 175, 109, 184, 0, 110, 89, 197, 0, 198, 3, 183, 0, 0, 4, 94, 0, 38, 0, 62, 0, 37, 124, 123};
       graph_result=Graph_Analysis(test_genome);
-      //std::cout<<"GPF "<<Get_Phenotype_Fitness(test_genome,-1,true)<<std::endl;
       std::cout<<"GR "<<graph_result<<std::endl;
       break;
-      /*
-    case 'Q':
-      for(int y=4;y>=-4;--y) {
-        for(int x=-4;x<=4;++x) {
-          std::cout<<SpiralCoordinate(x,y)<<" ";
-        }
-        std::cout<<std::endl;
-      }
-      break;
-      */
     case 'H':
       std::cout<<"Brute Tile running options\n -R [# runs] [run #] for topology robustness\n -C [# tiles] [# runs] for brute v graph comparison\n -S [# tiles] [# runs] for run selection\n"<<std::endl;
     }
