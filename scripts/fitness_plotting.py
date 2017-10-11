@@ -7,6 +7,7 @@ icy.Use_Seaborn()
 
 
 from matplotlib.animation import FuncAnimation,ImageMagickWriter
+from matplotlib.backends.backend_pdf import PdfPages
 
 RUNS=500
 RUN_TYPE=3
@@ -128,18 +129,18 @@ def GetHistCoords(data,bins):
 
 plot_params={
     'T3':{'mark_in':'x','c_in':'darkgreen','label_in':'Static'},
-    'T4O5':{'mark_in':'o','c_in':'darkred','label_in':r'Dynamic ($\Omega^2$ = 5)'},
-    'T4O25':{'mark_in':'s','c_in':'tomato','label_in':r'Dynamic ($\Omega^2$ = 25)'},
-    'T4O125':{'mark_in':'h','c_in':'gold','label_in':r'Dynamic ($\Omega^2$ = 125)'},
-    'T5O5':{'mark_in':'<','c_in':'skyblue','label_in':r'Dynamic ($\Omega^1$ = 5)'},
-    'T5O25':{'mark_in':'>','c_in':'slateblue','label_in':r'Dynamic ($\Omega^1$ = 25)'},
-    'T5O125':{'mark_in':'^','c_in':'navy','label_in':r'Dynamic ($\Omega^1$ = 125)'},
-    'T4O250':{'mark_in':'+','c_in':'olive','label_in':r'Dynamic ($\Omega$ = 250)'},
+    'T4O5':{'mark_in':'o','c_in':'darkred','label_in':r'Dynamic ($\Omega^2_{5}$)'},
+    'T4O25':{'mark_in':'s','c_in':'tomato','label_in':r'Dynamic ($\Omega^2_{25}$ )'},
+    'T4O125':{'mark_in':'h','c_in':'gold','label_in':r'Dynamic ($\Omega^2_{125}$)'},
+    'T5O5':{'mark_in':'<','c_in':'skyblue','label_in':r'Dynamic ($\Omega^1_{5}$)'},
+    'T5O25':{'mark_in':'>','c_in':'cornflowerblue','label_in':r'Dynamic ($\Omega^1_{25}$)'},
+    'T5O125':{'mark_in':'^','c_in':'navy','label_in':r'Dynamic ($\Omega^1_{125}$)'},
+    #'T4O250':{'mark_in':'+','c_in':'olive','label_in':r'Dynamic ($\Omega$ = 250)'},
 }
 
 def PlotFilledFractions(mu,needles=[5,25,50,100,500]):
     bins=30
-    plt.figure()
+    fig=plt.figure(figsize=(10,7))
     data_frame_low={}
     data_frame_high={}
     data_frame_locs=0
@@ -166,8 +167,8 @@ def PlotFilledFractions(mu,needles=[5,25,50,100,500]):
     plt.title(r'$\langle \mu L \rangle$ = {}, Sustained $g$ = [{}]'.format(4./mu,', '.join(map(str,needles))))
     plt.legend(ncol=2)
     plt.tight_layout()
-    plt.show(block=False)
-    
+    #plt.show(block=False)
+    return fig
 
 def PlotManyHistograms(needle,mu,bins=35):
     data_dict=LoadExistingData(needle,mu)
