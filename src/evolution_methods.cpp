@@ -272,6 +272,8 @@ void InitialGenotypeConditions(std::vector<int>& genotype) {
   case 1: //all random
     for(int t=0;t<Num_Tiles*length_factor;++t) {
       genotype[t]=Mutated_Colour(RNG_Engine);
+      if(Regulated && t%5==0)
+	genotype[t]=genotype[t]>Colour_Space/2 ? 1 : 0;	
     }
     break;
   case 2: //all on, non-interacting
