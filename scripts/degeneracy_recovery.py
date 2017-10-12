@@ -3,10 +3,12 @@
 ###  Alexander S Leonard   ####
 ###############################
 
+import matplotlib.pyplot as plt
+
 from math import factorial
 from operator import mul
-import matplotlib.pyplot as plt
 from itertools import combinations_with_replacement
+
 def choose(n, k):
     ntok = 1
     ktok = 1
@@ -19,7 +21,6 @@ def choose(n, k):
 
 def product_of(list_iterable):
     return reduce(mul, list_iterable, 1L)
-
 
 def Find_Neutral_Degeneracy(F,N,P):
     return sum([choose(F,U)*N**(F-U)*sum([product_of([P-2*Upp for Upp in xrange(0,Up-1+1)])*sum(product_of(factors) for factors in combinations_with_replacement(xrange(1,Up+1),U-Up)) for Up in xrange(0,U+1)]) for U in xrange(0,F+1)])
