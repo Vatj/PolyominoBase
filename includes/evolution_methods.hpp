@@ -13,6 +13,8 @@ extern int Fitness_Oscillation_Rate;
 extern int burn_in_period;
 extern int mutation_cofactor;
 extern int RUN;
+extern int active_targets;
+extern int initial_condition;
 
 extern std::random_device rd;
 extern xorshift RNG_Engine;
@@ -28,6 +30,8 @@ std::vector<int> Roulette_Wheel_Selection(std::vector<double>& Fitness_Weights,i
 int Find_Percentile_of_Vector(std::vector<int>& vec,double percentile);
 
 void Set_Runtime_Configurations(int argc, char* argv[]);
+
+void InitialGenotypeConditions(std::vector<int>& genotype);
 
 /*
 class GenotypeMutator {

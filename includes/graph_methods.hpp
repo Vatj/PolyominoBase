@@ -33,7 +33,7 @@ int FastLoopAnalysis(std::vector<int>& genome);
 std::tuple<int,int,int> Take_Loop_Step(std::vector<int>& genome ,int tile,int face,int deltaFace,std::vector<int> loop_Path,std::vector<int>& loop_Histories,bool Passed_BP);
 
 bool Cut_Rank_One_Loop(std::vector<int>& genome, std::vector<int>& loopR1_Path);
-bool Check_If_Loop(int tile,int face, std::vector<int>& loop_Path);
+bool Check_If_Loop(int tile, std::vector<int>& loop_Path);
 bool Loop_Rank_One_Check(std::vector<int>& loop_Histories);
 
 bool Check_If_Disjointed_Loops(std::vector<int>& loop_Histories);

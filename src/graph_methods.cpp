@@ -329,7 +329,7 @@ void Trim_Zero_Tiles(std::vector<int>& genome) {
 }
 
 
-bool Check_If_Loop(int tile,int face, std::vector<int>& loop_Path) {
+bool Check_If_Loop(int tile, std::vector<int>& loop_Path) {
   for(auto it = loop_Path.begin();it!=loop_Path.end();it+=2) {
     if(*it==tile)
       return true;        
@@ -377,7 +377,7 @@ std::tuple<int,int,int> Take_Loop_Step(std::vector<int>& genome,int tile,int fac
     }
 
       
-    if(Check_If_Loop(toTile,toFace,loop_Path)) {        
+    if(Check_If_Loop(toTile,loop_Path)) {        
       if(toTile!=*loop_Path.begin() || toFace==*(loop_Path.begin()+1)) 
         return std::make_tuple(rank2,rank4,rankInf); //'discovered loop 'too early', return upstream for now
         

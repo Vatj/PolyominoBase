@@ -15,12 +15,39 @@ int Fitness_Mode=0;
 int Fitness_Oscillation_Rate=500;
 int burn_in_period=100;//100000;
 int mutation_cofactor=4;
+int active_targets=3;
+int initial_condition=0;
 int RUN=0;
 
 std::random_device rd;
 xorshift RNG_Engine(rd());
 const double MINIMUM_FITNESS_THRESHOLD=0.0000001;
 
+/*
+
+class GenotypeMutator {
+  std::uniform_int_distribution<int> connections_dist;  // Note: no pointer
+  std::bernoulli_distribution Mutation_Chance;
+
+public:
+  GenotypeMutator::GenotypeMutator(int upper_limit,float mu) : connections_dist(0,upper_limit);  Mutation_Chance(m){ }
+  void mutate(std::vector<int>& genotype);
+  
+
+    // ...
+};
+
+void GenotypeMutator::mutate(std::vector<int> & genotype) {
+  for(unsigned int base=0;base<genotype.size();++base) {
+    if(Mutation_Chance(RNG_Engine)) {
+      int previousFace=genotype[t];
+      do {
+        genotype[t]=Mutated_Colour(RNG_Engine);
+      }while(genotype[t]==previousFace);
+    }
+  }      
+}
+*/
 /*
 //////////////
 // MUTATIONS//
@@ -155,31 +182,44 @@ void Set_Runtime_Configurations(int argc, char* argv[]) {
   if(argc>3) {
     for(int arg=2;arg<argc;arg+=2) {
       switch(argv[arg][1]) {
+        //BASIC PARAMETERS//
       case 'T': Num_Tiles=std::stoi(argv[arg+1]);
-        break;
-      case 'N': Num_Genomes=std::stoi(argv[arg+1]);
-        break;
-      case 'F': Target_Fitness=std::stoi(argv[arg+1]);
         break;
       case 'C': Colour_Space=std::stoi(argv[arg+1]);
         break;
-      case 'R': Regulated=std::stoi(argv[arg+1]);
-        break;
-      case 'M': Fitness_Mode=std::stoi(argv[arg+1]);
+      case 'N': Num_Genomes=std::stoi(argv[arg+1]);
         break;
       case 'K': GENERATION_LIMIT=std::stoi(argv[arg+1]);
         break;
-      case 'D': Num_Runs=std::stoi(argv[arg+1]);
-        break;
+      case 'M': Fitness_Mode=std::stoi(argv[arg+1]);
+        break;     
+     
+        //DYNAMIC PARAMETERS//
       case 'O': Fitness_Oscillation_Rate=std::stoi(argv[arg+1]);
         break;
-      case 'S': Shape_Matching_Fitness=std::stoi(argv[arg+1]);
-        break;
-      case 'B': burn_in_period=std::stoi(argv[arg+1]);
+      case 'A': active_targets=std::stoi(argv[arg+1]);
         break;
       case 'U': mutation_cofactor=std::stoi(argv[arg+1]);
         break;
+
+        //REGULATION PARAMETERS//
+      case 'R': Regulated=std::stoi(argv[arg+1]);
+        break;
+      case 'I': initial_condition=std::stoi(argv[arg+1]);
+        break;
+        
+        //RUN CONTROL PARAMETERS//
+      case 'D': Num_Runs=std::stoi(argv[arg+1]);
+        break;
       case 'V': RUN=std::stoi(argv[arg+1]);
+        break;
+
+        //OLD PARAMETERS//
+      case 'S': Shape_Matching_Fitness=std::stoi(argv[arg+1]);
+        break;
+      case 'B': burn_in_period=std::stoi(argv[arg+1]);
+        break;         
+      case 'F': Target_Fitness=std::stoi(argv[arg+1]);
         break;
       default: std::cout<<"Unknown Parameter Flag: "<<argv[arg][1]<<std::endl;
       }
@@ -215,4 +255,55 @@ void Set_Runtime_Configurations(int argc, char* argv[]) {
   }
   std::cout<<"||Run: "+std::to_string(RUN)+"                           ||"<<std::endl;
   std::cout<<"|||||||||||||||||||||||||||||||||||||"<<std::endl;
+}
+
+
+void InitialGenotypeConditions(std::vector<int>& genotype) {
+  std::uniform_int_distribution<int> Mutated_Colour(0,Colour_Space);
+  int length_factor= Regulated ? 5:4;
+  switch(initial_condition) {
+    //MUTUAL//
+  case 0:
+  default: //zeroed
+    genotype.assign(Num_Tiles*length_factor,0);
+    if(Regulated)
+      genotype[0]=1;
+    break;   
+  case 1: //all random
+    for(int t=0;t<Num_Tiles*length_factor;++t) {
+      genotype[t]=Mutated_Colour(RNG_Engine);
+    }
+    break;
+  case 2: //all on, non-interacting
+    genotype.assign(Num_Tiles*length_factor,1);
+    break;
+    //END MUTUAL//
+    
+    //REGULATION ONLY//
+  case 20: //first on, random tiles 
+  case 21: //all on, random tiles
+    for(int t=0;t<Num_Tiles*length_factor;++t) {
+      if(t%5==0) {
+        if(t>0 && initial_condition==20)
+          continue;
+        genotype[t]=1;
+      }
+      else {
+        genotype[t]=Mutated_Colour(RNG_Engine);
+      }
+    }
+    break;
+
+  case 22: //first on, non-interacting
+    genotype.assign(Num_Tiles*length_factor,1);
+    for(int t=5;t<Num_Tiles*length_factor;t+=5)
+      genotype[t]=0;
+    break;
+
+  case 23: //all on, zeroed
+    for(int t=0;t<Num_Tiles*length_factor;t+=5)
+      genotype[t]=1;
+    break;
+    //END REGULATION ONLY//
+  }
 }
