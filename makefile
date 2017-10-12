@@ -17,7 +17,7 @@ DEPEXT      := d
 OBJEXT      := o
 
 #Flags, Libraries and Includes
-CXXFLAGS    := -std=c++11 -Wall -O3 -fopenmp 
+CXXFLAGS    := -std=c++11 -Wall -O3 -fopenmp -Wextra -pedantic
 INC         := -I$(INCDIR)
 INCDEP      := -I$(INCDIR)
 
