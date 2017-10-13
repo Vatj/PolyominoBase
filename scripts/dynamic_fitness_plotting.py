@@ -10,7 +10,7 @@ from matplotlib.animation import FuncAnimation,ImageMagickWriter
 from matplotlib.backends.backend_pdf import PdfPages
 
 RUNS=500
-RUN_TYPE=3
+RUN_TYPE=4
 
 def SetRuns(sr):
     global RUNS
@@ -82,9 +82,9 @@ def MaxFraction(needle_length=30,mu=4,O=3,slicer=0):
 
     return firsts
 
-def PlotOccs():
+def PlotOccs(mu,O):
     Mu_Sets={32:'0.001563',16:'0.003125',8:'0.006250',4:'0.012500',1:'0.050000'}
-    fig=plt.figure()
+    fig=plt.figure(figsize=(10,7))
 
     additional=''
     if RUN_TYPE==4 or RUN_TYPE==5:
@@ -93,8 +93,9 @@ def PlotOccs():
     for r in xrange(RUNS):
         subfile_name='Modular{}_T20_C200_N500_Mu{}{}_K15000_Run{}'.format(RUN_TYPE,Mu_Sets[mu],additional,r)
         fitness_import=np.genfromtxt('/scratch/asl47/Data_Runs/Dynamic_2/T{}Mu{}{}/{}_Fitness.txt'.format(RUN_TYPE,mu,additional[1:],subfile_name),dtype=np.float64)
-        max_vals=fitness_import[1]*(fitness_import[0,:]>=1)
-        plt.plot(xrange(1,fitness_import.shape[1]+1),fitness_import[1])
+        max_vals=fitness_import[:,1]*(fitness_import[:,0]>=1)
+        plt.plot(xrange(1,fitness_import.shape[0]+1),max_vals)
+    plt.yscale('log',nonposy='mask')
     plt.show(block=False)
     
 
