@@ -8,7 +8,7 @@ void FitnessEvolutionDynamic() {
   double mu=1.0/(Num_Tiles*mutation_cofactor);
 #pragma omp parallel for schedule(dynamic)
   for(int r=0;r<Num_Runs;++r) {
-    std::string runN="T"+std::to_string(Num_Tiles)+"_C"+std::to_string(Colour_Space+1)+"_N"+std::to_string(Num_Genomes)+"_Mu"+std::to_string(mu)+"_O"+std::to_string(Fitness_Oscillation_Rate)+"_K"+std::to_string(GENERATION_LIMIT)+"_Run"+std::to_string(r+RUN);
+    std::string runN="_T"+std::to_string(Num_Tiles)+"_C"+std::to_string(Colour_Space+1)+"_N"+std::to_string(Num_Genomes)+"_Mu"+std::to_string(mu)+"_O"+std::to_string(Fitness_Oscillation_Rate)+"_K"+std::to_string(GENERATION_LIMIT)+"_Run"+std::to_string(r+RUN);
     EvolveFitnessDynamic(runN,mu);
   }
 }

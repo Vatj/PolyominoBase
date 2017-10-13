@@ -82,6 +82,22 @@ def MaxFraction(needle_length=30,mu=4,O=3,slicer=0):
 
     return firsts
 
+def PlotOccs():
+    Mu_Sets={32:'0.001563',16:'0.003125',8:'0.006250',4:'0.012500',1:'0.050000'}
+    fig=plt.figure()
+
+    additional=''
+    if RUN_TYPE==4 or RUN_TYPE==5:
+        additional='_O{}'.format(O)
+    
+    for r in xrange(RUNS):
+        subfile_name='Modular{}_T20_C200_N500_Mu{}{}_K15000_Run{}'.format(RUN_TYPE,Mu_Sets[mu],additional,r)
+        fitness_import=np.genfromtxt('/scratch/asl47/Data_Runs/Dynamic_2/T{}Mu{}{}/{}_Fitness.txt'.format(RUN_TYPE,mu,additional[1:],subfile_name),dtype=np.float64)
+        max_vals=fitness_import[1]*(fitness_import[0,:]>=1)
+        plt.plot(xrange(1,fitness_import.shape[1]+1),fitness_import[1])
+    plt.show(block=False)
+    
+
 import scipy as sp
 import scipy.optimize
 
