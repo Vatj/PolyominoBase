@@ -30,7 +30,7 @@ void Clockwise_Rotation(std::vector<int>& Spatial_Occupation,int DELTA_X,int DEL
 //FITNESS//
 ///////////
 double Get_Phenotype_Fitness(std::vector<int> genome,int Shape_Matching_Fitness,bool zeroth_fitness=false);
-bool GetMultiplePhenotypeFitness(std::vector<int> genome,std::vector<int> target_types,std::vector<double>& target_fitnesses);
+bool GetMultiplePhenotypeFitness(std::vector<int> genome,std::vector<int> target_types,std::vector<double>& target_fitnesses,int active_targets);
 double Shape_Matching_Fitness_Function(std::vector<int>& Spatial_Occupation,int& Delta_X,int& Delta_Y,int target_choice);
 
 

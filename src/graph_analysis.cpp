@@ -673,7 +673,7 @@ void Clockwise_Pi_Rotation(std::vector<int>& Spatial_Occupation,int DELTA_X,int 
   Spatial_Occupation=swapper;
 }
 
-bool GetMultiplePhenotypeFitness(std::vector<int> genome,std::vector<int> target_types,std::vector<double>& target_fitnesses) {
+bool GetMultiplePhenotypeFitness(std::vector<int> genome,std::vector<int> target_types,std::vector<double>& target_fitnesses,int active_targets) {
   std::vector<int> phenotype_information;
   Clean_Genome(genome,-1);
   if(Disjointed_Check(genome))
@@ -688,8 +688,22 @@ bool GetMultiplePhenotypeFitness(std::vector<int> genome,std::vector<int> target
   
   int dx=*(phenotype_information.end()-2);
   int dy=*(phenotype_information.end()-1);
-  for(unsigned int nth=0;nth<target_types.size();++nth) 
+  bool early_exit=false;
+  for(int nth=0;nth<active_targets;++nth) {
     target_fitnesses[nth]=Shape_Matching_Fitness_Function(phenotype_shape,dx,dy,target_types[nth]);
+    if(target_fitnesses[nth]<1.)
+      early_exit=true;
+  }
+  for(unsigned int nth=active_targets;nth<target_types.size();++nth) {
+    if(early_exit) {
+      target_fitnesses[nth]=-1;
+    }
+    else {
+      target_fitnesses[nth]=Shape_Matching_Fitness_Function(phenotype_shape,dx,dy,target_types[nth]);
+      if(target_fitnesses[nth]<1.)
+        early_exit=true;
+    } 
+  }
   return true;
 }
 
