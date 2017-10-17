@@ -733,6 +733,7 @@ double Shape_Matching_Fitness_Function(std::vector<int>& Spatial_Occupation,int&
   std::vector<int> Target_Occupation;
   int Target_Delta_X, Target_Delta_Y;
   int symmetric_rotations;
+  /*Codes: 0 is empty, -1 is ignored, 1 is filled*/
   switch(target_choice) {
   case 1: //short T shape
     Target_Occupation={-1,0,-1,-1, 0,1,0,-1, 0,1,1,1, 0,1,0,-1, -1,0,-1,-1};
@@ -771,8 +772,13 @@ double Shape_Matching_Fitness_Function(std::vector<int>& Spatial_Occupation,int&
     Target_Delta_Y=4;
     symmetric_rotations=4;
     break;
+  case 7: //space lander shape
+    Target_Occupation={-1,0,0,1,0,0,-1, 0,1,1,1,1,1,0, 0,1,0,0,0,1,0, -1,0,-1,-1,-1,0,-1}
+    Target_Delta_X=7;
+    Target_Delta_Y=4;
+    symmetric_rotations=4;
     
-  case 7: //stair shape
+  case 8: //stair shape
     Target_Occupation={-1,0,-1,-1,-1, 0,1,0,-1,-1, 0,1,1,0,-1, -1,0,1,1,0, -1,-1,0,1,-1};
     Target_Delta_X=5;
     Target_Delta_Y=5;
