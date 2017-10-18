@@ -3,3 +3,7 @@
 #include <iterator>
 
 void DoShape(std::string sub_file,std::string folder_base,std::vector<int> runs);
+
+
+void DeleteriousRobustness(int r);
+bool CheckRobust(std::vector<int> target);
