@@ -1,4 +1,4 @@
-import Degeneracy_Recovery as DR
+import degeneracy_recovery as DR
 
 import matplotlib.colors as colors
 import matplotlib.cm as cm

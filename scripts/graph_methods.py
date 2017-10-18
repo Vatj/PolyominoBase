@@ -1,17 +1,22 @@
 import networkx as nx
+import matplotlib.pyplot as plt
+from collections import defaultdict,deque,Counter
+import itertools
+import seaborn as sns
+import numpy as np
 
 def Transform_Graph_From_List(tile_kit):
     graph_kit=nx.MultiDiGraph()
     graph_kit.add_nodes_from(xrange(len(tile_kit)))
 
-    #Add edges for internal structure in clockwise orientation 
+    ## Add edges for internal structure in clockwise orientation 
     for internal_edge in xrange(len(tile_kit)/4):
         graph_kit.add_edge(internal_edge*4+0,internal_edge*4+1)#,color='k')
         graph_kit.add_edge(internal_edge*4+1,internal_edge*4+2)#,color='k')
         graph_kit.add_edge(internal_edge*4+2,internal_edge*4+3)#,color='k')
         graph_kit.add_edge(internal_edge*4+3,internal_edge*4+0)#,color='k')
 
-    #Add edges for graph connections
+    ## Add edges for graph connections
     for index,face in enumerate(tile_kit):
         search_offset=0
         if face==0:
@@ -28,7 +33,7 @@ def Transform_Graph_From_List(tile_kit):
 def Interaction_Matrix(colour):
     return colour if colour <=0 else  (1-colour%2)*(colour-1)+(colour%2)*(colour+1)
 
-import matplotlib.pyplot as plt
+
 def Draw_Graph(graph,kit):
     layout=nx.spring_layout(graph)
     nx.draw_networkx_labels(graph,layout,{j:str(i) for j,i in enumerate(kit)})
@@ -37,7 +42,31 @@ def Draw_Graph(graph,kit):
     plt.show(block=False)
 
 
-from collections import defaultdict
+def StripIsomorphisms(file_in):
+    tile_kits=[[int(i) for i in line.rstrip('\n').split()] for line in open('/rscratch/asl47/Bulk_Run/Modular/{}.txt'.format(file_in))]
+    assembly_graphs=zip(range(len(tile_kits)),[Transform_Graph_From_List(tile_kit) for tile_kit in tile_kits])
+
+    unique_assembly_graphs_indices=[]
+    
+    while len(assembly_graphs)>1:
+        #print len(assembly_graphs)
+        unique_assembly_graphs_indices.append(assembly_graphs[0][0])
+        assembly_graphs[:]=[assembly_graph for assembly_graph in assembly_graphs[1:] if not nx.is_isomorphic(assembly_graph[1],assembly_graphs[0][1])]
+
+    with open('/rscratch/asl47/Bulk_Run/Modular/{}_stripped.txt'.format(file_in), 'w') as outfile:
+        for index in unique_assembly_graphs_indices:
+            genotype= ' '.join(map(str,tile_kits[index]))+'\n'
+            outfile.write(genotype)
+
+from multiprocessing import Pool
+def StripInParallel(runs):
+    pool = Pool(processes=4)
+    pool.map_async(StripIsomorphisms,["A2_T20_C200_N500_Mu0.003125_O25_K15000_Run{}_Genotype".format(r) for r in runs])
+    pool.close()
+    
+
+    
+
 
 def Load_Tiles(fileN):
     Raw_Topologies_Input = [line.rstrip('\n') for line in open('/rscratch/asl47/{}.txt'.format(fileN))]
@@ -102,8 +131,7 @@ def Order_By_Zeroes(tile_kit):
 
     return new_tile_kit
 
-from collections import deque
-import itertools
+
 def Enumerate_Topology(tile_kit):
     queue_kit=[deque(tile) for tile in tile_kit]
 
@@ -160,9 +188,7 @@ def dump2():
                     x+=str(i)+' '
                 f.write(x[:-1]+'\n')
                 
-from collections import Counter
-import seaborn as sns
-import numpy as np
+
 def Phenotype_Hamming_Distances():
     BP_Genotypes_Input = [line.rstrip('\n') for line in open('/rscratch/asl47/BP_Genotypes.txt')]
     BP_Genotypes = [[int(face) for face in line.split()] for line in BP_Genotypes_Input]
@@ -201,7 +227,7 @@ if __name__ == "__main__":
 ############
 ##PLOTTING##
 ############
-import seaborn as sns
+
 def Use_Seaborn():
     sns.set_context("paper",font_scale=2.2)
     sns.set_style("white",rc={"xtick.major.size": 8, "ytick.major.size": 8,"xtick.minor.size":5, "ytick.minor.size": 5,"axes.linewidth": 2,"axes.edgecolor":"darkgray","font.size":8,"axes.titlesize":8,"axes.labelsize":5})
@@ -210,7 +236,7 @@ def Use_Seaborn():
 
 
     
-from collections import defaultdict
+
 def Plot_Method_Testing(Ts,R):
     Use_Seaborn()
     plt.rc('text', usetex=True)
