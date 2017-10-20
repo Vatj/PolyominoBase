@@ -16,8 +16,8 @@ void FitnessEvolutionDynamic() {
 void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
   std::string out_name_g="//rscratch//asl47//Bulk_Run//Modular//A"+std::to_string(active_targets)+Run_Details+"_Genotype.txt";
   std::string out_name_f="//rscratch//asl47//Bulk_Run//Modular//A"+std::to_string(active_targets)+Run_Details+"_Fitness.txt";
-  std::string out_name_r="//rscratch//asl47//Bulk_Run//Modular//A"+std::to_string(active_targets)+Run_Details+"_Robust.txt";
-  //std::ofstream out_file_g(out_name_g, std::ios_base::out);
+  //std::string out_name_r="//rscratch//asl47//Bulk_Run//Modular//A"+std::to_string(active_targets)+Run_Details+"_Robust.txt";
+  std::ofstream out_file_g(out_name_g, std::ios_base::out);
   std::ofstream out_file_f(out_name_f, std::ios_base::out);
   //std::ofstream out_file_r(out_name_r, std::ios_base::out);
 
@@ -28,10 +28,10 @@ void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
   std::bernoulli_distribution Mutation_Chance(Mu);
   std::vector<int> Initial_Genome(Num_Tiles*4,0),Evolving_Genome(Num_Tiles*4),target_types(TOTAL_TARGETS), Index_Selections(Num_Genomes);
   
-  InitialGenotypeConfiguration(Initial_Genome);
+  //InitialGenotypeConfiguration(Initial_Genome);
   std::vector<std::vector<int> > Genome_Pool(Num_Genomes,Initial_Genome), Temporary_Pool(Num_Genomes);
   std::vector<double> Phenotype_Fitness_Sizes(Num_Genomes), Phenotype_Fitness_Sizes_Full(Num_Genomes),target_fitnesses(TOTAL_TARGETS);
-  //std::set< std::vector<int> > unique_genotypes;
+  std::set< std::vector<int> > unique_genotypes;
 
   int successive_generations=0;
   int writing_generation=GENERATION_LIMIT;
@@ -68,7 +68,7 @@ void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
         Phenotype_Fitness_Sizes_Full[n]=0;
       }
       Genome_Pool[n]=Evolving_Genome;
-      /*
+      
       if(Phenotype_Fitness_Sizes_Full[n]>=1.) {
         std::vector<int> duplicate_genome=(Evolving_Genome);
         Clean_Genome(duplicate_genome);
@@ -76,7 +76,7 @@ void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
           duplicate_genome.erase(std::find(duplicate_genome.begin(),duplicate_genome.end(),-1),duplicate_genome.end());
         unique_genotypes.insert(duplicate_genome);
       }
-      */
+      
     } //END GENOME LOOP
 
     double max_fitness=*std::max_element(Phenotype_Fitness_Sizes_Full.begin(),Phenotype_Fitness_Sizes_Full.end());
@@ -133,19 +133,18 @@ void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
     }   
     Genome_Pool.assign(Temporary_Pool.begin(),Temporary_Pool.end());
   }
-  /*
+  
   for(std::vector<int> genotype : unique_genotypes) {
     for(int base : genotype) {
       out_file_g << base <<" ";
     }
     out_file_g << "\n";
   }
-  */
-
-
-  //out_file_g.close();
+  
+  out_file_g.close();
   out_file_f.close();
 }
+
 void EvolveRegulated(int& Discovery_Generation, int& Adaptation_Generation,double Mu) {
   std::uniform_int_distribution<int> Mutated_Colour(0,Colour_Space);
   std::bernoulli_distribution Mutation_Chance(Mu);
