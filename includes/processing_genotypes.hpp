@@ -6,4 +6,4 @@ void DoShape(std::string sub_file,std::string folder_base,std::vector<int> runs)
 
 
 void DeleteriousRobustness(int r);
-bool CheckRobust(std::vector<int> target);
+bool CheckRobust(std::vector<int> target,int target_sets=0,int num_targets=0);

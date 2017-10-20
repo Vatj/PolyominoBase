@@ -32,6 +32,7 @@ int Find_Percentile_of_Vector(std::vector<int>& vec,double percentile);
 void Set_Runtime_Configurations(int argc, char* argv[]);
 
 void InitialGenotypeConditions(std::vector<int>& genotype);
+void InitialGenotypeConfiguration(std::vector<int>& genotype);
 
 /*
 class GenotypeMutator {

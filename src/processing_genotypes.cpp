@@ -160,11 +160,22 @@ void DoShape(std::string sub_file,std::string folder_base,std::vector<int> runs)
 std::random_device rd;
 xorshift RNG_ENGINE(rd());
 
-bool CheckRobust(std::vector<int> target) {
+bool CheckRobust(std::vector<int> target,int target_sets,int num_targets) {
   std::uniform_int_distribution<int> mutated_base(0, 79);
   std::uniform_int_distribution<int> mutated_colours(0, 199);
 
-  std::vector<int> targets{4,5,6};
+  std::vector<int> targets;
+  switch(target_sets) {
+  case 0:
+    targets={4,5,6};
+    break;
+  case 1:
+    targets={5,6,4};
+    break;
+  case 2:
+    targets={4,6,5};
+    break;
+  }
   std::vector<double> fitnesses(3);
 
   int chosen_base=mutated_base(RNG_ENGINE);
@@ -173,8 +184,9 @@ bool CheckRobust(std::vector<int> target) {
     target[chosen_base]=mutated_colours(RNG_ENGINE);
   }while(target[chosen_base]==old_base_colour);
 
-  if(GetMultiplePhenotypeFitness(target,targets,fitnesses,3)) {    
-    if(std::accumulate(fitnesses.begin(),fitnesses.end(),0.0)==3)
+  if(GetMultiplePhenotypeFitness(target,targets,fitnesses,num_targets)) {
+    return true;
+    if(std::accumulate(fitnesses.begin(),fitnesses.begin()+num_targets,0.0)==num_targets)
       return true;
     else
       return false;
@@ -182,6 +194,8 @@ bool CheckRobust(std::vector<int> target) {
   else
     return false;
 }
+
+
 
 void DeleteriousRobustness(int r) {
   int N_REPS=1000;
@@ -240,6 +254,8 @@ int main(int argc, char* argv[]) {
   std::string file_base, folder_base,mu_t, mu,run_t, temp_input;
   std::map<int,std::string> Mu_map ={{1, "0.050000"}, {4, "0.012500"}, {8, "0.006250"}, {16, "0.003125"}, {32,"0.001563"}};
 
+  std::vector<int> genotype;
+  int num_rob=0,num_rob2=0,num_rob3=0,num_robx=0,num_robx2=0,num_robx3=0;;
   if(argc>1) {
     switch(argv[1][1]) {
     case '3':
@@ -265,6 +281,66 @@ int main(int argc, char* argv[]) {
     case 'R':
       DeleteriousRobustness(N);
       break;
+    case 'C':
+      for(int i=0;i<10;++i) {
+        num_rob=0;num_rob2=0;num_rob3=0;
+        num_robx=0;num_robx2=0;num_robx3=0;
+        switch(i) {
+        case 0:
+        default: //SIF zeroed
+          genotype={0,0,0,1, 0,0,0,3, 0,0,0,5, 2,0,7,0, 8,6,9,4, 10,0,11,0, 12,0,13,0, 14,15,0,0, 0,19,18,0, 17,0,0,16, 0,21,0,20, 0,0,23,22, 24,25,0,0, 0,0,0,26, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0};
+          break;   
+        case 1: //SIF non-interacting
+          genotype={27, 29, 31, 1, 33, 35, 37, 3, 39, 41, 43, 5, 2, 45, 7, 47, 8, 6, 9, 4, 10, 49, 11, 51, 12, 53, 13, 55, 14, 15, 57, 59, 61, 19, 18, 63, 17, 65, 67, 16, 69, 21, 71, 20, 73, 75, 23, 22, 24, 25, 77, 79, 81, 83, 85, 26, 87, 89, 91, 93, 95, 97, 99, 101, 103, 105, 107, 109, 111, 113, 115, 117, 119, 121, 123, 125, 127, 129, 131, 133};
+          break;
+        case 2: //compact zeroed
+          genotype={0,0,1,0, 2,0,3,0, 4,2,5,2, 6,0,7,0, 8,9,2,0, 0,11,2,10, 0,13,0,12, 0,0,15,14, 16,2,0,0, 0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0};
+          break;
+        case 3: //compact non-interacting
+          genotype={17, 19, 1, 21, 2, 23, 3, 25, 4, 2, 5, 2, 6, 27, 7, 29, 8, 9, 2, 31, 33, 11, 2, 10, 35, 13, 37, 12, 39, 41, 15, 14, 16, 2, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63, 65, 67, 69, 71, 73, 75, 77, 79, 81, 83, 85, 87, 89, 91, 93, 95, 97, 99, 101, 103, 105, 107, 109, 111, 113, 115, 117, 119, 121, 123, 125, 127, 129, 131, 133};
+          break;
+        case 4: //4 fold complex Z
+          genotype={1,2,0,3, 0,4,0,5, 0,6,7,15, 8,0,9,0, 10,11,13,11, 0,12,0,0, 14,0,11,0, 0,16,0,17, 19,18,0,0, 0,0,20,11,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0};
+          break;
+        case 5: //4fold non-int
+          genotype={1, 2, 21, 3, 23, 4, 25, 5, 27, 6, 7, 15, 8, 29, 9, 31, 10, 11, 13, 11, 33, 12, 35, 37, 14, 39, 11, 41, 43, 16, 45, 17, 19, 18, 47, 49, 51, 53, 20, 11, 55, 57, 59, 61, 63, 65, 67, 69, 71, 73, 75, 77, 79, 81, 83, 85, 87, 89, 91, 93, 95, 97, 99, 101, 103, 105, 107, 109, 111, 113, 115, 117, 119, 121, 123, 125, 127, 129, 131, 133};
+          break;
+        case 6: //single seeded
+          genotype={0,1,0,0, 0,0,3,2, 4,5,0,0, 0,27,0,6, 0,19,7,28, 8,0,9,0, 10,13,15,11, 0,12,0,0, 0,0,0,14, 16,0,17,0, 18,0,0,0, 21,0,0,20, 0,23,22,0, 0,0,25,24, 26,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0};
+          break;
+        case 7: //single seeded
+          genotype={29,1,31,33, 35,37,3,2, 4,5,39,41, 43,27,45,6, 47,19,7,28, 8,49,9,51, 10,13,15,11, 53,12,55,57, 59,61,63,14, 16,65,17,67, 18,69,71,73, 21,75,77,20, 79,23,22,81, 83,85,25,24, 26,87,89,91, 93,95,97,99, 101,103,105,107, 109,111,113,115, 117,119,121,123, 125,127,129,131};
+          break;
+        case 8: // sif with rank 1
+          genotype={0,0,0,1, 0,0,0,3, 0,0,0,5, 2,0,7,0, 8,6,9,4, 10,0,11,0, 12,27,13,0, 14,15,0,0, 0,19,18,28, 17,0,0,16, 0,21,0,20, 0,0,23,22, 24,25,0,0, 0,0,0,26, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0};
+          break;
+        case 9: //SIF non-interacting
+          genotype={27, 29, 31, 1, 33, 35, 37, 3, 39, 41, 43, 5, 2, 45, 7, 47, 8, 6, 9, 4, 10, 49, 11, 51, 12, 135, 13, 55, 14, 15, 57, 59, 61, 19, 18, 136, 17, 65, 67, 16, 69, 21, 71, 20, 73, 75, 23, 22, 24, 25, 77, 79, 81, 83, 85, 26, 87, 89, 91, 93, 95, 97, 99, 101, 103, 105, 107, 109, 111, 113, 115, 117, 119, 121, 123, 125, 127, 129, 131, 133};
+          break;
+        }
+     
+      
+      
+#pragma omp parallel for schedule(dynamic),reduction(+:num_rob,num_rob2,num_rob3)
+        for(int n =0; n<N;++n) {
+          if(CheckRobust(genotype,0,2))
+            ++num_rob;
+          //if(CheckRobust(genotype,0,3))
+          //  ++num_robx;
+          //if(CheckRobust(genotype,1,2))
+          //  ++num_rob2;
+          //if(CheckRobust(genotype,1,3))
+          //  ++num_robx2;
+          //if(CheckRobust(genotype,2,2))
+          //  ++num_rob3;
+          //if(CheckRobust(genotype,2,3))
+          //  ++num_robx3;
+        }
+        
+        std::cout<<"**Robustnesses for genotype "<<i<<"**\n Targets 4,5 -> "<<static_cast<float>(num_rob)/N << " || "<<static_cast<float>(num_robx)/N <<"\n Targets 5,6 -> " <<static_cast<float>(num_rob2)/N <<  " || "<<static_cast<float>(num_robx2)/N <<"\n Targets 6,4 -> "<<static_cast<float>(num_rob3)/N <<" || "<<static_cast<float>(num_robx3)/N << "\n";
+        }
+        break;
+       
     default:
       std::cout<<"unknown"<<std::endl;
     }
