@@ -1,6 +1,7 @@
 import icy
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.stats import sem, linregress
 
 icy.Use_Seaborn()
 #import seaborn as sns
@@ -9,7 +10,10 @@ icy.Use_Seaborn()
 from matplotlib.animation import FuncAnimation,ImageMagickWriter
 from matplotlib.backends.backend_pdf import PdfPages
 
-RUNS=500
+from dynamic_fitness_methods import *
+
+
+RUNS=96
 RUN_TYPE=4
 
 def SetRuns(sr):
@@ -30,76 +34,76 @@ def SetPar(st,sr):
 
 
 
-def AddNewDataToFile(classifier,data_in,needle,mu):
-    with open('/rscratch/asl47/Processed/Dynamic/Evolution_Solution_Times_Mu{}_Needle{}.txt'.format(mu,needle), "a") as data_file:
-        data_file.write(classifier+': ')
-        for value in data_in:
-            data_file.write('{} '.format(value))
-        data_file.write('\n')
 
-def AddBulkDataToFile(Ts,Os,needle,mu):
-    keys=['T{}{}'.format(t,'' if t==3 else 'O{}'.format(o)) for (t,o) in zip(Ts,Os)]
-    SetRuns(500)
-    
-    for key in keys:
-        SetType(int(key[1]))
-        data=MaxFraction(needle,mu,'' if key[1]=='3' else int(key[3:]))
-        AddNewDataToFile(key,data,needle,mu)
+
+def PlotMaximalOccupation(mu,I):
+    fig, axarr = plt.subplots(2, 2, sharex=True, figsize=(10,8))
+    Mu_Sets={32:'0.001563',16:'0.003125',8:'0.006250',4:'0.012500',1:'0.050000'}
+
+
+    for O,ax in zip([5,25,75,125],axarr.reshape(-1)):
+        avg_data=np.empty((RUNS,500))
+        for r in xrange(RUNS):
+            subfile_name='A2_T20_C200_N10000_Mu{}_O{}_K500_I{}_Run{}'.format(Mu_Sets[mu],O,I,r)
+            fitness_import=np.genfromtxt('/rscratch/asl47/Bulk_Run/Modular/{}_Fitness.txt'.format(subfile_name),dtype=np.float64)
+
+            avg_data[r]=fitness_import[:,1]*(fitness_import[:,0]>=1)
+            ax.plot([i/(1.*O) for i in xrange(fitness_import.shape[0])],avg_data[r],lw=0.5,alpha=0.6)
+
+            
+        ax.plot([i/(1.*O) for i in xrange(0,500)],np.mean(avg_data,axis=0),lw=2,c='k',ls=':')
         
-def LoadExistingData(needle,mu):
-    data_dict={key:[int(v) for v in values.split()] for (key,values) in [line.rstrip('\n').split(':') for line in open('/rscratch/asl47/Processed/Dynamic/Evolution_Solution_Times_Mu{}_Needle{}.txt'.format(mu,needle))]}
-    return data_dict
-
+        for t,c in zip(range(3),['r','b','g']):
+            slope, intercept, r_value, p_value, std_err = linregress([i/(1.*O) for i in xrange(int(O*.2),int(O*.8))],np.log10(np.mean(avg_data,axis=0)[int(O*t+O*.2):int(O*(t+1)-O*.2)]))
+            print t,slope, intercept, r_value, p_value, std_err
+            for q in xrange(3):
+                ax.plot(np.linspace(q*3+t,q*3+1+t,21),[10**(intercept+slope*i) for i in np.linspace(0,1,21)],lw=2.5,c=c)
     
-def MaxFraction(needle_length=30,mu=4,O=3,slicer=0):
-    occ=0
-    bounce=0
-    firsts=[]
-    additional=''
-    if RUN_TYPE==4 or RUN_TYPE==5:
-        additional='_O{}'.format(O)
+        ax.set_title(r'$\Omega_{{{0}}}$'.format(O))
+        ax.set_yscale('log',nonposy='mask')
+        ax.set_xlim([0,8])
+        if O ==25 or O==125:
+            ax.yaxis.tick_right()
 
+        
+    fig.add_subplot(111, frameon=False)
+    # hide # TODO: ick and tick label of the big axes
+    plt.tick_params(labelcolor='none', top='off', bottom='off', left='off', right='off')
+    plt.grid(False)
+    plt.xlabel("Landscape Changes")
+    plt.ylabel("\# of 3 Target fit genotypes")
+    fig.suptitle('Initial condition {}'.format(I))
+    fig.set_tight_layout(True)
+    return fig
+    #plt.show(block=False)
+
+
+def PlotMaximalOccupation2(mu,I):
+    fig = plt.figure(figsize=(10,8))
     Mu_Sets={32:'0.001563',16:'0.003125',8:'0.006250',4:'0.012500',1:'0.050000'}
-    #Mu_Files={4:'',2:'Mu2',1:'Mu1'}
-    
-    
-    needle=np.array([1]*needle_length,dtype=np.float64)
-    t=0
+
+
+
+    avg_data=np.empty((RUNS,5000))
     for r in xrange(RUNS):
-        subfile_name='Modular{}_T20_C200_N500_Mu{}{}_K15000_Run{}'.format(RUN_TYPE,Mu_Sets[mu],additional,r)
-        fitness_import=np.genfromtxt('/scratch/asl47/Data_Runs/Dynamic_2/T{}Mu{}{}/{}_Fitness.txt'.format(RUN_TYPE,mu,additional[1:],subfile_name),dtype=np.float64)
-        #maxes.append(max(fitness_import[:,1]))
-        if max(fitness_import[:,slicer])>=1:
-            haystack=search_sequence_numpy(fitness_import[:,slicer],needle)
-            if haystack>0:
-                occ+=1
-                firsts.append(haystack)
-
-
-    print "counted runs: ",t
-    print "seen {} times for a fraction of {}".format(occ,occ*1./RUNS)
-    #print "bounced {} times".format(bounce)
-
-    return firsts
-
-def PlotOccs(mu,O):
-    Mu_Sets={32:'0.001563',16:'0.003125',8:'0.006250',4:'0.012500',1:'0.050000'}
-    fig=plt.figure(figsize=(10,7))
-
-    additional=''
-    if RUN_TYPE==4 or RUN_TYPE==5:
-        additional='_O{}'.format(O)
-    
-    for r in xrange(RUNS):
-        subfile_name='A2_T20_C200_N5000_Mu{}{}_K5000_Run{}'.format(Mu_Sets[mu],additional,r)
+        subfile_name='A3_T20_C200_N10000_Mu{}_O5000_K5000_I{}_Run{}'.format(Mu_Sets[mu],I,r)
         fitness_import=np.genfromtxt('/rscratch/asl47/Bulk_Run/Modular/{}_Fitness.txt'.format(subfile_name),dtype=np.float64)
-        #fitness_import=np.genfromtxt('/rscratch/asl47/Bulk_Run/Modular/T{}Mu{}{}/{}_Fitness.txt'.format(RUN_TYPE,mu,additional[1:],subfile_name),dtype=np.float64)
-        max_vals=fitness_import[:,1]*(fitness_import[:,0]>=1)
-        plt.plot(xrange(1,fitness_import.shape[0]+1),max_vals)
+        avg_data[r]=fitness_import[:,1]*(fitness_import[:,0]>=1)
+        plt.plot(range(5000),avg_data[r],lw=0.5,alpha=0.6)
+            
+            
+    plt.plot(range(5000),np.mean(avg_data,axis=0),lw=2,c='k',ls=':')
+    print np.mean(avg_data,axis=0)[:5]
+        
+
+                
+    plt.title(r'Static (condition {})'.format(I))
     plt.yscale('log',nonposy='mask')
+    plt.xlabel('Generations')
+    plt.ylabel('Maximally Fit genotypes')
     plt.show(block=False)
 
-
+from matplotlib.colors import LogNorm
 def PlotModularityGrid(mu,O):
     fig=plt.figure(figsize=(10,7))
     additional=''
@@ -111,16 +115,18 @@ def PlotModularityGrid(mu,O):
 
     H, xedges, yedges = np.histogram2d(modularity_import[:,0], modularity_import[:,1], bins=(11, 86),range=((9,20),(14,100)),normed=True)
     X, Y = np.meshgrid(xedges-0.5, yedges-0.5)
-    plt.pcolormesh(X,Y,H.T,norm=LogNorm(),cmap='plasma')
+    plt.pcolormesh(X,Y,H.T,norm=LogNorm(),cmap='plasma', rasterized=True)
     plt.yscale('log')
     cbar=plt.colorbar()
     cbar.set_label('Relative Frequency', rotation=90)
     
     plt.xlabel('``Active" Genome Length')
     plt.ylabel('Phenotype Size')
+    plt.title('T{} O{}'.format(RUN_TYPE,O))
 
     fig.set_tight_layout(True)
-    plt.show(block=False)
+    return fig
+    #plt.show(block=False)
     #return modularity_import
 
 from scipy.stats import sem
@@ -142,7 +148,7 @@ def PlotRobustness(O,R,c_in):
 def PlotAll():
     plt.figure(figsize=(10,7))
 
-    for o,r,c in zip([5]*13+[25]*16+[125]*4,[2,3,4,6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,3,6],['darkgreen']*13+['royalblue']*16+['firebrick']*4):
+    for o,r,c in zip([5]*13+[25]*16+[125]*13,[2,3,4,6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,3,6,7,8,9,10,11,12,13,14,15],['darkgreen']*13+['royalblue']*16+['firebrick']*13):
     #for o,r,c in zip([125]*9+[25]*12+[5]*8,[2,3,4,5,7,10,12,13,15,0,1,3,4,6,7,8,9,10,11,12,15,3,5,6,7,9,12,14,15],['firebrick']*9+['royalblue']*12+['darkgreen']*8):
         PlotRobustness(o,r,c)
 
@@ -300,40 +306,7 @@ def PlotManyHistograms(needle,mu,bins=35):
 
 
 
-def search_sequence_numpy(arr,seq):
-    """ Find sequence in an array using NumPy only.
 
-    Parameters
-    ----------    
-    arr    : input 1D array
-    seq    : input 1D array
-
-    Output
-    ------    
-    Output : 1D Array of indices in the input array that satisfy the 
-    matching of input sequence in the input array.
-    In case of no match, empty list is returned.
-    """
-
-    # Store sizes of input array and sequence
-    Na, Nseq = arr.size, seq.size
-
-    # Range of sequence
-    r_seq = np.arange(Nseq)
-
-    # Create 2D array of sliding indices across entire length of input array.
-    # Match up with the input sequence & get the matching starting indices.
-    M = (arr[np.arange(Na-Nseq+1)[:,None] + r_seq] == seq).all(1)
-    # Get the range of those indices as final output
-    if M.any>0:
-        indices=np.where(np.convolve(M,np.ones((Nseq),dtype=int))>0)[0]
-        if indices.shape[0]>0:
-            return indices[0]
-        else:
-            return 0
-    else:
-        return 0
-        return [] 
 
 def PlotFitnessOverTime(x,needle_length=50):
     counts=0
@@ -361,5 +334,51 @@ def PlotFitnessOverTime(x,needle_length=50):
     return counts
 
 
-#nice -n 15 ./TileEvolution -Q -T 20 -C 199 -N 1000 -U 1 -K 1 -B 5000 -D 150 -O 25 -M 16 -V 0
 
+
+
+
+def roulette_selection(weights,N):
+    sorted_indexed_weights = sorted(enumerate(weights), key=operator.itemgetter(1))
+    indices, sorted_weights = zip(*sorted_indexed_weights)
+    tot_sum=sum(sorted_weights)
+    prob = [x*1./tot_sum for x in sorted_weights]
+    cum_prob=np.cumsum(prob)
+   
+    for i in xrange(N):
+        random_num=random.random()
+        for index_value, cum_prob_value in zip(indices,cum_prob):
+            if random_num < cum_prob_value:
+                yield weights[index_value]
+                break
+            
+from collections import Counter
+import random
+import operator
+def getr(p,N):
+    t=list(roulette_selection(p,N))
+    
+    print Counter(t)
+    t.sort()
+    
+    return t
+    
+    
+def Iterateit(X,N):
+    next_pop=[1]*X+[2]*(N-X)
+    fracs=np.empty((10,2))
+    fracs[0][0]=next_pop.count(1)
+    fracs[0][1]=next_pop.count(2)
+    
+    for i in xrange(9):
+        next_pop2=getr(next_pop,N)
+        fracs[i+1][0]=next_pop2.count(1)
+        fracs[i+1][1]=next_pop2.count(2)
+        next_pop=next_pop2
+    plt.figure()
+    plt.plot(range(10),fracs[:,0],'r')
+    plt.plot(range(10),fracs[:,1],'b')
+    plt.show(block=False)
+        
+def g(n,c):
+    return 2./(2+(2./c-2)*2**n)
