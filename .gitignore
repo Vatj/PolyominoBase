@@ -8,6 +8,8 @@ bin/*
 Ignore any pyc from imports
 scripts/*.pyc
 
+scripts/*.pdf
+
 # Ignore Mac specific files
 .DS_Store
 
