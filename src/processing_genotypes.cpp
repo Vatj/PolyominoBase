@@ -16,26 +16,15 @@ void DoShape(std::string sub_file,std::string folder_base,std::vector<int> runs)
   std::vector<int> component_lengths;
 
   std::string modularity_file_name="//rscratch//asl47//Processed/Dynamic//"+folder_base+"_Modular_Data.txt";
-  std::ofstream mod_file_out(modularity_file_name);
+  std::ofstream mod_file_out(modularity_file_name,std::ios_base::app);
 
-  //std::cout<<"//scratch//asl47//Data_Runs//Dynamic_2//"+folder_base+"//"+sub_file+"_Run"+std::to_string(0)+"_Genotype.txt"<<std::endl;
+  std::cout<<"//scratch//asl47//Data_Runs//Dynamic_3//"+folder_base+"//"+sub_file+"_Run"+std::to_string(0)+"_Genotype.txt"<<std::endl;
   for(int run : runs) {
     //std::cout<<"Merging for run "<<run<<std::endl;
-    std::string in_file_name="//scratch//asl47//Data_Runs//Dynamic_2//"+folder_base+"//"+sub_file+"_Run"+std::to_string(run)+"_Genotype.txt";
+    std::string in_file_name="//scratch//asl47//Data_Runs//Dynamic_3//"+folder_base+"//"+sub_file+"_Run"+std::to_string(run)+"_Genotype.txt";
     std::ifstream in_file(in_file_name);
     std::string line_input;
-    bool collect_input=false;
     while (std::getline(in_file, line_input)) {
-      if(line_input[0]=='g') {
-        if(line_input.find("10000")!=std::string::npos)
-          collect_input=true;
-        else
-          collect_input=false;
-        continue;
-      }
-      if(!collect_input)  
-        continue;
-      
       std::istringstream string_stream(line_input);
       std::vector<int> genome{std::istream_iterator<int>(string_stream), std::istream_iterator<int>()};
       if(Disjointed_Check(genome)) {
@@ -50,34 +39,36 @@ void DoShape(std::string sub_file,std::string folder_base,std::vector<int> runs)
         if(steric_result<=0)
           continue;
 
-        mod_file_out << genome_length << " " <<steric_result << "\n";
-        Steric_Check_Table(partial_genome,shape_table,num_shapes);
-        component_lengths.emplace_back(partial_genome.size());
+        mod_file_out << genome_length << " " <<steric_result << " ";
+        //Steric_Check_Table(partial_genome,shape_table,num_shapes);
+        //component_lengths.emplace_back(partial_genome.size());
       }
       else {
-        mod_file_out << genome.size()/4 << " " <<Steric_Check(genome,-1) << "\n";
-        Steric_Check_Table(genome,shape_table,num_shapes);
-        component_lengths.emplace_back(genome.size());
+        mod_file_out << genome.size()/4 << " " <<Steric_Check(genome,-1) << " ";
+        //Steric_Check_Table(genome,shape_table,num_shapes);
+        //component_lengths.emplace_back(genome.size());
       }
     }
   }
   mod_file_out.close();
+  return;
 
 
   std::string out_file_name;
   std::string out_file_name_lengths;
-  out_file_name ="//rscratch//asl47//Processed/Dynamic//"+folder_base+"Shape_Data";
-  out_file_name_lengths=out_file_name+"_L.txt";
-  std::ofstream out_file_lengths(out_file_name_lengths);
-  for(int length :component_lengths)
-    out_file_lengths<<length<<" ";
-  out_file_lengths.close();
+  //out_file_name ="//rscratch//asl47//Processed/Dynamic//"+folder_base+"Shape_Data";
+  //out_file_name_lengths=out_file_name+"_L.txt";
+  //std::ofstream out_file_lengths(out_file_name_lengths);
+  //for(int length :component_lengths)
+  //  out_file_lengths<<length<<" ";
+  //out_file_lengths.close();
   out_file_name+=".txt";
  
   
    
   std::ofstream out_file(out_file_name);
   //std::cout<<"** RESULTS **"<<std::endl;
+  
   int shape_N=0;
   for(std::vector<int>::iterator shape_it = shape_table.begin(); shape_it != shape_table.end();) {
     out_file <<"*Code* "<<shape_N<<" *Deltas* ";//<<*it<<" "<<*(it+1)<<" Shape:";
@@ -86,7 +77,7 @@ void DoShape(std::string sub_file,std::string folder_base,std::vector<int> runs)
       if(p==1)
         out_file<<" *Shape* ";
     }
-
+  
     int dx=*shape_it,dy=*(shape_it+1);
     std::vector<int> check_shape_data(shape_it+2,shape_it+2+*shape_it* *(shape_it+1));
     std::vector<int> phenotype_Shape;
@@ -246,7 +237,7 @@ void DeleteriousRobustness(int r) {
 int main(int argc, char* argv[]) {
   int N=1000;
   if(argc>2) {
-    N=std::stoi(argv[2]);
+    N=std::stoi(argv[3]);
   }
   
   std::vector<int> runs(N);
@@ -258,11 +249,13 @@ int main(int argc, char* argv[]) {
   int num_rob=0,num_rob2=0,num_rob3=0,num_robx=0,num_robx2=0,num_robx3=0;;
   if(argc>1) {
     switch(argv[1][1]) {
-    case '3':
-      mu=Mu_map[std::stoi(argv[3])];
-      mu_t=argv[3];
-      file_base="Modular3_T20_C200_N500_Mu"+mu+"_K15000";
-      folder_base="T3Mu"+mu_t;
+    case 'M':
+      mu=Mu_map[std::stoi(argv[4])];
+      run_t=argv[2];
+      mu_t=argv[4];
+      temp_input=argv[5];
+      file_base="A"+run_t+"_T20_C200_N500_Mu"+mu+"_O"+temp_input+"_K25000_I0";
+      folder_base="A"+run_t+"Mu"+mu_t+"O"+temp_input;;
       DoShape(file_base,folder_base,runs);
       break;
     case '4':
@@ -272,8 +265,7 @@ int main(int argc, char* argv[]) {
       mu_t=argv[3];
       temp_input=argv[4];
       file_base="Modular"+run_t+"_T20_C200_N500_Mu"+mu+"_O"+temp_input+"_K15000";
-      folder_base="T"+run_t+"Mu"+mu_t+"O"+temp_input;
-      //std::cout<<file_base<<std::endl;
+      folder_base="A"+run_t+"Mu"+mu_t+"O"+temp_input;
       DoShape(file_base,folder_base,runs);
       break;
 

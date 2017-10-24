@@ -695,14 +695,14 @@ bool GetMultiplePhenotypeFitness(std::vector<int> genome,std::vector<int> target
       early_exit=true;
   }
   for(unsigned int nth=active_targets;nth<target_types.size();++nth) {
-    if(early_exit) {
-      target_fitnesses[nth]=-1;
-    }
-    else {
+    //if(early_exit) {
+      //target_fitnesses[nth]=-1;
+    //}
+    //else {
       target_fitnesses[nth]=Shape_Matching_Fitness_Function(phenotype_shape,dx,dy,target_types[nth]);
       if(target_fitnesses[nth]<1.)
         early_exit=true;
-    } 
+      //} 
   }
   return true;
 }
@@ -791,7 +791,7 @@ double Shape_Matching_Fitness_Function(std::vector<int>& Spatial_Occupation,int&
     Target_Delta_X=7;
     Target_Delta_Y=4;
     symmetric_rotations=4;
-    
+    break;
   case 8: //stair shape
     Target_Occupation={-1,0,-1,-1,-1, 0,1,0,-1,-1, 0,1,1,0,-1, -1,0,1,1,0, -1,-1,0,1,-1};
     Target_Delta_X=5;

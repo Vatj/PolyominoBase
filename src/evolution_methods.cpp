@@ -82,6 +82,7 @@ void GenotypeMutator::mutate(std::vector<int>& genotype) {
 */
 
 
+//void SetFitnessTargets(std::vector<int>& targets)
 
 //////////////////////////////////////
 //FITNESS FUNCTION RELATED FUNCTIONS//

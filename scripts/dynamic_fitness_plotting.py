@@ -9,11 +9,12 @@ icy.Use_Seaborn()
 
 from matplotlib.animation import FuncAnimation,ImageMagickWriter
 from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.colors import LogNorm
 
 from dynamic_fitness_methods import *
 
 
-RUNS=96
+RUNS=500
 RUN_TYPE=4
 
 def SetRuns(sr):
@@ -103,33 +104,31 @@ def PlotMaximalOccupation2(mu,I):
     plt.ylabel('Maximally Fit genotypes')
     plt.show(block=False)
 
-from matplotlib.colors import LogNorm
-def PlotModularityGrid(mu,O):
+
+def PlotModularityGrid2(A,mu,O):
     fig=plt.figure(figsize=(10,7))
-    additional=''
-    if RUN_TYPE==4 or RUN_TYPE==5:
-        additional='_O{}'.format(O)
-    modularity_import=np.genfromtxt('/rscratch/asl47/Processed/Dynamic/T{}Mu{}{}_Modular_Data.txt'.format(RUN_TYPE,mu,additional[1:]),dtype=np.float64)
+    runs=500.
+
+    modularity_import=np.loadtxt('/rscratch/asl47/Processed/Dynamic/A{}Mu{}O{}_Modular_Data.txt'.format(A,mu,O),dtype=np.uint8).reshape(-1,2)
     
 
 
-    H, xedges, yedges = np.histogram2d(modularity_import[:,0], modularity_import[:,1], bins=(11, 86),range=((9,20),(14,100)),normed=True)
+    H, xedges, yedges = np.histogram2d(modularity_import[:,0], modularity_import[:,1], bins=(11, 86),range=((9,20),(14,100)))
     X, Y = np.meshgrid(xedges-0.5, yedges-0.5)
-    plt.pcolormesh(X,Y,H.T,norm=LogNorm(),cmap='plasma', rasterized=True)
+    plt.pcolormesh(X,Y,H.T/runs,norm=LogNorm(10,150),cmap='inferno')#, rasterized=True)
     plt.yscale('log')
     cbar=plt.colorbar()
     cbar.set_label('Relative Frequency', rotation=90)
     
-    plt.xlabel('``Active" Genome Length')
+    plt.xlabel('``Active" Genome Size')
     plt.ylabel('Phenotype Size')
-    plt.title('T{} O{}'.format(RUN_TYPE,O))
+    plt.title('Mu {}, {}'.format(mu,'Static' if A==3 else 'Dynamic $\Omega^{{{}}}$'.format(O)))
 
     fig.set_tight_layout(True)
-    return fig
-    #plt.show(block=False)
+    #return fig
+    plt.show(block=False)
     #return modularity_import
 
-from scipy.stats import sem
 
 def PlotRobustness(O,R,c_in):
 
@@ -200,29 +199,30 @@ def PlotHistogram(data,bins='empty',c_in='hotpink',mark_in='o',label_in='Default
 def PlotPartialHistogram(data,bins='empty',c_in='hotpink',mark_in='o',label_in='Default',label_on=True):
     if bins=='empty':
         bins=int(np.sqrt(len(data)+0.5))
-    hist,bins=np.histogram(data,bins=np.logspace(2,np.log10(15000),bins))#np.log10(min(data)*0.9)
+    hist,bins=np.histogram(data,bins=np.logspace(2,np.log10(25000),bins))#np.log10(min(data)*0.9)
     if label_on:
         return plt.scatter(np.mean(zip(bins,bins[1:]),axis=1),np.cumsum(hist)/(1.*RUNS),c=c_in,marker=mark_in,s=50,label=label_in,zorder=10)
     else:
         return plt.scatter(np.mean(zip(bins,bins[1:]),axis=1),np.cumsum(hist)/(1.*RUNS),c=c_in,marker=mark_in,s=50,zorder=10)
 
 def GetHistCoords(data,bins):
-    hist,bin_edges=np.histogram(data,bins=np.logspace(2,np.log10(15000),bins))
+    hist,bin_edges=np.histogram(data,bins=np.logspace(2,np.log10(25000),bins))
     return zip(np.mean(zip(bin_edges,bin_edges[1:]),axis=1),np.cumsum(hist)/(1.*RUNS))
 
 
 plot_params={
-    'T3':{'mark_in':'x','c_in':'darkgreen','label_in':'Static'},
-    'T4O5':{'mark_in':'o','c_in':'darkred','label_in':r'Dynamic ($\Omega^2_{5}$)'},
-    'T4O25':{'mark_in':'s','c_in':'tomato','label_in':r'Dynamic ($\Omega^2_{25}$ )'},
-    'T4O125':{'mark_in':'h','c_in':'gold','label_in':r'Dynamic ($\Omega^2_{125}$)'},
-    'T5O5':{'mark_in':'<','c_in':'skyblue','label_in':r'Dynamic ($\Omega^1_{5}$)'},
-    'T5O25':{'mark_in':'>','c_in':'cornflowerblue','label_in':r'Dynamic ($\Omega^1_{25}$)'},
-    'T5O125':{'mark_in':'^','c_in':'navy','label_in':r'Dynamic ($\Omega^1_{125}$)'},
+    'A3O25000':{'mark_in':'x','c_in':'darkgreen','label_in':'Static'},
+    'A2O5':{'mark_in':'o','c_in':'darkred','label_in':r'Dynamic ($\Omega^2_{5}$)'},
+    'A2O25':{'mark_in':'s','c_in':'tomato','label_in':r'Dynamic ($\Omega^2_{25}$ )'},
+    'A2O50':{'mark_in':'h','c_in':'gold','label_in':r'Dynamic ($\Omega^2_{50}$)'},
+    'A2O75':{'mark_in':'<','c_in':'orchid','label_in':r'Dynamic ($\Omega^2_{75}$)'},
+    'A2O100':{'mark_in':'>','c_in':'cornflowerblue','label_in':r'Dynamic ($\Omega^2_{100}$)'},
+    'A2O125':{'mark_in':'^','c_in':'navy','label_in':r'Dynamic ($\Omega^2_{125}$)'},
     #'T4O250':{'mark_in':'+','c_in':'olive','label_in':r'Dynamic ($\Omega$ = 250)'},
 }
 
-def PlotFilledFractions(mu,needles=[5,25,50,100,500]):
+def PlotFilledFractions(mu,needles=[5,50,100,250,500]):
+    GEN_LIMIT=25000
     bins=30
     fig=plt.figure(figsize=(10,7))
     data_frame_low={}
@@ -230,10 +230,12 @@ def PlotFilledFractions(mu,needles=[5,25,50,100,500]):
     data_frame_locs=0
     for needle in needles:
         data_dict=LoadExistingData(needle,mu)
+        data_dict2=LoadExistingData2(needle,mu)
         sorted_keys=sorted(data_dict.keys())
-        sorted_keys[1:4]=sorted(sorted_keys[1:4],key=lambda x: int(x[3:]))
-        sorted_keys[4:]=sorted(sorted_keys[4:],key=lambda x: int(x[3:]))
+        sorted_keys[:6]=sorted(sorted_keys[:6],key=lambda x: int(x[3:]))
+        #sorted_keys[4:]=sorted(sorted_keys[4:],key=lambda x: int(x[3:]))
         for run_t in sorted_keys:
+            data_dict[run_t]+=data_dict2[run_t]
             PlotPartialHistogram(data_dict[run_t],bins,label_on=False,**plot_params[run_t])
             if needle==needles[0]:
                 data_frame_locs,data_frame_low[run_t]=zip(*GetHistCoords(data_dict[run_t],bins))
@@ -242,17 +244,17 @@ def PlotFilledFractions(mu,needles=[5,25,50,100,500]):
                 data_frame_locs,data_frame_high[run_t]=zip(*GetHistCoords(data_dict[run_t],bins))
                 plt.fill_between(data_frame_locs,data_frame_low[run_t],data_frame_high[run_t],alpha=0.5,label=plot_params[run_t]['label_in'],color=plot_params[run_t]['c_in'],zorder=1)
 
-    plt.plot([15000,15000],[-1,2],'k-',lw=3)
+    plt.plot([25000,25000],[-1,2],'k-',lw=3)
     plt.ylim([-0.05,1.05])
-    plt.xlim([100,16000])
+    plt.xlim([100,26000])
     plt.xlabel(r'Generation')
     plt.ylabel('Solution CDF')
     plt.xscale('log')
     plt.title(r'$\langle \mu L \rangle$ = {}, Sustained $g$ = [{}]'.format(4./mu,', '.join(map(str,needles))))
     plt.legend(ncol=2)
     plt.tight_layout()
-    #plt.show(block=False)
-    return fig
+    plt.show(block=False)
+    #return fig
 
 def PlotManyHistograms(needle,mu,bins=35):
     data_dict=LoadExistingData(needle,mu)
@@ -382,3 +384,85 @@ def Iterateit(X,N):
         
 def g(n,c):
     return 2./(2+(2./c-2)*2**n)
+
+def PlotModularityGrid(A,mu,O):
+
+    data=np.loadtxt('/rscratch/asl47/Processed/Dynamic/A{}Mu{}O{}_Modular_Data.txt'.format(A,mu,O),dtype=np.uint8).reshape(-1,2)
+    ymin, ymax=data[:,1].min(),data[:,1].max()
+    xmin, xmax=data[:,0].min(),data[:,0].max()
+    #Define grid for subplots
+    gs = gridspec.GridSpec(2, 2, width_ratios=[3, 1], height_ratios = [1, 4])
+    gs.update(wspace=0.07, hspace=0.07)
+    #Create scatter plot
+    fig = plt.figure(figsize=(10,7))
+    ax = plt.subplot(gs[1, 0],frameon = True)
+    H, xedges, yedges = np.histogram2d(data[:,0], data[:,1], bins=(12, 86),range=((9,21),(14,100)),normed=True)
+    X, Y = np.meshgrid(xedges, yedges)
+    ax.pcolormesh(X,Y,H.T,norm=LogNorm(),cmap='inferno')#, rasterized=True)
+    
+    #ax.grid(True)
+    
+    #Create Y-marginal (right)
+    axr = plt.subplot(gs[1, 1], sharey=ax, frameon = False,xticks = [] ) #xlim=(0, 1), ylim = (ymin, ymax) xticks=[], yticks=[]
+    axr.hist(data[:,1], color = '#5673E0', orientation = 'horizontal', normed = True,bins=86,range=(14,100))
+    axr.plot([0,1],[np.mean(data[:,1])]*2,c='r',lw=2,ls=':')
+    axr.annotate('{:.2f}'.format(np.mean(data[:,1])), xy=(1,np.mean(data[:,1])),fontsize=12)
+    axr.set_xscale('log')
+    axr.axis('off')
+
+
+    #Create X-marginal (top)
+    axt = plt.subplot(gs[0,0], sharex=ax,frameon = False,yticks = [])# xticks = [], , ) #xlim = (xmin, xmax), ylim=(0, 1)
+    axt.hist(data[:,0], color = '#5673E0', normed = True,bins=12,range=(9,21))
+    axt.plot([np.mean(data[:,0])]*2,[0,1],c='r',lw=2,ls=':')
+    axt.annotate('{:.2f}'.format(np.mean(data[:,0])), xy=(np.mean(data[:,0]), 1),fontsize=12)
+    axt.set_yscale('log')
+
+    axt.axis('off')
+
+    adjust_spines(ax,['top','right'])
+    adjust_spines(axt,['bottom'])
+
+    ax.set_xlabel('G Size')
+    ax.set_ylabel('P Size')
+    locs = ax.xaxis.get_ticklocs()
+    ax.set_xticks(locs+0.5)
+    ax.set_xticklabels([int(i) for i in locs])
+    ax.set_xlim([8.7,21])
+    #adjust_spines(axr,['left'])
+    #ax.set_yscale('log')
+    fig.text(0.7,0.80,'Mu {}\n{}'.format(mu,'Static' if A==3 else 'Dynamic $\Omega^{{{}}}$'.format(O)))
+
+    
+    
+    try:
+        ax.set_title(kwargs['title'])
+        ax.set_xlabel(kwargs['xlabel'])
+        ax.set_ylabel(kwargs['ylabel'])
+    except:
+        pass
+    
+    #Bring the marginals closer to the scatter plot
+    #fig.set_tight_layout(True)
+    return fig
+    #plt.show(block=False)
+
+def adjust_spines(ax, spines):
+    for loc, spine in ax.spines.items():
+        if loc in spines:
+            spine.set_position(('outward', 10))  # outward by 10 points
+            spine.set_smart_bounds(True)
+    return
+
+    # turn off ticks where there is no spine
+    if 'left' in spines:
+        ax.yaxis.set_ticks_position('left')
+    else:
+        # no yaxis ticks
+        ax.yaxis.set_ticks([])
+
+    if 'bottom' in spines:
+        ax.xaxis.set_ticks_position('bottom')
+    else:
+        # no xaxis ticks
+        ax.xaxis.set_ticks([])
