@@ -14,7 +14,7 @@ from matplotlib.colors import LogNorm
 from dynamic_fitness_methods import *
 
 
-RUNS=500
+RUNS=10
 RUN_TYPE=4
 
 def SetRuns(sr):
@@ -37,68 +37,97 @@ def SetPar(st,sr):
 
 
 
-def PlotMaximalOccupation(mu,I):
-    fig, axarr = plt.subplots(2, 2, sharex=True, figsize=(10,8))
+def PlotMaximalOccupation():
+    fig, axarr = plt.subplots(3,2, sharex=True, figsize=(10,8))
     Mu_Sets={32:'0.001563',16:'0.003125',8:'0.006250',4:'0.012500',1:'0.050000'}
+    K=451
+    vals={2:[(0.690229,0.09594899999999995),(0.59705,0.0025),(0.64406,0.04951)],1:[(0.742176,0.147896),(0.76428,0.16973),(0.64977,0.05522)]}
 
-
-    for O,ax in zip([5,25,75,125],axarr.reshape(-1)):
-        avg_data=np.empty((RUNS,500))
+    #for A,O,ax in zip([1,1,2,2],[25,50,25,50],axarr.reshape(-1)):#5,25,50,75,100,125
+    O=150
+    for (A,mu),ax in zip([(1,32),(2,32),(1,16),(2,16),(1,8),(2,8)],axarr.reshape(-1)):
+        avg_data_total=np.empty((RUNS,K))
+        avg_data=np.empty((RUNS,K))
         for r in xrange(RUNS):
-            subfile_name='A2_T20_C200_N10000_Mu{}_O{}_K500_I{}_Run{}'.format(Mu_Sets[mu],O,I,r)
-            fitness_import=np.genfromtxt('/rscratch/asl47/Bulk_Run/Modular/{}_Fitness.txt'.format(subfile_name),dtype=np.float64)
+            subfile_name='A{}_T20_C200_N100000_Mu{}_O{}_K{}_I0_Run{}'.format(A,Mu_Sets[mu],O,K,r)
+            fitness_import=np.loadtxt('/scratch/asl47/Data_Runs/Robustness/{}_Fitness.txt'.format(subfile_name),dtype=np.uint32)
 
-            avg_data[r]=fitness_import[:,1]*(fitness_import[:,0]>=1)
-            ax.plot([i/(1.*O) for i in xrange(fitness_import.shape[0])],avg_data[r],lw=0.5,alpha=0.6)
+            avg_data_total[r]=fitness_import[:,1]
+            avg_data[r]=fitness_import[:,0]#*(fitness_import[:,0]>=1)
+            ax.plot(range(0,fitness_import.shape[0]),avg_data[r],lw=0.5,alpha=0.6,zorder=10)
+            ax.plot(range(0,fitness_import.shape[0]),avg_data_total[r],lw=0.5,alpha=0.6,zorder=10)
 
-            
-        ax.plot([i/(1.*O) for i in xrange(0,500)],np.mean(avg_data,axis=0),lw=2,c='k',ls=':')
+
+        ax.plot(range(0,fitness_import.shape[0]),np.mean(avg_data,axis=0,dtype=np.float64),lw=1,c='k',ls='--')
+        ax.fill_between(range(0,fitness_import.shape[0]),np.mean(avg_data,axis=0,dtype=np.float64)-np.std(avg_data,axis=0,dtype=np.float64),np.mean(avg_data,axis=0,dtype=np.float64)+np.std(avg_data,axis=0,dtype=np.float64))
+     
+        ax.plot(range(0,fitness_import.shape[0]),np.mean(avg_data_total,axis=0,dtype=np.float64),lw=1,c='gray',ls='-')
+        ax.fill_between(range(0,fitness_import.shape[0]),np.mean(avg_data_total,axis=0,dtype=np.float64)-np.std(avg_data_total,axis=0,dtype=np.float64),np.mean(avg_data_total,axis=0,dtype=np.float64)+np.std(avg_data_total,axis=0,dtype=np.float64))
+        
+        ax.plot(range(0,O),[100000*(1-(1-vals[A][i/O%3][0])*(4./mu))*(1-vals[A][(i-1)/O%3][1]*(4./mu))**(i%O) for i in xrange(1,O+1)],lw=2,c='r',ls='',marker='o',alpha=0.5)
+        
+        co_factors=[np.nanmean(avg_data_total,axis=0,dtype=np.float64)[o*O+1] for o in xrange(3)]
+        #print co_factors
+        
+        ax.plot(range(O,fitness_import.shape[0]),[co_factors[(i)/O%3]*(1-vals[A][(i)/O%3][1]*(4./mu))**(i%O) for i in xrange(O,fitness_import.shape[0])],lw=2,c='darkred',ls='',marker='o',alpha=0.5)
+        
+        ax.plot(range(0,fitness_import.shape[0]),[100000*(1-(1-vals[A][i/O%3][0])*(4./mu)) for i in xrange(0,fitness_import.shape[0])],lw=2,c='g',ls='',marker='o',alpha=0.5)
         
         for t,c in zip(range(3),['r','b','g']):
-            slope, intercept, r_value, p_value, std_err = linregress([i/(1.*O) for i in xrange(int(O*.2),int(O*.8))],np.log10(np.mean(avg_data,axis=0)[int(O*t+O*.2):int(O*(t+1)-O*.2)]))
+            continue
+            slope, intercept, r_value, p_value, std_err = linregress(range(int(O*.2),int(O*.8)),np.log10(np.mean(avg_data_total,axis=0,dtype=np.float64)[O*t+int(O*.2):O*t+int(O*.8)]))
+            
             print t,slope, intercept, r_value, p_value, std_err
-            for q in xrange(3):
-                ax.plot(np.linspace(q*3+t,q*3+1+t,21),[10**(intercept+slope*i) for i in np.linspace(0,1,21)],lw=2.5,c=c)
+            #for q in xrange(3):
+            ax.plot(np.linspace(O*t,O*t+O,O+1),[10**(intercept+slope*i) for i in np.linspace(0,O,O+1)],lw=2.5,c=c)
     
-        ax.set_title(r'$\Omega_{{{0}}}$'.format(O))
-        ax.set_yscale('log',nonposy='mask')
-        ax.set_xlim([0,8])
-        if O ==25 or O==125:
+        #ax.set_title(r'$\Omega^{{{1}}}_{{{0}}}$'.format(O,A))
+        ax.set_yscale('log',nonposy='clip')
+        #ax.set_xlim([0,8])
+        if A==2:
             ax.yaxis.tick_right()
 
-        
-    fig.add_subplot(111, frameon=False)
-    # hide # TODO: ick and tick label of the big axes
-    plt.tick_params(labelcolor='none', top='off', bottom='off', left='off', right='off')
-    plt.grid(False)
-    plt.xlabel("Landscape Changes")
-    plt.ylabel("\# of 3 Target fit genotypes")
-    fig.suptitle('Initial condition {}'.format(I))
+
+    axarr.reshape(-1)[-2].set_xlabel(r'$\Omega^{1}_{25}$')
+    axarr.reshape(-1)[-1].set_xlabel(r'$\Omega^{2}_{25}$')
+    axarr.reshape(-1)[0].set_ylabel(r'$\langle \mu L \rangle = 1/8$')
+    axarr.reshape(-1)[2].set_ylabel(r'$\langle \mu L \rangle = 1/4$')
+    axarr.reshape(-1)[4].set_ylabel(r'$\langle \mu L \rangle = 1/2$')
+
+    
+    #return fig
+    l1,=plt.plot([0],[0],lw=1,c='k',ls='--')
+    l2,=plt.plot([0],[0],lw=1,c='gray',ls='-')
+    l3,=plt.plot([0],[0],c='darkred',ls='',marker='o',alpha=0.5)
+    plt.figlegend([l1,l2,l3],[r'$\mathcal{F}^{\textrm{active}}$',r'$\mathcal{F}^{\textrm{total}}$',r'Robustness data fits'],loc='upper center',ncol=3, borderaxespad=0.,fancybox=True)
     fig.set_tight_layout(True)
-    return fig
-    #plt.show(block=False)
+    plt.show(block=False)
 
 
-def PlotMaximalOccupation2(mu,I):
+def PlotMaximalOccupation2(mu):
     fig = plt.figure(figsize=(10,8))
     Mu_Sets={32:'0.001563',16:'0.003125',8:'0.006250',4:'0.012500',1:'0.050000'}
 
-
-
-    avg_data=np.empty((RUNS,5000))
+    avg_data=np.empty((RUNS,100))
+    avg_data_total=np.empty((RUNS,100))
     for r in xrange(RUNS):
-        subfile_name='A3_T20_C200_N10000_Mu{}_O5000_K5000_I{}_Run{}'.format(Mu_Sets[mu],I,r)
-        fitness_import=np.genfromtxt('/rscratch/asl47/Bulk_Run/Modular/{}_Fitness.txt'.format(subfile_name),dtype=np.float64)
-        avg_data[r]=fitness_import[:,1]*(fitness_import[:,0]>=1)
-        plt.plot(range(5000),avg_data[r],lw=0.5,alpha=0.6)
+        subfile_name='A3_T20_C200_N100000_Mu{}_O100_K100_I0_Run{}'.format(Mu_Sets[mu],r)
+        fitness_import=np.loadtxt('/rscratch/asl47/Bulk_Run/Modular/{}_Fitness.txt'.format(subfile_name),dtype=np.uint32)
+        avg_data[r]=fitness_import[:,1]
+        avg_data_total[r]=fitness_import[:,1]
+        #plt.plot(range(25000),avg_data[r],lw=0.5,alpha=0.6)
+        plt.plot(range(0,fitness_import.shape[0]),avg_data[r],lw=0.5,alpha=0.6)
+        plt.plot(range(0,fitness_import.shape[0]),avg_data_total[r],lw=0.5,alpha=0.6)
+    plt.plot(range(0,fitness_import.shape[0]),np.nanmean(avg_data,axis=0,dtype=np.float64),lw=2,c='k',ls='--')
+    plt.plot(range(0,fitness_import.shape[0]),np.nanmean(avg_data_total,axis=0,dtype=np.float64),lw=2,c='gray',ls='--')
+    r1=1-0.909
+    plt.plot(range(0,fitness_import.shape[0]),[100000*(1-(r1)*(4./mu))*(1-r1*(4./mu))**(i) for i in xrange(1,fitness_import.shape[0]+1)],lw=2,c='r',ls='',marker='o',alpha=0.4)
+    slope, intercept, r_value, p_value, std_err = linregress(range(100),np.log10(np.nanmean(avg_data_total,axis=0,dtype=np.float64)))
             
-            
-    plt.plot(range(5000),np.mean(avg_data,axis=0),lw=2,c='k',ls=':')
-    print np.mean(avg_data,axis=0)[:5]
-        
-
+    print slope, intercept, r_value, p_value, std_err
+    plt.plot(range(100),[10**(intercept+slope*i) for i in xrange(100)],lw=2.5,marker='o',ls='')
                 
-    plt.title(r'Static (condition {})'.format(I))
+    plt.title(r'Static (mu {})'.format(mu))
     plt.yscale('log',nonposy='mask')
     plt.xlabel('Generations')
     plt.ylabel('Maximally Fit genotypes')
@@ -111,8 +140,6 @@ def PlotModularityGrid2(A,mu,O):
 
     modularity_import=np.loadtxt('/rscratch/asl47/Processed/Dynamic/A{}Mu{}O{}_Modular_Data.txt'.format(A,mu,O),dtype=np.uint8).reshape(-1,2)
     
-
-
     H, xedges, yedges = np.histogram2d(modularity_import[:,0], modularity_import[:,1], bins=(11, 86),range=((9,20),(14,100)))
     X, Y = np.meshgrid(xedges-0.5, yedges-0.5)
     plt.pcolormesh(X,Y,H.T/runs,norm=LogNorm(10,150),cmap='inferno')#, rasterized=True)
@@ -127,11 +154,10 @@ def PlotModularityGrid2(A,mu,O):
     fig.set_tight_layout(True)
     #return fig
     plt.show(block=False)
-    #return modularity_import
+
 
 
 def PlotRobustness(O,R,c_in):
-
     data_frame=[]
     with open('/rscratch/asl47/Processed/Dynamic/TN_rob_O{}_r{}.txt'.format(O,R)) as data_file:
         for line in data_file:
@@ -140,30 +166,72 @@ def PlotRobustness(O,R,c_in):
             else:
                 data_frame.append(np.array([float(i) for i in line.split()],dtype=np.float64))
     plt.errorbar([i/5. for i in xrange(1,len(data_frame)+1)],[np.mean(data_frame[i]) for i in xrange(len(data_frame))],yerr=[sem(data_frame[i]) for i in xrange(len(data_frame))],c=c_in)
-
-    #for i in xrange(8):
-    #    plt.plot([1.1+1*i]*2,[0,1],'k')
-
 def PlotAll():
     plt.figure(figsize=(10,7))
-
     for o,r,c in zip([5]*13+[25]*16+[125]*13,[2,3,4,6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,3,6,7,8,9,10,11,12,13,14,15],['darkgreen']*13+['royalblue']*16+['firebrick']*13):
-    #for o,r,c in zip([125]*9+[25]*12+[5]*8,[2,3,4,5,7,10,12,13,15,0,1,3,4,6,7,8,9,10,11,12,15,3,5,6,7,9,12,14,15],['firebrick']*9+['royalblue']*12+['darkgreen']*8):
         PlotRobustness(o,r,c)
-
     plt.xlabel('Landscape changes')
     plt.ylabel('Averaged Fit Phenotype Deleterious Robustness')
     plt.title(r'$\langle \mu L \rangle$=0.25')
     for c_in,label_in in zip(['firebrick','royalblue','darkgreen'],[r'$\Omega_{125}$',r'$\Omega_{25}$',r'$\Omega_{5}$']):
         plt.errorbar([0],[0],c=c_in,label=label_in)
-
     plt.legend()
     plt.tight_layout()
-        
+    plt.show(block=False)
+
+
+from matplotlib_venn import venn3, venn3_circles
+def PlotGPVenns():
+    file_bases='/rscratch/asl47/Bulk_Run/Modular'
+    avg_G_size=[[] for i in xrange(7)]
+
+    for I in xrange(3):
+        for run in xrange(50):
+            avg_G_size[I].append(file_len('{}/A1_T20_C200_N10000_Mu0.003125_O1_K{}000_I{}_Run{}_Genotype.txt'.format(file_bases,15 if I==0 else 20,I,run)))
+
+            
+    for I in xrange(3):
+        for run in xrange(50):
+            avg_G_size[3+I].append(file_len('{}/A2_T20_C200_N10000_Mu0.003125_O1_K20000_I{}_Run{}_Genotype.txt'.format(file_bases,I,run)))
+
+    for run in xrange(25):
+            avg_G_size[6].append(file_len('{}/A3_T20_C200_N10000_Mu0.003125_O1_K20000_I0_Run{}_Genotype.txt'.format(file_bases,run)))
+            
+    
+
+    # Abc # aBc # ABc # abC # AbC # aBC # ABC
+    #return avg_G_size
+    s = list(np.mean(G)/norming for G,norming in zip(avg_G_size,[50,50,50,50,50,50,25])) #(square_only,cross_only,square_cross, tetris_only,square_tetris,cross_tetris,complete)
+    print s
+    v = venn3(subsets=s, set_labels=('A', 'B', 'C'))
+
+    # Subset labels
+    v.get_label_by_id('100').set_text('Abc')
+    v.get_label_by_id('010').set_text('aBc')
+    v.get_label_by_id('110').set_text('ABc')
+    v.get_label_by_id('001').set_text('Abc')
+    v.get_label_by_id('101').set_text('aBc')
+    v.get_label_by_id('011').set_text('ABc')
+    v.get_label_by_id('111').set_text('ABC')
+
+    # Subset colors
+    v.get_patch_by_id('100').set_color('c')
+    v.get_patch_by_id('010').set_color('#993333')
+    v.get_patch_by_id('110').set_color('blue')
+    
+    # Subset alphas
+    v.get_patch_by_id('101').set_alpha(0.4)
+    v.get_patch_by_id('011').set_alpha(1.0)
+    v.get_patch_by_id('111').set_alpha(0.7)
+
+    # Border styles
+    c = venn3_circles(subsets=s, linestyle='solid')
+    c[0].set_ls('dotted')  # Line style
+    c[1].set_ls('dashed')
+    c[2].set_lw(1.0)       # Line width
     
     plt.show(block=False)
 
-    
 import scipy as sp
 import scipy.optimize
 
@@ -199,14 +267,14 @@ def PlotHistogram(data,bins='empty',c_in='hotpink',mark_in='o',label_in='Default
 def PlotPartialHistogram(data,bins='empty',c_in='hotpink',mark_in='o',label_in='Default',label_on=True):
     if bins=='empty':
         bins=int(np.sqrt(len(data)+0.5))
-    hist,bins=np.histogram(data,bins=np.logspace(2,np.log10(25000),bins))#np.log10(min(data)*0.9)
+    hist,bins=np.histogram(data,bins=np.logspace(np.log10(500),np.log10(25000),bins))#np.log10(min(data)*0.9)
     if label_on:
         return plt.scatter(np.mean(zip(bins,bins[1:]),axis=1),np.cumsum(hist)/(1.*RUNS),c=c_in,marker=mark_in,s=50,label=label_in,zorder=10)
     else:
         return plt.scatter(np.mean(zip(bins,bins[1:]),axis=1),np.cumsum(hist)/(1.*RUNS),c=c_in,marker=mark_in,s=50,zorder=10)
 
 def GetHistCoords(data,bins):
-    hist,bin_edges=np.histogram(data,bins=np.logspace(2,np.log10(25000),bins))
+    hist,bin_edges=np.histogram(data,bins=np.logspace(np.log10(500),np.log10(25000),bins))
     return zip(np.mean(zip(bin_edges,bin_edges[1:]),axis=1),np.cumsum(hist)/(1.*RUNS))
 
 
@@ -221,21 +289,22 @@ plot_params={
     #'T4O250':{'mark_in':'+','c_in':'olive','label_in':r'Dynamic ($\Omega$ = 250)'},
 }
 
-def PlotFilledFractions(mu,needles=[5,50,100,250,500]):
+def PlotFilledFractions(mu,needles=[5,50,100,500]):
     GEN_LIMIT=25000
-    bins=30
+    bins=25
     fig=plt.figure(figsize=(10,7))
     data_frame_low={}
     data_frame_high={}
     data_frame_locs=0
     for needle in needles:
         data_dict=LoadExistingData(needle,mu)
-        data_dict2=LoadExistingData2(needle,mu)
+        #data_dict2=LoadExistingData2(needle,mu)
         sorted_keys=sorted(data_dict.keys())
         sorted_keys[:6]=sorted(sorted_keys[:6],key=lambda x: int(x[3:]))
         #sorted_keys[4:]=sorted(sorted_keys[4:],key=lambda x: int(x[3:]))
-        for run_t in sorted_keys:
-            data_dict[run_t]+=data_dict2[run_t]
+        #print sorted_keys
+        for run_t in sorted_keys[:3]+[sorted_keys[-1]]:
+            #data_dict[run_t]+=data_dict2[run_t]
             PlotPartialHistogram(data_dict[run_t],bins,label_on=False,**plot_params[run_t])
             if needle==needles[0]:
                 data_frame_locs,data_frame_low[run_t]=zip(*GetHistCoords(data_dict[run_t],bins))
@@ -246,7 +315,7 @@ def PlotFilledFractions(mu,needles=[5,50,100,250,500]):
 
     plt.plot([25000,25000],[-1,2],'k-',lw=3)
     plt.ylim([-0.05,1.05])
-    plt.xlim([100,26000])
+    plt.xlim([400,26000])
     plt.xlabel(r'Generation')
     plt.ylabel('Solution CDF')
     plt.xscale('log')
@@ -335,56 +404,7 @@ def PlotFitnessOverTime(x,needle_length=50):
     plt.show(block=False)
     return counts
 
-
-
-
-
-
-def roulette_selection(weights,N):
-    sorted_indexed_weights = sorted(enumerate(weights), key=operator.itemgetter(1))
-    indices, sorted_weights = zip(*sorted_indexed_weights)
-    tot_sum=sum(sorted_weights)
-    prob = [x*1./tot_sum for x in sorted_weights]
-    cum_prob=np.cumsum(prob)
-   
-    for i in xrange(N):
-        random_num=random.random()
-        for index_value, cum_prob_value in zip(indices,cum_prob):
-            if random_num < cum_prob_value:
-                yield weights[index_value]
-                break
-            
-from collections import Counter
-import random
-import operator
-def getr(p,N):
-    t=list(roulette_selection(p,N))
-    
-    print Counter(t)
-    t.sort()
-    
-    return t
-    
-    
-def Iterateit(X,N):
-    next_pop=[1]*X+[2]*(N-X)
-    fracs=np.empty((10,2))
-    fracs[0][0]=next_pop.count(1)
-    fracs[0][1]=next_pop.count(2)
-    
-    for i in xrange(9):
-        next_pop2=getr(next_pop,N)
-        fracs[i+1][0]=next_pop2.count(1)
-        fracs[i+1][1]=next_pop2.count(2)
-        next_pop=next_pop2
-    plt.figure()
-    plt.plot(range(10),fracs[:,0],'r')
-    plt.plot(range(10),fracs[:,1],'b')
-    plt.show(block=False)
-        
-def g(n,c):
-    return 2./(2+(2./c-2)*2**n)
-
+from matplotlib import gridspec
 def PlotModularityGrid(A,mu,O):
 
     data=np.loadtxt('/rscratch/asl47/Processed/Dynamic/A{}Mu{}O{}_Modular_Data.txt'.format(A,mu,O),dtype=np.uint8).reshape(-1,2)
@@ -444,8 +464,8 @@ def PlotModularityGrid(A,mu,O):
     
     #Bring the marginals closer to the scatter plot
     #fig.set_tight_layout(True)
-    return fig
-    #plt.show(block=False)
+    #return fig
+    plt.show(block=False)
 
 def adjust_spines(ax, spines):
     for loc, spine in ax.spines.items():
@@ -466,3 +486,138 @@ def adjust_spines(ax, spines):
     else:
         # no xaxis ticks
         ax.xaxis.set_ticks([])
+
+
+
+
+        ###### JUNK #####
+
+
+def roulette_selection(weights,N):
+    sorted_indexed_weights = sorted(enumerate(weights), key=operator.itemgetter(1))
+    indices, sorted_weights = zip(*sorted_indexed_weights)
+    tot_sum=sum(sorted_weights)
+    prob = [x*1./tot_sum for x in sorted_weights]
+    cum_prob=np.cumsum(prob)
+   
+    for i in xrange(N):
+        random_num=random()
+        for index_value, cum_prob_value in zip(indices,cum_prob):
+            if random_num < cum_prob_value:
+                yield weights[index_value]
+                break
+            
+from collections import Counter
+import random
+import operator
+def getr(p,N):
+    return sorted(list(roulette_selection(p,N)))
+    #print Counter(t)
+    #t.sort()
+    #return t
+
+from random import random
+def mut(L):
+    del_r=0.1
+    drop_r=0.5
+    #print Counter(L)
+    for i,l in enumerate(L):
+        if l==1:
+            if random()<del_r:
+                L[i]=0
+        else: #l==2
+            rand=random()
+            if rand<del_r:
+                L[i]=0
+            elif rand>del_r and (rand-del_r)<drop_r:
+                L[i]=1
+    #print Counter(L)
+    return sorted(L)
+            
+    #return sorted([1 if j==2 and random()<drop_r else j for j in [0 if random()<del_r else i for i in L]])
+
+    #L3=sorted([0 if random()<del_r else i for i in L2])
+    
+    #return L3
+    
+    
+def Iterateit(N,X):
+    steps=50
+    next_pop=[1]*int(X*N)+[2]*int(N*(1-X))
+    fracs=np.empty((2*steps,3))
+
+    
+    for i in xrange(0,2*steps,2):
+        
+        for j in xrange(3):
+            fracs[i][2-j]=next_pop.count(j)
+ 
+        next_pop=mut(next_pop)
+        for j in xrange(3):
+            fracs[i+1][2-j]=next_pop.count(j)
+        next_pop=getr(next_pop,N)
+        
+
+        #next_pop=next_pop3
+    #plt.figure()
+    plt.plot(range(steps*2),fracs[:,0],'r',label='Max')
+    plt.plot(range(steps*2),fracs[:,1],'b',label='Med')
+    
+    plt.plot(range(0,steps*2,2),fracs[::2,0],marker='o',c='r',ls='')
+    plt.plot(range(1,steps*2,2),fracs[1::2,0],marker='d',c='r',ls='')
+    plt.plot(range(0,steps*2,2),fracs[::2,1],marker='o',c='b',ls='')
+    plt.plot(range(1,steps*2,2),fracs[1::2,1],marker='d',c='b',ls='')
+    
+    plt.plot(range(steps*2),fracs[:,2],'k')
+
+    plt.plot(range(steps),[N*g(i,X) for i in xrange(steps)],'g:')
+    pp=[(1-X)]
+    for i in xrange(steps-1):
+        pp.append(pprime(pp[-1]))
+    plt.plot(range(steps),[N*p for p in pp],'c:')
+    plt.legend()
+    plt.show(block=False)
+        
+def g(n,c):
+    return 2./(2+(2./c-2)*2**n)
+
+def g2(n,A0):
+    c1=9./(16*A0)
+    return 63./((56*c1-45)*2**(1-4*n)*9**n+90)
+    
+
+def pprime(p):
+    mu=0.2
+    return 2*p*(1-mu)/(1+p)
+
+def quavo(n):
+    n_prime=np.empty(3)
+    n_pp=np.empty(3)
+    #W=np.matrix(((1.2,0.6,.2),(0,0.9,0.1),(0,0,0))).T
+    Q=np.matrix(((0.7,0,0),(0.2,0.9,0),(0.1,0.1,1)))
+    f=np.array([3,1,0])
+    #print Q
+    for j in xrange(3):
+        n_prime[j]=sum([n[i]*Q[j,i] for i in xrange(3)])
+
+    #print n_prime
+
+    for j in xrange(3):
+        #print n_prime[j],f[j], sum([f[i]*n_prime[i] for i in xrange(3)])
+        n_pp[j]=n_prime[j]*f[j]/(1.*sum([f[i]*n_prime[i] for i in xrange(3)]))
+    
+
+    return n_pp
+
+def q2(n,k):
+    R=0.5
+    F=np.matrix(((2,0,0),(0,1,0),(0,0,0)))
+    Q=np.matrix(((R,0,0),(1-R-0.1,0.9,0),(0.1,0.1,1)))
+
+    res=(F*Q)**k *n
+    return res/np.linalg.norm(res,ord=1)
+    
+
+
+    
+
