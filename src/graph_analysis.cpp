@@ -694,6 +694,7 @@ bool GetMultiplePhenotypeFitness(std::vector<int> genome,std::vector<int> target
     if(target_fitnesses[nth]<1.)
       early_exit=true;
   }
+
   for(unsigned int nth=active_targets;nth<target_types.size();++nth) {
     //if(early_exit) {
       //target_fitnesses[nth]=-1;
@@ -742,6 +743,7 @@ double Shape_Matching_Fitness_Function(std::vector<int>& Spatial_Occupation,int&
 
   //HARDCODED PARAMETERS
   bool Size_Penalty_On=true;
+  int asymmetry_factor=2;
 
   //TARGETS
   std::vector<int> Target_Occupation;
@@ -821,6 +823,11 @@ double Shape_Matching_Fitness_Function(std::vector<int>& Spatial_Occupation,int&
               if(Spatial_Occupation[X_Check+Y_Check*Delta_X+X_slides+Y_slides*Delta_X]==Target_Occupation[X_Check+Y_Check*Target_Delta_X]) {
                 ++Positive_Match;
               }
+              else {
+                if(Spatial_Occupation[X_Check+Y_Check*Delta_X+X_slides+Y_slides*Delta_X]==1 && Target_Occupation[X_Check+Y_Check*Target_Delta_X]==0) {
+                  Positive_Match-=asymmetry_factor;
+                }
+              }
             }
           }
           if(Positive_Match==max_possible_overlap)
@@ -845,6 +852,11 @@ double Shape_Matching_Fitness_Function(std::vector<int>& Spatial_Occupation,int&
                 else {
                   if(Spatial_Occupation[X_Check+Y_Check*Delta_X-X_slides-Y_slides*Delta_X]==Target_Occupation[X_Check+Y_Check*Target_Delta_X]) {
                     ++Positive_Match;
+                  }
+                  else {
+                    if(Spatial_Occupation[X_Check+Y_Check*Delta_X+X_slides+Y_slides*Delta_X]==1 && Target_Occupation[X_Check+Y_Check*Target_Delta_X]==0) {
+                      Positive_Match-=asymmetry_factor;
+                    }
                   }
                 }
               }
@@ -876,6 +888,12 @@ double Shape_Matching_Fitness_Function(std::vector<int>& Spatial_Occupation,int&
                     if(Spatial_Occupation[X_Check+Y_Check*Delta_X+Y_slides*Delta_X-X_slides]==Target_Occupation[X_Check+Y_Check*Target_Delta_X]) {
                       ++Positive_Match;
                     }
+                    else {
+                    if(Spatial_Occupation[X_Check+Y_Check*Delta_X+X_slides+Y_slides*Delta_X]==1 && Target_Occupation[X_Check+Y_Check*Target_Delta_X]==0) {
+                      Positive_Match-=asymmetry_factor;
+                    }
+                  }
+                    
                   }
                 }
               }
@@ -891,7 +909,7 @@ double Shape_Matching_Fitness_Function(std::vector<int>& Spatial_Occupation,int&
     std::swap(Target_Delta_X,Target_Delta_Y);
   }
   if(Size_Penalty_On) {
-      return *std::max_element(Fitness_Overlaps.begin(), Fitness_Overlaps.end())*std::min(1.,std::accumulate(Spatial_Occupation.begin(),Spatial_Occupation.end(),0.0)/std::count(Target_Occupation.begin(),Target_Occupation.end(),1));
+    return std::max(0.,*std::max_element(Fitness_Overlaps.begin(), Fitness_Overlaps.end()))*std::min(1.,std::accumulate(Spatial_Occupation.begin(),Spatial_Occupation.end(),0.0)/std::count(Target_Occupation.begin(),Target_Occupation.end(),1));
   }
   else
     return *std::max_element(Fitness_Overlaps.begin(), Fitness_Overlaps.end());

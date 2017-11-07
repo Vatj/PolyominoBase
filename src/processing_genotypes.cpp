@@ -164,7 +164,7 @@ bool CheckRobust(std::vector<int> target,int target_sets,int num_targets) {
     targets={5,6,4};
     break;
   case 2:
-    targets={4,6,5};
+    targets={6,4,5};
     break;
   }
   std::vector<double> fitnesses(3);
@@ -176,7 +176,6 @@ bool CheckRobust(std::vector<int> target,int target_sets,int num_targets) {
   }while(target[chosen_base]==old_base_colour);
 
   if(GetMultiplePhenotypeFitness(target,targets,fitnesses,num_targets)) {
-    return true;
     if(std::accumulate(fitnesses.begin(),fitnesses.begin()+num_targets,0.0)==num_targets)
       return true;
     else
@@ -246,7 +245,7 @@ int main(int argc, char* argv[]) {
   std::map<int,std::string> Mu_map ={{1, "0.050000"}, {4, "0.012500"}, {8, "0.006250"}, {16, "0.003125"}, {32,"0.001563"}};
 
   std::vector<int> genotype;
-  int num_rob=0,num_rob2=0,num_rob3=0,num_robx=0,num_robx2=0,num_robx3=0;;
+  int num_rob03=0,num_rob02=0,num_rob12=0,num_rob22=0,num_rob01=0,num_rob11=0,num_rob21=0;
   if(argc>1) {
     switch(argv[1][1]) {
     case 'M':
@@ -274,9 +273,9 @@ int main(int argc, char* argv[]) {
       DeleteriousRobustness(N);
       break;
     case 'C':
-      for(int i=0;i<10;++i) {
-        num_rob=0;num_rob2=0;num_rob3=0;
-        num_robx=0;num_robx2=0;num_robx3=0;
+      for(int i=0;i<1;++i) {
+        num_rob03=0;num_rob02=0;num_rob12=0;num_rob22=0;num_rob01=0;num_rob11=0;num_rob21=0;
+
         switch(i) {
         case 0:
         default: //SIF zeroed
@@ -313,23 +312,25 @@ int main(int argc, char* argv[]) {
      
       
       
-#pragma omp parallel for schedule(dynamic),reduction(+:num_rob,num_rob2,num_rob3)
+#pragma omp parallel for schedule(dynamic),reduction(+:num_rob03,num_rob02,num_rob12,num_rob22,num_rob01,num_rob11,num_rob21)
         for(int n =0; n<N;++n) {
+          if(CheckRobust(genotype,0,3))
+            ++num_rob03;
           if(CheckRobust(genotype,0,2))
-            ++num_rob;
-          //if(CheckRobust(genotype,0,3))
-          //  ++num_robx;
-          //if(CheckRobust(genotype,1,2))
-          //  ++num_rob2;
-          //if(CheckRobust(genotype,1,3))
-          //  ++num_robx2;
-          //if(CheckRobust(genotype,2,2))
-          //  ++num_rob3;
-          //if(CheckRobust(genotype,2,3))
-          //  ++num_robx3;
+            ++num_rob02;
+          if(CheckRobust(genotype,1,2))
+            ++num_rob12;
+          if(CheckRobust(genotype,2,2))
+            ++num_rob22;
+          if(CheckRobust(genotype,0,1))
+            ++num_rob01;
+          if(CheckRobust(genotype,1,1))
+            ++num_rob11;
+          if(CheckRobust(genotype,2,1))
+            ++num_rob21;
         }
         
-        std::cout<<"**Robustnesses for genotype "<<i<<"**\n Targets 4,5 -> "<<static_cast<float>(num_rob)/N << " || "<<static_cast<float>(num_robx)/N <<"\n Targets 5,6 -> " <<static_cast<float>(num_rob2)/N <<  " || "<<static_cast<float>(num_robx2)/N <<"\n Targets 6,4 -> "<<static_cast<float>(num_rob3)/N <<" || "<<static_cast<float>(num_robx3)/N << "\n";
+        std::cout<<"**Robustnesses for genotype "<<i<<"**\nTargets 4,5,6 ->"<< static_cast<float>(num_rob03)/N <<"\nTargets 4,5 -> "<<static_cast<float>(num_rob02)/N << "\nTargets 5,6-> "<<static_cast<float>(num_rob12)/N <<"\nTargets 6,4 -> " <<static_cast<float>(num_rob22)/N <<  "\nTarget 4 -> "<<static_cast<float>(num_rob01)/N <<"\nTarget 5 -> "<<static_cast<float>(num_rob11)/N <<"\nTarget 6 -> "<<static_cast<float>(num_rob21)/N << "\n";
         }
         break;
        

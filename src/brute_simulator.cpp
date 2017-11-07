@@ -402,6 +402,61 @@ namespace Brute_Force
 
 }
 
+void GenotypeSpaceSampler(int N_samples) {
+  std::uniform_int_distribution<int> Color(0,199);
+  std::random_device rd;
+  xorshift RNG_source(rd());
+
+  int a=0,b=0,c=0,ab=0,bc=0,ac=0,abc=0;
+#pragma omp parallel for schedule(dynamic),reduction(+:a,b,c,ab,bc,ac,abc)
+  for(int n=0;n<N_samples;++n) {
+    std::vector<int> targets={4,5,6};
+    std::vector<double> fitnesses(3);
+    std::vector<int> genotype(20);
+    for(int b=0;b<20;++b)
+      genotype[b]=Color(RNG_source);
+    
+    if(GetMultiplePhenotypeFitness(genotype,targets,fitnesses,3)) {    
+      if(fitnesses[0]==1) {
+        if(fitnesses[1]==1) {
+          if(fitnesses[2]==1) {
+            ++abc;
+          }
+          else {
+            ++ab;
+          }
+        }
+        else {
+          if(fitnesses[2]==1) {
+            ++ac;
+          }
+          else {
+            ++a;
+          }
+        }
+      }
+      else {
+        if(fitnesses[1]==1) {
+          if(fitnesses[2]==1) {
+            ++bc;
+          }
+          else {
+            ++b;
+            
+          }
+        }
+        else {
+          if(fitnesses[2]==1) {
+            ++c;
+          }
+        }
+      }
+    } 
+
+  }
+  std::cout<<"G Sample\nABC: "<<abc<<"\nAB: "<<ab<<"\nBC: "<<bc<<"\nAC: "<<ac<<"\nA: "<<a<<"\nB: "<<b<<"\nC: "<<c<<std::endl; 
+}
+
 double get_wall_time(){
     struct timeval time;
     if (gettimeofday(&time,NULL)){
@@ -419,11 +474,14 @@ double get_cpu_time(){
 
 int main(int argc, char* argv[]) {
 
-  std::vector<std::vector<int> > GENOME_VECTOR(100000000);
+  std::vector<std::vector<int> > GENOME_VECTOR(1);
   std::vector<int> test_genome;
   int graph_result;
   if(argc>1) {
     switch(argv[1][1]) {
+    case 'G':
+      GenotypeSpaceSampler(std::stoi(argv[2]));
+      break;
     case 'R':
       //Topology_Robustness({0,0,0,1,2,2,3,4},std::stoi(argv[2]),{6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 38, 42, 50, 60, 70, 84, 100, 150, 250, 500},std::stoi(argv[3]));
       Topology_Robustness({0,0,0,1,2,2,2,2},std::stoi(argv[2]),{6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 38, 42, 50, 60, 70, 84, 100, 150, 250, 500},std::stoi(argv[3]));

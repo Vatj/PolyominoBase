@@ -17,7 +17,7 @@ void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
   std::string out_name_g="//rscratch//asl47//Bulk_Run//Modular//A"+std::to_string(active_targets)+Run_Details+"_Genotype.txt";
   std::string out_name_f="//rscratch//asl47//Bulk_Run//Modular//A"+std::to_string(active_targets)+Run_Details+"_Fitness.txt";
   //std::string out_name_r="//rscratch//asl47//Bulk_Run//Modular//A"+std::to_string(active_targets)+Run_Details+"_Robust.txt";
-  std::ofstream out_file_g(out_name_g, std::ios_base::out);
+  //std::ofstream out_file_g(out_name_g, std::ios_base::out);
   std::ofstream out_file_f(out_name_f, std::ios_base::out);
   //std::ofstream out_file_r(out_name_r, std::ios_base::out);
 
@@ -33,19 +33,34 @@ void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
   std::vector<double> Phenotype_Fitness_Sizes(Num_Genomes), Phenotype_Fitness_Sizes_Full(Num_Genomes),target_fitnesses(TOTAL_TARGETS);
   std::set< std::vector<int> > unique_genotypes;
 
+  /*
+  switch(initial_condition) {
+  case 0:
+    target_types={4,5,6};
+    break;
+  case 1:
+    target_types={5,6,4};
+    break;
+  case 2:
+    target_types={6,4,5};
+    break;      
+  }
+  */
+
   
   for(int g=1;g<=GENERATION_LIMIT;++g) {
     switch(((g-1)/Fitness_Oscillation_Rate)%3) {
     case 0:
-      target_types={4,5,6};
+      target_types={4,6,7};
       break;
     case 1:
-      target_types={5,6,4};
+      target_types={6,7,4};
       break;
     case 2:
-      target_types={6,4,5};
+      target_types={7,4,6};
       break;
     }
+    
     for(int n=0;n<Num_Genomes;++n) {
       Evolving_Genome=Genome_Pool[n];
       for(int t=0;t<Num_Tiles*4;++t) {
@@ -58,15 +73,15 @@ void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
       }
       if(GetMultiplePhenotypeFitness(Evolving_Genome,target_types,target_fitnesses,active_targets)) {    
         Phenotype_Fitness_Sizes[n]=std::accumulate(target_fitnesses.begin(),target_fitnesses.begin()+active_targets,0.0,[](double cum,double nex){return cum+Fitness_Function(nex);})/(active_targets*pow(FITNESS_CLIFF,active_targets-std::count(target_fitnesses.begin(),target_fitnesses.begin()+active_targets,1.)));
-        //Phenotype_Fitness_Sizes_Full[n]=std::accumulate(target_fitnesses.begin(),target_fitnesses.end(),0.0)/4.;
-        Phenotype_Fitness_Sizes_Full[n]=Phenotype_Fitness_Sizes_Full[n]>=static_cast<double>(TOTAL_TARGETS) ? 1. : 0;
+        //Phenotype_Fitness_Sizes_Full[n]=std::accumulate(target_fitnesses.begin(),target_fitnesses.end(),0.0)/.;
+        Phenotype_Fitness_Sizes_Full[n]=std::accumulate(target_fitnesses.begin(),target_fitnesses.end(),0.0)>=static_cast<double>(TOTAL_TARGETS) ? 1. : 0;
       }
       else {
         Phenotype_Fitness_Sizes[n]=0;
         Phenotype_Fitness_Sizes_Full[n]=0;
       }
       Genome_Pool[n]=Evolving_Genome;
-      
+      /*
       if(Phenotype_Fitness_Sizes_Full[n]>=1.) {
         std::vector<int> duplicate_genome=(Evolving_Genome);
         Clean_Genome(duplicate_genome);
@@ -74,47 +89,39 @@ void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
           duplicate_genome.erase(std::find(duplicate_genome.begin(),duplicate_genome.end(),-1),duplicate_genome.end());
         unique_genotypes.insert(duplicate_genome);
       }
+      */
       
     } //END GENOME LOOP
 
-    double max_fitness=*std::max_element(Phenotype_Fitness_Sizes_Full.begin(),Phenotype_Fitness_Sizes_Full.end());
+    
+    double max_fitness=*std::max_element(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end());
     if(max_fitness>=1.) {
-      out_file_f << max_fitness << " " << std::count(Phenotype_Fitness_Sizes_Full.begin(),Phenotype_Fitness_Sizes_Full.end(),max_fitness) << "\n";
+      //out_file_f << max_fitness << " " << std::count(Phenotype_Fitness_Sizes_Full.begin(),Phenotype_Fitness_Sizes_Full.end(),max_fitness) << "\n";
+      out_file_f << std::count(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end(),1) << " " << std::count(Phenotype_Fitness_Sizes_Full.begin(),Phenotype_Fitness_Sizes_Full.end(),1) << "\n";
     }
     else {
       out_file_f << "0 0\n";
     }
     
+    
    
     Index_Selections=Roulette_Wheel_Selection(Phenotype_Fitness_Sizes,Num_Genomes);
     for(int nth_select=0;nth_select<Num_Genomes;++nth_select) {
       Temporary_Pool[nth_select]=Genome_Pool[Index_Selections[nth_select]];
-    }   
+    }    
     Genome_Pool.assign(Temporary_Pool.begin(),Temporary_Pool.end());
   }
-  
   /*
-  for(int n=0;n<Num_Genomes;++n) {
-    if(Phenotype_Fitness_Sizes_Full[n]>=0.9) {
-      std::vector<int> duplicate_genome=(Genome_Pool[n]);
-        Clean_Genome(duplicate_genome);
-        if(Disjointed_Check(duplicate_genome))
-          duplicate_genome.erase(std::find(duplicate_genome.begin(),duplicate_genome.end(),-1),duplicate_genome.end());
-        for(int base : duplicate_genome) {
-          out_file_g << base <<" ";
-        }
-        out_file_g << "\n";
-    }
-  }
-  */
   for(std::vector<int> genotype : unique_genotypes) {
     for(int base : genotype) {
       out_file_g << base <<" ";
     }
     out_file_g << "\n";
   }
+  */
   
-  out_file_g.close();
+  
+  //out_file_g.close();
   out_file_f.close();
 }
 

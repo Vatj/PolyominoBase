@@ -12,7 +12,7 @@ namespace Brute_Force
 
   int Compare_Two_Polyominoes_Tile_Details(std::vector<int>& Placed_Tiles_Check,std::vector<int>& Placed_Tiles_Compare);
 
-
+  
   
 
   //RUNNING COMMANDS
@@ -56,3 +56,5 @@ void BD_Fractional_Occupation(int genome_Length,int C,int N_Cases);
 
 
 void Topology_Robustness(std::vector<int> genotype,int N_runs, std::vector<int> Colours,const int R_N);
+
+void GenotypeSpaceSampler(int N_samples);
