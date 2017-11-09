@@ -21,7 +21,7 @@ void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
   std::ofstream out_file_f(out_name_f, std::ios_base::out);
   //std::ofstream out_file_r(out_name_r, std::ios_base::out);
 
-  const int FITNESS_CLIFF=2;
+  const int FITNESS_CLIFF=5;
   const int TOTAL_TARGETS=3;
   
   std::uniform_int_distribution<int> Mutated_Colour(0,Colour_Space);
@@ -51,16 +51,17 @@ void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
   for(int g=1;g<=GENERATION_LIMIT;++g) {
     switch(((g-1)/Fitness_Oscillation_Rate)%3) {
     case 0:
-      target_types={4,6,7};
+      target_types={4,5,6};
       break;
     case 1:
-      target_types={6,7,4};
+      target_types={5,6,4};
       break;
     case 2:
-      target_types={7,4,6};
+      target_types={6,4,5};
       break;
     }
     
+    int a=0,b=0,c=0,ab=0,bc=0,ac=0,abc=0;
     for(int n=0;n<Num_Genomes;++n) {
       Evolving_Genome=Genome_Pool[n];
       for(int t=0;t<Num_Tiles*4;++t) {
@@ -75,14 +76,50 @@ void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
         Phenotype_Fitness_Sizes[n]=std::accumulate(target_fitnesses.begin(),target_fitnesses.begin()+active_targets,0.0,[](double cum,double nex){return cum+Fitness_Function(nex);})/(active_targets*pow(FITNESS_CLIFF,active_targets-std::count(target_fitnesses.begin(),target_fitnesses.begin()+active_targets,1.)));
         //Phenotype_Fitness_Sizes_Full[n]=std::accumulate(target_fitnesses.begin(),target_fitnesses.end(),0.0)/.;
         Phenotype_Fitness_Sizes_Full[n]=std::accumulate(target_fitnesses.begin(),target_fitnesses.end(),0.0)>=static_cast<double>(TOTAL_TARGETS) ? 1. : 0;
+
+        if(target_fitnesses[(3-((g-1)/Fitness_Oscillation_Rate)%3)%3]==1) {
+          if(target_fitnesses[(4-((g-1)/Fitness_Oscillation_Rate)%3)%3]==1) {
+            if(target_fitnesses[(5-((g-1)/Fitness_Oscillation_Rate)%3)%3]==1) {
+              ++abc;
+            }
+            else {
+              ++ab;
+            }
+          }
+          else {
+            if(target_fitnesses[(5-((g-1)/Fitness_Oscillation_Rate)%3)%3]==1) {
+            ++ac;
+          }
+          else {
+            ++a;
+          }
+        }
       }
       else {
-        Phenotype_Fitness_Sizes[n]=0;
-        Phenotype_Fitness_Sizes_Full[n]=0;
+        if(target_fitnesses[(4-((g-1)/Fitness_Oscillation_Rate)%3)%3]==1) {
+          if(target_fitnesses[(5-((g-1)/Fitness_Oscillation_Rate)%3)%3]==1) {
+            ++bc;
+          }
+          else {
+            ++b;
+            
+          }
+        }
+        else {
+          if(target_fitnesses[(5-((g-1)/Fitness_Oscillation_Rate)%3)%3]==1) {
+            ++c;
+          }
+        }
+      }
+        
+    }
+    else {
+      Phenotype_Fitness_Sizes[n]=0;
+      Phenotype_Fitness_Sizes_Full[n]=0;
       }
       Genome_Pool[n]=Evolving_Genome;
       /*
-      if(Phenotype_Fitness_Sizes_Full[n]>=1.) {
+        if(Phenotype_Fitness_Sizes_Full[n]>=1.) {
         std::vector<int> duplicate_genome=(Evolving_Genome);
         Clean_Genome(duplicate_genome);
         if(Disjointed_Check(duplicate_genome))
@@ -95,16 +132,19 @@ void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
 
     
     double max_fitness=*std::max_element(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end());
-    if(max_fitness>=1.) {
+    if(true || max_fitness>=1.) {
       //out_file_f << max_fitness << " " << std::count(Phenotype_Fitness_Sizes_Full.begin(),Phenotype_Fitness_Sizes_Full.end(),max_fitness) << "\n";
-      out_file_f << std::count(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end(),1) << " " << std::count(Phenotype_Fitness_Sizes_Full.begin(),Phenotype_Fitness_Sizes_Full.end(),1) << "\n";
+      //out_file_f << std::count(Phenotype_Fitness_Sizes.begin(),Phenotype_Fitness_Sizes.end(),1) << " " << std::count(Phenotype_Fitness_Sizes_Full.begin(),Phenotype_Fitness_Sizes_Full.end(),1) << "\n";
+      out_file_f <<abc<<" "<<ab<<" "<<bc<<" "<<ac<<" "<<a<<" "<<b<<" "<<c<<"\n"; 
     }
     else {
-      out_file_f << "0 0\n";
+      out_file_f << "0 0 0 0 0 0 0\n";
     }
     
     
-   
+
+    if(abc>=Num_Genomes/2)
+      return;
     Index_Selections=Roulette_Wheel_Selection(Phenotype_Fitness_Sizes,Num_Genomes);
     for(int nth_select=0;nth_select<Num_Genomes;++nth_select) {
       Temporary_Pool[nth_select]=Genome_Pool[Index_Selections[nth_select]];
