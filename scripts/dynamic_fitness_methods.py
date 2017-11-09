@@ -2,7 +2,7 @@ import numpy as np
 import subprocess
 
 def AddNewDataToFile(classifier,data_in,needle,mu):
-    with open('/rscratch/asl47/Processed/Dynamic/Evolution_Solution_Times_new__Mu{}_Needle{}.txt'.format(mu,needle), "a") as data_file:
+    with open('/rscratch/asl47/Processed/Dynamic/Evolution_Solution_Times_q2_Mu{}_Needle{}.txt'.format(mu,needle), "a") as data_file:
         data_file.write(classifier+': ')
         for value in data_in:
             data_file.write('{} '.format(value))
@@ -10,17 +10,22 @@ def AddNewDataToFile(classifier,data_in,needle,mu):
 
 def AddBulkDataToFile(As,Os,needle,mu):    
     for (A,O) in zip(As,Os):
-        data=SolutionCDF(needle,A,mu,O,275)
+        data=SolutionCDF(needle,A,mu,O,500)
         AddNewDataToFile('A{}O{}'.format(A,O),data,needle,mu)
         
 def LoadExistingData(needle,mu):
-    data_dict={key:[int(v) for v in values.split()] for (key,values) in [line.rstrip('\n').split(':') for line in open('/rscratch/asl47/Processed/Dynamic/Evolution_Solution_Times_new_Mu{}_Needle{}.txt'.format(mu,needle))]}
+    data_dict={key:[int(v) for v in values.split()] for (key,values) in [line.rstrip('\n').split(':') for line in open('/rscratch/asl47/Processed/Dynamic/Evolution_Solution_Times_q2_Mu{}_Needle{}.txt'.format(mu,needle))]}
     return data_dict
 
 def LoadExistingData2(needle,mu):
     data_dict={key:[int(v) for v in values.split()] for (key,values) in [line.rstrip('\n').split(':') for line in open('/rscratch/asl47/Processed/Dynamic/Evolution_Solution_Times3_Mu{}_Needle{}.txt'.format(mu,needle))]}
     return data_dict
 
+def LoadPartials():
+    d={}
+    for A,O in [(3,10000),(2,5),(2,25),(2,75),(1,5)]:
+        d['A{}O{}'.format(A,O)]=SolutionCDF_Partials(500,A,16,O,1000)
+    return d
     
 def SolutionCDF(needle_length=30,A=2,mu=4,O=3,runs=1):
     occ=0
@@ -34,12 +39,12 @@ def SolutionCDF(needle_length=30,A=2,mu=4,O=3,runs=1):
     needle=np.ones(needle_length,dtype=np.float64)
     
     for r in xrange(runs):
-        subfile_name='A{}_T20_C200_N1000_Mu{}_O{}_K15000_I0_Run{}'.format(A,Mu_Sets[mu],O,r)
-        fitness_import=np.loadtxt('/rscratch/asl47/Bulk_Run/Modular/{}_Fitness.txt'.format(subfile_name))
+        subfile_name='A{}_T20_C200_N500_Mu{}_O{}_K25000_I0_Run{}'.format(A,Mu_Sets[mu],O,r)
+        fitness_import=np.loadtxt('/scratch/asl47/Data_Runs/Dynamic_3/A{}Mu{}O{}/{}_Fitness.txt'.format(A,mu,O,subfile_name))
         #/A{}Mu{}O{}/
-        fitness_import[fitness_import >0]=1
-        if max(fitness_import[:,1])>=1:
-            haystack=search_sequence_numpy(fitness_import[:,1],needle)
+        #fitness_import[fitness_import >0]=1
+        if max(fitness_import[:,0])>=1:
+            haystack=search_sequence_numpy(fitness_import[:,0],needle)
             
             if haystack>0:
                 occ+=1
@@ -47,6 +52,33 @@ def SolutionCDF(needle_length=30,A=2,mu=4,O=3,runs=1):
 
     print "seen {} times for a fraction of {}".format(occ,occ*1./runs)
     return firsts
+
+def SolutionCDF_Partials(pop_amount=500,A=2,mu=4,O=3,runs=1):
+    firsts=np.zeros((runs,4))
+    Mu_Sets={32:'0.001563',16:'0.003125',8:'0.006250',4:'0.012500',1:'0.050000'}
+     
+    
+    for r in xrange(runs):
+        subfile_name='A{}_T20_C200_N1000_Mu{}_O{}_K10000_I0_Run{}'.format(A,Mu_Sets[mu],O,r)
+        fitness_import=np.loadtxt('/scratch/asl47/Data_Runs/Dynamic_V2/{}_Fitness.txt'.format(subfile_name))
+        #return fitness_import
+        try:
+            single_targets= (fitness_import[:,4:7]>pop_amount).argmax(axis=0)
+            single_target=single_targets[np.nonzero(single_targets)].min()
+            
+            double_targets= (fitness_import[:,1:4]>pop_amount).argmax(axis=0)
+            double_target=double_targets[np.nonzero(double_targets)].min()
+
+            triple_target=np.argmax(fitness_import[:,0]>pop_amount)
+
+            if triple_target!=0:
+                firsts[r]=np.array([0,single_target,double_target,triple_target])
+        except:
+            pass
+    return firsts[~np.all(firsts == 0, axis=1)]
+
+def DifferentialDiscovery(target_times):
+    return np.diff(target_times,axis=1)
 
 def search_sequence_numpy(arr,seq):
     """ Find sequence in an array using NumPy only.
@@ -92,3 +124,7 @@ def file_len(fname):
     if p.returncode != 0:
         raise IOError(err)
     return int(result.strip().split()[0])
+
+def movingaverage(interval, window_size):
+    window = np.ones(int(window_size))/float(window_size)
+    return np.convolve(interval, window, 'same')
