@@ -24,6 +24,7 @@ def LoadExistingData2(needle,mu):
 def LoadPartials(N=100):
     d={}
     for A,O in [(3,10000),(2,5),(2,25),(2,75),(1,5),(1,25)]:
+        print 'loading for A,O'
         d['A{}O{}'.format(A,O)]=SolutionCDF_Partials(500,A,16,O,N)
     return d
 def SavePartial(d):
