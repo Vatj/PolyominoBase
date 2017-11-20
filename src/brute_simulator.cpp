@@ -12,6 +12,7 @@ namespace interface_model
   typedef unsigned char uchar;
 
   
+  
   inline uint16_t reverse(uint16_t v) {
   v = ((v >> 1) & 0x5555) | ((v & 0x5555) << 1); /* swap odd/even bits */
   v = ((v >> 2) & 0x3333) | ((v & 0x3333) << 2); /* swap bit pairs */
@@ -25,6 +26,7 @@ namespace interface_model
   }
   
   static std::vector<uchar> interface_indices{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+  static std::uniform_real_distribution<double> uniform(0, 1)
   void MutateInterfaces(std::vector<uint16_t>& binary_genome,double mu_prob) {
     std::binomial_distribution<uchar> b_dist(interface_indices.size(),mu_prob);
     for(uint16_t& base : binary_genome) {
@@ -50,10 +52,13 @@ namespace interface_model
         std::cout<<"tile "<<tile<<", face "<<face<<std::endl;
         uchar samming_energy=SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[tile*4+face]);
         std::cout<<"H "<<binary_genome[current_tile*4+current_orientation]<<" ^ "<<reverse(binary_genome[tile*4+face])<<" ("<<binary_genome[tile*4+face]<<")  = "<<+samming_energy<<std::endl;
+        if(uniform(RNG_Engine)<std::exp(-1*samming_energy)) {
+          std::cout<<"prob bind"<<std::endl;
+        }
         if(samming_energy<1) {
           std::cout<<"Placing tile! "<<current_x<<","<<current_y<<", and "<<tile<<","<<(4+current_direction-face)%4<<std::endl;
           placed_tiles.insert(placed_tiles.end(),{current_x,current_y,tile,(4+current_direction-face)%4});
-          PerimeterGrowth(binary_genome,current_x,current_y,(4+current_direction-face)%4,tile,growing_perimeter,placed_tiles);
+          PerimeterGrowth(current_x,current_y,(4+current_direction-face)%4,current_direction,tile,growing_perimeter,placed_tiles);
           return;
         }        
       }
@@ -67,18 +72,11 @@ namespace interface_model
     std::iota(tile_types.begin(), tile_types.end(), 0);
     std::vector<int> placed_tiles{0,0,0,0}; //(x,y,tile type, orientation)
     std::vector<int> growing_perimeter; //(x,y,direction,tile type, orientation)
-    //randomize insertion!!
 
-    growing_perimeter.insert(growing_perimeter.end(),{0,1,2,0,0});
-    growing_perimeter.insert(growing_perimeter.end(),{1,0,3,0,1});
-    growing_perimeter.insert(growing_perimeter.end(),{0,-1,0,0,2});
-    growing_perimeter.insert(growing_perimeter.end(),{-1,0,1,0,3});
-    
-    
+    PerimeterGrowth(0,0,0,-1,0,growing_perimeter,placed_tiles);   
     while(!growing_perimeter.empty()) {
       std::cout<<"looping"<<std::endl;
       PlaceNextUnit(binary_genome,tile_types,faces,growing_perimeter,placed_tiles);  
-
 
       if(placed_tiles.size()>(4*20)) {
         std::cout<<"breaking"<<std::endl;
@@ -86,19 +84,17 @@ namespace interface_model
       }
     }
 
-   
     return placed_tiles;   
     
   }
 
-  void PerimeterGrowth(std::vector<uint16_t>& binary_genome,int x,int y,int direction, int tile_type,std::vector<int>& growing_perimeter,std::vector<int>& placed_tiles) {
-    int dx,dy;
+  void PerimeterGrowth(int x,int y,int theta,int direction, int tile_type,std::vector<int>& growing_perimeter,std::vector<int>& placed_tiles) {
+    int dx=0,dy=0;
     for(int f=0;f<4;++f) {
       if(direction==f) {
         std::cout<<"skipping over direction "<<f<<" from init direction "<<direction<<std::endl;
         continue;
       }
-      
       switch(f) {
       case 0:
         dx=0;
@@ -118,6 +114,7 @@ namespace interface_model
         break;
       }
       bool occupied_site=false;
+      std::uniform_int_distribution<int> index_randomizer(0, growing_perimeter.size()/5);
       for(std::vector<int>::iterator tile_info=placed_tiles.begin();tile_info!=placed_tiles.end();tile_info+=4) {
         if(x+dx==*tile_info && y+dy==*(tile_info+1)) {
           occupied_site=true;
@@ -129,8 +126,8 @@ namespace interface_model
         continue;
       }
       else {
-        std::cout<<"new possible site at  "<<x+dx<<","<<y+dy<<" and "<<tile_type<<","<<(f+2)%4<<","<<(4+f-direction)%4<<std::endl;
-        growing_perimeter.insert(growing_perimeter.end(),{x+dx,y+dy,(f+2)%4,tile_type,(4+f-direction)%4});
+        std::cout<<"new possible site at  "<<x+dx<<","<<y+dy<<" and "<<tile_type<<","<<(f+2)%4<<","<<(4+f-theta)%4<<std::endl;
+        growing_perimeter.insert(growing_perimeter.begin()+5*index_randomizer(RNG_Engine),{x+dx,y+dy,(f+2)%4,tile_type,(4+f-theta)%4});
       }
     }
       

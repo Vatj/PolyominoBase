@@ -10,7 +10,7 @@ namespace interface_model
   void MutateInterfaces(std::vector<uint16_t>& binary_genome,double mu_prob);
   void PlaceNextUnit(std::vector<uint16_t>& binary_genome,std::vector<uint16_t>& tile_types,std::vector<uint16_t>& faces,std::vector<int>& growing_perimeter,std::vector<int>& placed_tiles);
   std::vector<int> ProteinAssembler(std::vector<uint16_t> binary_genome,double temperature);
-  void PerimeterGrowth(std::vector<uint16_t>& binary_genome,int x,int y,int direction, int tile_type,std::vector<int>& growing_perimeter,std::vector<int>& placed_tiles);
+  void PerimeterGrowth(int x,int y,int theta,int direction, int tile_type,std::vector<int>& growing_perimeter,std::vector<int>& placed_tiles);
 
 
 }
