@@ -1,5 +1,19 @@
 #include "graph_analysis.hpp"
+#include "stdint.h"
 
+namespace interface_model
+{
+
+  typedef unsigned char uchar;
+
+  int SammingDistance(uint16_t face1,uint16_t face2);
+  void MutateInterfaces(std::vector<uint16_t>& binary_genome,double mu_prob);
+  void PlaceNextUnit(std::vector<uint16_t>& binary_genome,std::vector<uint16_t>& tile_types,std::vector<uint16_t>& faces,std::vector<int>& growing_perimeter,std::vector<int>& placed_tiles);
+  std::vector<int> ProteinAssembler(std::vector<uint16_t> binary_genome,double temperature);
+  void PerimeterGrowth(std::vector<uint16_t>& binary_genome,int x,int y,int direction, int tile_type,std::vector<int>& growing_perimeter,std::vector<int>& placed_tiles);
+
+
+}
 namespace Brute_Force
 {
   std::vector<int> Brute_Force_Polyomino_Builder(std::vector<int> genome, unsigned int THRESHOLD_SIZE,int initial_Tile,int initial_Rotation);

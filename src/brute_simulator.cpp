@@ -3,6 +3,143 @@
 #include <time.h>
 #include <sys/time.h>
 
+namespace interface_model
+{
+  std::random_device rd;
+  xorshift RNG_Engine(rd());
+
+
+  typedef unsigned char uchar;
+
+  
+  inline uint16_t reverse(uint16_t v) {
+  v = ((v >> 1) & 0x5555) | ((v & 0x5555) << 1); /* swap odd/even bits */
+  v = ((v >> 2) & 0x3333) | ((v & 0x3333) << 2); /* swap bit pairs */
+  v = ((v >> 4) & 0x0F0F) | ((v & 0x0F0F) << 4); /* swap nibbles */
+  v = ((v >> 8) & 0x00FF) | ((v & 0x00FF) << 8); /* swap bytes */
+  return v;
+  }
+
+  int SammingDistance(uint16_t face1,uint16_t face2) {
+    return 16-__builtin_popcount(face1 ^ reverse(face2));
+  }
+  
+  static std::vector<uchar> interface_indices{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+  void MutateInterfaces(std::vector<uint16_t>& binary_genome,double mu_prob) {
+    std::binomial_distribution<uchar> b_dist(interface_indices.size(),mu_prob);
+    for(uint16_t& base : binary_genome) {
+      std::shuffle(interface_indices.begin(), interface_indices.end(), RNG_Engine);
+      uchar num_mutations= b_dist(RNG_Engine);
+      for(uchar nth=0;nth<num_mutations;++nth)
+        base ^= (1U << interface_indices[nth]);
+    }
+  } 
+    
+  void PlaceNextUnit(std::vector<uint16_t>& binary_genome,std::vector<uint16_t>& tile_types,std::vector<uint16_t>& faces,std::vector<int>& growing_perimeter,std::vector<int>& placed_tiles) {
+    int current_orientation=growing_perimeter.back();growing_perimeter.pop_back();
+    int current_tile=growing_perimeter.back();growing_perimeter.pop_back();
+    int current_direction=growing_perimeter.back();growing_perimeter.pop_back();
+    int current_y=growing_perimeter.back();growing_perimeter.pop_back();
+    int current_x=growing_perimeter.back();growing_perimeter.pop_back();
+    
+    std::shuffle(tile_types.begin(), tile_types.end(), RNG_Engine);
+    std::shuffle(faces.begin(), faces.end(), RNG_Engine);
+
+    for(uint16_t tile : tile_types) {
+      for(uint16_t face : faces) {
+        std::cout<<"tile "<<tile<<", face "<<face<<std::endl;
+        uchar samming_energy=SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[tile*4+face]);
+        std::cout<<"H "<<binary_genome[current_tile*4+current_orientation]<<" ^ "<<reverse(binary_genome[tile*4+face])<<" ("<<binary_genome[tile*4+face]<<")  = "<<+samming_energy<<std::endl;
+        if(samming_energy<1) {
+          std::cout<<"Placing tile! "<<current_x<<","<<current_y<<", and "<<tile<<","<<(4+current_direction-face)%4<<std::endl;
+          placed_tiles.insert(placed_tiles.end(),{current_x,current_y,tile,(4+current_direction-face)%4});
+          PerimeterGrowth(binary_genome,current_x,current_y,(4+current_direction-face)%4,tile,growing_perimeter,placed_tiles);
+          return;
+        }        
+      }
+    }
+  }
+  
+  std::vector<int> ProteinAssembler(std::vector<uint16_t> binary_genome,double temperature) {
+
+    std::vector<uint16_t> faces{0,1,2,3};
+    std::vector<uint16_t> tile_types(binary_genome.size()/(4.));
+    std::iota(tile_types.begin(), tile_types.end(), 0);
+    std::vector<int> placed_tiles{0,0,0,0}; //(x,y,tile type, orientation)
+    std::vector<int> growing_perimeter; //(x,y,direction,tile type, orientation)
+    //randomize insertion!!
+
+    growing_perimeter.insert(growing_perimeter.end(),{0,1,2,0,0});
+    growing_perimeter.insert(growing_perimeter.end(),{1,0,3,0,1});
+    growing_perimeter.insert(growing_perimeter.end(),{0,-1,0,0,2});
+    growing_perimeter.insert(growing_perimeter.end(),{-1,0,1,0,3});
+    
+    
+    while(!growing_perimeter.empty()) {
+      std::cout<<"looping"<<std::endl;
+      PlaceNextUnit(binary_genome,tile_types,faces,growing_perimeter,placed_tiles);  
+
+
+      if(placed_tiles.size()>(4*20)) {
+        std::cout<<"breaking"<<std::endl;
+        break;
+      }
+    }
+
+   
+    return placed_tiles;   
+    
+  }
+
+  void PerimeterGrowth(std::vector<uint16_t>& binary_genome,int x,int y,int direction, int tile_type,std::vector<int>& growing_perimeter,std::vector<int>& placed_tiles) {
+    int dx,dy;
+    for(int f=0;f<4;++f) {
+      if(direction==f) {
+        std::cout<<"skipping over direction "<<f<<" from init direction "<<direction<<std::endl;
+        continue;
+      }
+      
+      switch(f) {
+      case 0:
+        dx=0;
+        dy=1;
+        break;
+      case 1:
+        dx=1;
+        dy=0;
+        break;
+      case 2:
+        dx=0;
+        dy=-1;
+        break;
+      case 3:
+        dx=-1;
+        dy=0;
+        break;
+      }
+      bool occupied_site=false;
+      for(std::vector<int>::iterator tile_info=placed_tiles.begin();tile_info!=placed_tiles.end();tile_info+=4) {
+        if(x+dx==*tile_info && y+dy==*(tile_info+1)) {
+          occupied_site=true;
+          break;
+        }
+      }
+      if(occupied_site) {
+        std::cout<<"occupied "<<x+dx<<","<<y+dy<<std::endl;
+        continue;
+      }
+      else {
+        std::cout<<"new possible site at  "<<x+dx<<","<<y+dy<<" and "<<tile_type<<","<<(f+2)%4<<","<<(4+f-direction)%4<<std::endl;
+        growing_perimeter.insert(growing_perimeter.end(),{x+dx,y+dy,(f+2)%4,tile_type,(4+f-direction)%4});
+      }
+    }
+      
+  }
+
+  
+
+}
+
 namespace Brute_Force
 {
   std::random_device rd;
@@ -476,6 +613,8 @@ int main(int argc, char* argv[]) {
 
   std::vector<std::vector<int> > GENOME_VECTOR(1);
   std::vector<int> test_genome;
+  std::vector<unsigned short> g{0,0,0,0, 65535,31,3,31, 31,31,100,16383, 31,31,31, 55807};
+  int p=0;
   int graph_result;
   if(argc>1) {
     switch(argv[1][1]) {
@@ -508,6 +647,20 @@ int main(int argc, char* argv[]) {
         //{27, 61, 93, 90, 0, 0, 28, 176, 0, 175, 109, 184, 0, 110, 89, 197, 0, 198, 3, 183, 0, 0, 4, 94, 0, 38, 0, 62, 0, 37, 124, 123};
       graph_result=Graph_Analysis(test_genome);
       std::cout<<"GR "<<graph_result<<std::endl;
+      break;
+
+    case 'Q':
+      test_genome=interface_model::ProteinAssembler(g,1);
+      
+      for(int x:test_genome) {
+        std::cout<<x<<" ";
+        ++p;
+        if(p==4) {
+          std::cout<<"|| ";
+          p=0;
+        }
+      }
+      std::cout<<std::endl;
       break;
     case 'H':
       std::cout<<"Brute Tile running options\n -R [# runs] [run #] for topology robustness\n -C [# tiles] [# runs] for brute v graph comparison\n -S [# tiles] [# runs] for run selection\n"<<std::endl;
