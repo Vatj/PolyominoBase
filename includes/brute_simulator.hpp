@@ -8,10 +8,14 @@ namespace interface_model
 
   int SammingDistance(uint16_t face1,uint16_t face2);
   void MutateInterfaces(std::vector<uint16_t>& binary_genome,double mu_prob);
-  void PlaceNextUnit(std::vector<uint16_t>& binary_genome,std::vector<uint16_t>& tile_types,std::vector<uint16_t>& faces,std::vector<int>& growing_perimeter,std::vector<int>& placed_tiles);
-  std::vector<int> ProteinAssembler(std::vector<uint16_t> binary_genome,double temperature);
+
+
+  int ProteinAssemblyOutcome(std::vector<uint16_t> binary_genome,uchar N_repeats);
+  std::vector<int> AssembleProtein(const std::vector<uint16_t>& binary_genome,double temperature);
+  void PlaceNextUnit(const std::vector<uint16_t>& binary_genome,std::vector<uint16_t>& tile_types,std::vector<uint16_t>& faces,std::vector<int>& growing_perimeter,std::vector<int>& placed_tiles,double temperature);
   void PerimeterGrowth(int x,int y,int theta,int direction, int tile_type,std::vector<int>& growing_perimeter,std::vector<int>& placed_tiles);
 
+  std::vector<int> SpatialGrid(std::vector<int>& placed_tiles, int& dx,int& dy);
 
 }
 namespace Brute_Force
