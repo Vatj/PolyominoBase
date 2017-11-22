@@ -652,7 +652,8 @@ bool Traverse_Numbered_Sterics(std::vector<int>& Spatial_Grid,int DELTA_X,int DE
   }
   return false;
 }
-  
+
+
 void Clockwise_Rotation(std::vector<int>& Spatial_Occupation,int DELTA_X,int DELTA_Y) {
   std::vector<int> swapper;
   for(int column=0;column<DELTA_X;++column) {

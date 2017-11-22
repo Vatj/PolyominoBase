@@ -5,77 +5,85 @@
 
 namespace interface_model
 {
-  std::random_device rd;
-  xorshift RNG_Engine(rd());
+  //std::random_device rd;
+  xorshift RNG_Engine(124124124);//rd());
 
-  typedef unsigned char uchar;
+  
   const static double FAIL_THRESHOLD=0.75;
-
-  inline uint16_t reverse(uint16_t v) {
-  v = ((v >> 1) & 0x5555) | ((v & 0x5555) << 1); /* swap odd/even bits */
-  v = ((v >> 2) & 0x3333) | ((v & 0x3333) << 2); /* swap bit pairs */
-  v = ((v >> 4) & 0x0F0F) | ((v & 0x0F0F) << 4); /* swap nibbles */
-  v = ((v >> 8) & 0x00FF) | ((v & 0x00FF) << 8); /* swap bytes */
-  return v;
+  
+  template<typename T> inline T reverse_bits(T v) {
+    T s = sizeof(v) * CHAR_BIT; // bit size; must be power of 2
+    //std::cout<<CHAR_BIT<<std::endl;
+    T mask = ~0;         
+    while ((s >>= 1) > 0) 
+      {
+        mask ^= (mask << s);
+        v = ((v >> s) & mask) | ((v << s) & ~mask);
+      }
+    return v;
   }
 
   int SammingDistance(uint16_t face1,uint16_t face2) {
-    return 16-__builtin_popcount(face1 ^ reverse(face2));
+    return 16-__builtin_popcount(face1 ^ reverse_bits<uint16_t>(face2));
   }
 
   void MutateInterfaces(std::vector<uint16_t>& binary_genome,double mu_prob) {
-    std::vector<uchar> interface_indices{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-    std::binomial_distribution<uchar> b_dist(interface_indices.size(),mu_prob);
+    std::vector<uint8_t> interface_indices{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+    std::binomial_distribution<uint8_t> b_dist(interface_indices.size(),mu_prob);
     for(uint16_t& base : binary_genome) {
       std::shuffle(interface_indices.begin(), interface_indices.end(), RNG_Engine);
-      uchar num_mutations= b_dist(RNG_Engine);
-      for(uchar nth=0;nth<num_mutations;++nth)
+      uint8_t num_mutations= b_dist(RNG_Engine);
+      for(uint8_t nth=0;nth<num_mutations;++nth)
         base ^= (1U << interface_indices[nth]);
     }
   }
 
 
-  int ProteinAssemblyOutcome(std::vector<uint16_t> binary_genome,uchar N_repeats) {
-    int dx,dy,dx_prime,dy_prime;
+  int ProteinAssemblyOutcome(std::vector<uint16_t> binary_genome,uint8_t N_repeats) {
+    uint8_t dx,dy,dx_prime,dy_prime;
     double temperature=1;
-    std::vector<int> assembly_information=AssembleProtein(binary_genome,temperature);
-    int UND_failures=assembly_information.size()==0 ? 1 : 0 ;
+    std::vector<int8_t> assembly_information=AssembleProtein(binary_genome,temperature);
+    
+    std::vector<int8_t> assembly_information_prime;
+    uint8_t UND_failures=assembly_information.size()==0 ? 1 : 0;
+    std::vector<uint8_t> spatial_information;
+    std::vector<uint8_t> spatial_information_prime;
     if(!assembly_information.empty()) {
-    assembly_information=SpatialGrid(assembly_information,dx,dy);
+    spatial_information=SpatialGrid(assembly_information,dx,dy);
 
-    for(int y=0;y<dy;++y) {
-      for(int x=0;x<dx;++x) {
-        std::cout<<assembly_information[y*dx+x]<<" ";
+    for(uint8_t y=0;y<dy;++y) {
+      for(uint8_t x=0;x<dx;++x) {
+        std::cout<<+spatial_information[y*dx+x]<<" ";
       }
       std::cout<<std::endl;
     }
     std::cout<<std::endl;
     }
 
-    for(uchar nth=0;nth<N_repeats;++nth) {
-      std::vector<int> assembly_information_prime=AssembleProtein(binary_genome,temperature);
+    for(uint8_t nth=0;nth<N_repeats;++nth) {
+      assembly_information_prime=AssembleProtein(binary_genome,temperature);
       if(assembly_information_prime.size()==0) {
         ++UND_failures;
         std::cout<<"skipping"<<std::endl;
         continue;
       }
       else {
-      assembly_information_prime=SpatialGrid(assembly_information_prime,dx_prime,dy_prime);
+      spatial_information_prime=SpatialGrid(assembly_information_prime,dx_prime,dy_prime);
 
-      for(int y=0;y<dy_prime;++y) {
-        for(int x=0;x<dx_prime;++x) {
-        std::cout<<assembly_information_prime[y*dx_prime+x]<<" ";
-      }
+      for(uint8_t y=0;y<dy_prime;++y) {
+        for(uint8_t x=0;x<dx_prime;++x) {
+          std::cout<<+spatial_information_prime[y*dx_prime+x]<<" ";
+        }
         std::cout<<std::endl;
-    }
+      }
       std::cout<<std::endl;
     
-      if(!Brute_Force::Compare_Two_Polyominoes_Shapes(assembly_information,dx,dy,assembly_information_prime,dx_prime,dy_prime))
+      if(!ComparePolyominoes(spatial_information,dx,dy,spatial_information_prime,dx_prime,dy_prime))
         ++UND_failures;      
       }
       if(UND_failures*1./N_repeats>FAIL_THRESHOLD)
         return -1;
-      assembly_information=assembly_information_prime;
+      spatial_information=spatial_information_prime;
       dx=dx_prime;
       dy=dy_prime;
     }
@@ -84,14 +92,15 @@ namespace interface_model
   }
   
 
-  std::vector<int> AssembleProtein(const std::vector<uint16_t>& binary_genome,double temperature) {
-    std::vector<uint16_t> faces{0,1,2,3};
-    std::vector<uint16_t> tile_types(binary_genome.size()/(4.));
+  std::vector<int8_t> AssembleProtein(const std::vector<uint16_t>& binary_genome,double temperature) {
+    std::vector<uint8_t> faces{0,1,2,3};
+    std::vector<uint8_t> tile_types(binary_genome.size()/(4.));
     std::iota(tile_types.begin(), tile_types.end(), 0);
-    std::vector<int> placed_tiles{0,0,0}; //(x,y,tile type, orientation)
-    std::vector<int> growing_perimeter; //(x,y,direction,tile type, orientation)
+    std::vector<int8_t> placed_tiles{0,0,0}; //(x,y,tile type, orientation)
+    std::vector<int8_t> growing_perimeter; //(x,y,direction,tile type, orientation)
     PerimeterGrowth(0,0,0,-1,0,growing_perimeter,placed_tiles);   
     while(!growing_perimeter.empty()) {
+      
       PlaceNextUnit(binary_genome,tile_types,faces,growing_perimeter,placed_tiles,temperature);  
       if(placed_tiles.size()>(binary_genome.size()*binary_genome.size()/4.)) {
         placed_tiles.clear();
@@ -101,56 +110,39 @@ namespace interface_model
     return placed_tiles;   
   }
     
-  void PlaceNextUnit(const std::vector<uint16_t>& binary_genome,std::vector<uint16_t>& tile_types,std::vector<uint16_t>& faces,std::vector<int>& growing_perimeter,std::vector<int>& placed_tiles,double temperature) {
+  void PlaceNextUnit(const std::vector<uint16_t>& binary_genome,std::vector<uint8_t>& tile_types,std::vector<uint8_t>& faces,std::vector<int8_t>& growing_perimeter,std::vector<int8_t>& placed_tiles,double temperature) {
     
-    int current_orientation=growing_perimeter.back();growing_perimeter.pop_back();
-    int current_tile=growing_perimeter.back();growing_perimeter.pop_back();
-    int current_direction=growing_perimeter.back();growing_perimeter.pop_back();
-    int current_y=growing_perimeter.back();growing_perimeter.pop_back();
-    int current_x=growing_perimeter.back();growing_perimeter.pop_back();
+    uint8_t current_orientation=growing_perimeter.back();growing_perimeter.pop_back();
+    uint8_t current_tile=growing_perimeter.back();growing_perimeter.pop_back();
+    uint8_t current_direction=growing_perimeter.back();growing_perimeter.pop_back();
+    int8_t current_y=growing_perimeter.back();growing_perimeter.pop_back();
+    int8_t current_x=growing_perimeter.back();growing_perimeter.pop_back();
     
     std::shuffle(tile_types.begin(), tile_types.end(), RNG_Engine);
     std::shuffle(faces.begin(), faces.end(), RNG_Engine);
 
     std::uniform_real_distribution<double> uniform(0, 1);
 
-    for(uint16_t tile : tile_types) {
-      for(uint16_t face : faces) {
-        uchar samming_energy=SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[tile*4+face]);
+    for(uint8_t tile : tile_types) {
+      for(uint8_t face : faces) {
+        uint8_t samming_energy=SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[tile*4+face]);
         //std::cout<<"H "<<binary_genome[current_tile*4+current_orientation]<<" ^ "<<reverse(binary_genome[tile*4+face])<<" ("<<binary_genome[tile*4+face]<<")  = "<<+samming_energy<<std::endl;
         //if(uniform(RNG_Engine)<std::exp(-1*samming_energy)) {
         //  std::cout<<"prob bind"<<std::endl;
         //}
         if(uniform(RNG_Engine)<std::exp(-1*samming_energy/temperature)) {
          
-          placed_tiles.insert(placed_tiles.end(),{current_x,current_y,tile});//,(4+current_direction-face)%4});
+          placed_tiles.insert(placed_tiles.end(),{current_x,current_y,static_cast<int8_t>(tile)});//,(4+current_direction-face)%4});
           PerimeterGrowth(current_x,current_y,(4+current_direction-face)%4,current_direction,tile,growing_perimeter,placed_tiles);
           return;
         }        
       }
     }
   }
-  
-  std::vector<int> SpatialGrid(std::vector<int>& placed_tiles, int& dx,int& dy) {
-    std::vector<int> x_locs, y_locs;
-    for(std::vector<int>::iterator check_iter = placed_tiles.begin();check_iter!=placed_tiles.end();check_iter+=3) {
-      x_locs.emplace_back(*check_iter);
-      y_locs.emplace_back(*(check_iter+1));
-    }
-    std::vector<int>::iterator LEFT_X_Check,RIGHT_X_Check,TOP_Y_Check,BOTTOM_Y_Check;
-    std::tie(LEFT_X_Check,RIGHT_X_Check)=std::minmax_element(x_locs.begin(),x_locs.end());
-    std::tie(BOTTOM_Y_Check,TOP_Y_Check)=std::minmax_element(y_locs.begin(),y_locs.end());
-    dx=*RIGHT_X_Check-*LEFT_X_Check+1;
-    dy=*TOP_Y_Check-*BOTTOM_Y_Check+1;
-    placed_tiles.assign(dx*dy,0);
-    for(unsigned int tileIndex=0;tileIndex<x_locs.size();++tileIndex)
-      placed_tiles[(*TOP_Y_Check-y_locs[tileIndex])*dx + (x_locs[tileIndex]-*LEFT_X_Check)]=1;
-    return placed_tiles;
-  }
 
-  void PerimeterGrowth(int x,int y,int theta,int direction, int tile_type,std::vector<int>& growing_perimeter,std::vector<int>& placed_tiles) {
-    int dx=0,dy=0;
-    for(int f=0;f<4;++f) {
+  void PerimeterGrowth(int8_t x,int8_t y,uint8_t theta,uint8_t direction, uint8_t tile_type,std::vector<int8_t>& growing_perimeter,std::vector<int8_t>& placed_tiles) {
+    int8_t dx=0,dy=0;
+    for(uint8_t f=0;f<4;++f) {
       if(direction==f)
         continue;
       switch(f) {
@@ -161,20 +153,74 @@ namespace interface_model
       }
       bool occupied_site=false;
       std::uniform_int_distribution<int> index_randomizer(0, growing_perimeter.size()/5);
-      for(std::vector<int>::iterator tile_info=placed_tiles.begin();tile_info!=placed_tiles.end();tile_info+=3) {
-        if(x+dx==*tile_info && y+dy==*(tile_info+1)) {
+      for(std::vector<int8_t>::reverse_iterator tile_info=placed_tiles.rbegin();tile_info!=placed_tiles.rend();tile_info+=3) {
+        if(x+dx==*(tile_info-2) && y+dy==*(tile_info-1)) {
           occupied_site=true;
           break;
         }
       }
       if(!occupied_site)
-        growing_perimeter.insert(growing_perimeter.begin()+5*index_randomizer(RNG_Engine),{x+dx,y+dy,(f+2)%4,tile_type,(4+f-theta)%4});      
+        growing_perimeter.insert(growing_perimeter.begin()+5*index_randomizer(RNG_Engine),{static_cast<int8_t>(x+dx),static_cast<int8_t>(y+dy),static_cast<int8_t>((f+2)%4),static_cast<int8_t>(tile_type),static_cast<int8_t>((4+f-theta)%4)});      
     }
+  }
+  
+  std::vector<uint8_t> SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,uint8_t& dy) {
+    std::vector<int8_t> x_locs, y_locs;
+    for(std::vector<int8_t>::iterator check_iter = placed_tiles.begin();check_iter!=placed_tiles.end();check_iter+=3) {
+      x_locs.emplace_back(*check_iter);
+      y_locs.emplace_back(*(check_iter+1));
+    }
+    std::vector<int8_t>::iterator LEFT_X_Check,RIGHT_X_Check,TOP_Y_Check,BOTTOM_Y_Check;
+    std::tie(LEFT_X_Check,RIGHT_X_Check)=std::minmax_element(x_locs.begin(),x_locs.end());
+    std::tie(BOTTOM_Y_Check,TOP_Y_Check)=std::minmax_element(y_locs.begin(),y_locs.end());
+    dx=*RIGHT_X_Check-*LEFT_X_Check+1;
+    dy=*TOP_Y_Check-*BOTTOM_Y_Check+1;
+    std::vector<uint8_t> spatial_grid(dx*dy); 
+    for(uint16_t tileIndex=0;tileIndex<x_locs.size();++tileIndex)
+      spatial_grid[(*TOP_Y_Check-y_locs[tileIndex])*dx + (x_locs[tileIndex]-*LEFT_X_Check)]=1;
+    return spatial_grid;
   }
 
   
 
-}
+  bool ComparePolyominoes(std::vector<uint8_t>& Spatial_Occupation_Check,uint8_t Delta_X_Check,uint8_t Delta_Y_Check, std::vector<uint8_t>& Spatial_Occupation_Compare,uint8_t Delta_X_Compare,uint8_t Delta_Y_Compare) {
+    if(std::accumulate(Spatial_Occupation_Check.begin(),Spatial_Occupation_Check.end(),0)!=std::accumulate(Spatial_Occupation_Compare.begin(),Spatial_Occupation_Compare.end(),0))
+      return false;
+    if(Delta_X_Check==Delta_X_Compare && Delta_Y_Check==Delta_Y_Compare && Delta_X_Check==Delta_Y_Check) { //bounding boxes match, symmetric
+      if(Spatial_Occupation_Check==Spatial_Occupation_Compare) 
+        return true;
+      else {
+        for(int rotation=0;rotation<3;++rotation) {
+          ClockwiseRotation(Spatial_Occupation_Check,Delta_X_Check,Delta_Y_Check);
+          if(Spatial_Occupation_Check==Spatial_Occupation_Compare)
+            return true;
+        }
+        return false;
+      }
+    }
+    if(Delta_X_Check==Delta_X_Compare && Delta_Y_Check==Delta_Y_Compare)  //bounding boxes match, asymmetric
+      return Spatial_Occupation_Check==Spatial_Occupation_Compare ? true : Spatial_Occupation_Check==ClockwisePiRotation(Spatial_Occupation_Compare);
+    if(Delta_X_Check==Delta_Y_Compare && Delta_Y_Check==Delta_X_Compare) { //bounding boxes pi/2 off, asymmetric
+      ClockwiseRotation(Spatial_Occupation_Check,Delta_X_Check,Delta_Y_Check);
+      return Spatial_Occupation_Check==Spatial_Occupation_Compare ? true : Spatial_Occupation_Check==ClockwisePiRotation(Spatial_Occupation_Compare);
+    }
+    return false;
+  }
+  void ClockwiseRotation(std::vector<uint8_t>& Spatial_Occupation,uint8_t& dx,uint8_t& dy) {
+    std::vector<uint8_t> swapper;
+    swapper.reserve(Spatial_Occupation.size());
+    for(uint8_t column=0;column<dx;++column) 
+      for(uint8_t row=dy;row!=0;--row) 
+        swapper.emplace_back(Spatial_Occupation[(row-1)*dx+column]);
+    std::swap(dx,dy);
+    Spatial_Occupation=swapper;
+ }
+  std::vector<uint8_t> ClockwisePiRotation(std::vector<uint8_t>& spatial_occupation) {
+    std::reverse(spatial_occupation.begin(),spatial_occupation.end());
+    return spatial_occupation;
+  }
+  
+}//end interface_model namespace
 
 namespace Brute_Force
 {
@@ -375,6 +421,7 @@ namespace Brute_Force
     }
     return return_code;
   }
+ 
   bool Compare_Two_Polyominoes_Shapes(std::vector<int>& Spatial_Occupation_Check,int Delta_X_Check,int Delta_Y_Check, std::vector<int>& Spatial_Occupation_Compare,int Delta_X_Compare,int Delta_Y_Compare) {
     if(std::accumulate(Spatial_Occupation_Check.begin(),Spatial_Occupation_Check.end(),0)!=std::accumulate(Spatial_Occupation_Compare.begin(),Spatial_Occupation_Compare.end(),0)) {
       return false;
@@ -686,17 +733,9 @@ int main(int argc, char* argv[]) {
       break;
 
     case 'Q':
-      test_genome=interface_model::AssembleProtein(g,1);
+      //test_genome=interface_model::AssembleProtein(g,1);
       std::cout<<interface_model::ProteinAssemblyOutcome(g,10)<<std::endl;
-      for(int x:test_genome) {
-        std::cout<<x<<" ";
-        ++p;
-        if(p==4) {
-          std::cout<<"|| ";
-          p=0;
-        }
-      }
-      std::cout<<std::endl;
+
       break;
     case 'H':
       std::cout<<"Brute Tile running options\n -R [# runs] [run #] for topology robustness\n -C [# tiles] [# runs] for brute v graph comparison\n -S [# tiles] [# runs] for run selection\n"<<std::endl;

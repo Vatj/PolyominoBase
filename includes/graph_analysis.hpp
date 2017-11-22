@@ -21,7 +21,9 @@ bool Traverse_Numbered_Sterics(std::vector<int>& Spatial_Grid,int DELTA_X,int DE
 /////////////
 //ROTATIONS//
 /////////////
+
 void Clockwise_Pi_Rotation(std::vector<int>& Spatial_Occupation,int DELTA_X,int DELTA_Y);
+
 void Clockwise_Rotation(std::vector<int>& Spatial_Occupation,int DELTA_X,int DELTA_Y);
 
 

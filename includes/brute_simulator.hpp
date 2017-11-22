@@ -1,22 +1,26 @@
 #include "graph_analysis.hpp"
 #include "stdint.h"
+#include "limits.h"
 
 namespace interface_model
 {
 
-  typedef unsigned char uchar;
-
+  template<typename T> inline T reverse_bits(T v);
   int SammingDistance(uint16_t face1,uint16_t face2);
   void MutateInterfaces(std::vector<uint16_t>& binary_genome,double mu_prob);
 
 
-  int ProteinAssemblyOutcome(std::vector<uint16_t> binary_genome,uchar N_repeats);
-  std::vector<int> AssembleProtein(const std::vector<uint16_t>& binary_genome,double temperature);
-  void PlaceNextUnit(const std::vector<uint16_t>& binary_genome,std::vector<uint16_t>& tile_types,std::vector<uint16_t>& faces,std::vector<int>& growing_perimeter,std::vector<int>& placed_tiles,double temperature);
-  void PerimeterGrowth(int x,int y,int theta,int direction, int tile_type,std::vector<int>& growing_perimeter,std::vector<int>& placed_tiles);
+  int ProteinAssemblyOutcome(std::vector<uint16_t> binary_genome,uint8_t N_repeats);
+  
+  std::vector<int8_t> AssembleProtein(const std::vector<uint16_t>& binary_genome,double temperature);
+  void PlaceNextUnit(const std::vector<uint16_t>& binary_genome,std::vector<uint8_t>& tile_types,std::vector<uint8_t>& faces,std::vector<int8_t>& growing_perimeter,std::vector<int8_t>& placed_tiles,double temperature);
+  
+  void PerimeterGrowth(int8_t x,int8_t y,uint8_t theta,uint8_t direction, uint8_t tile_type,std::vector<int8_t>& growing_perimeter,std::vector<int8_t>& placed_tiles);
+  std::vector<uint8_t> SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,uint8_t& dy);
 
-  std::vector<int> SpatialGrid(std::vector<int>& placed_tiles, int& dx,int& dy);
-
+  bool ComparePolyominoes(std::vector<uint8_t>& Spatial_Occupation_Check,uint8_t Delta_X_Check,uint8_t Delta_Y_Check, std::vector<uint8_t>& Spatial_Occupation_Compare,uint8_t Delta_X_Compare,uint8_t Delta_Y_Compare);
+  void ClockwiseRotation(std::vector<uint8_t>& Spatial_Occupation,uint8_t& DELTA_X,uint8_t& DELTA_Y);
+  std::vector<uint8_t> ClockwisePiRotation(std::vector<uint8_t>& spatial_occupation);
 }
 namespace Brute_Force
 {
@@ -26,6 +30,8 @@ namespace Brute_Force
   int Analyse_Genotype_Outcome(std::vector<int> genome, int N_Repeated_Checks);
   bool Unbound_Deterministic_Check(std::vector<int>& Spatial_Occupation,int Delta_X,int Delta_Y);
   std::vector<int> Generate_Spatial_Occupancy(std::vector<int>& Placed_Tiles_Check, int& DELTA_X_Check,int& DELTA_Y_Check,int generate_mode);
+  
+
   bool Compare_Two_Polyominoes_Shapes(std::vector<int>& Spatial_Occupation_Check,int Delta_X_Check,int Delta_Y_Check, std::vector<int>& Spatial_Occupation_Compare,int Delta_X_Compare,int Delta_Y_Compare);
 
   int Compare_Two_Polyominoes_Tile_Details(std::vector<int>& Placed_Tiles_Check,std::vector<int>& Placed_Tiles_Compare);
