@@ -1,6 +1,6 @@
 #include "graph_analysis.hpp"
 #include "stdint.h"
-#include "limits.h"
+//#include "limits.h"
 
 namespace interface_model
 {
@@ -18,7 +18,7 @@ namespace interface_model
   void PerimeterGrowth(int8_t x,int8_t y,uint8_t theta,uint8_t direction, uint8_t tile_type,std::vector<int8_t>& growing_perimeter,std::vector<int8_t>& placed_tiles);
   std::vector<uint8_t> SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,uint8_t& dy);
 
-  bool ComparePolyominoes(std::vector<uint8_t>& Spatial_Occupation_Check,uint8_t Delta_X_Check,uint8_t Delta_Y_Check, std::vector<uint8_t>& Spatial_Occupation_Compare,uint8_t Delta_X_Compare,uint8_t Delta_Y_Compare);
+  bool ComparePolyominoes(std::vector<uint8_t>& Spatial_Occupation_Check,uint8_t& Delta_X_Check,uint8_t& Delta_Y_Check, std::vector<uint8_t>& Spatial_Occupation_Compare,uint8_t& Delta_X_Compare,uint8_t& Delta_Y_Compare);
   void ClockwiseRotation(std::vector<uint8_t>& Spatial_Occupation,uint8_t& DELTA_X,uint8_t& DELTA_Y);
   std::vector<uint8_t> ClockwisePiRotation(std::vector<uint8_t>& spatial_occupation);
 }

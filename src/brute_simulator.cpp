@@ -41,7 +41,7 @@ namespace interface_model
 
   int ProteinAssemblyOutcome(std::vector<uint16_t> binary_genome,uint8_t N_repeats) {
     uint8_t dx,dy,dx_prime,dy_prime;
-    double temperature=1;
+    double temperature=0.1;
     std::vector<int8_t> assembly_information=AssembleProtein(binary_genome,temperature);
     
     std::vector<int8_t> assembly_information_prime;
@@ -111,27 +111,19 @@ namespace interface_model
   }
     
   void PlaceNextUnit(const std::vector<uint16_t>& binary_genome,std::vector<uint8_t>& tile_types,std::vector<uint8_t>& faces,std::vector<int8_t>& growing_perimeter,std::vector<int8_t>& placed_tiles,double temperature) {
-    
     uint8_t current_orientation=growing_perimeter.back();growing_perimeter.pop_back();
     uint8_t current_tile=growing_perimeter.back();growing_perimeter.pop_back();
     uint8_t current_direction=growing_perimeter.back();growing_perimeter.pop_back();
     int8_t current_y=growing_perimeter.back();growing_perimeter.pop_back();
     int8_t current_x=growing_perimeter.back();growing_perimeter.pop_back();
-    
     std::shuffle(tile_types.begin(), tile_types.end(), RNG_Engine);
     std::shuffle(faces.begin(), faces.end(), RNG_Engine);
-
     std::uniform_real_distribution<double> uniform(0, 1);
 
     for(uint8_t tile : tile_types) {
       for(uint8_t face : faces) {
         uint8_t samming_energy=SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[tile*4+face]);
-        //std::cout<<"H "<<binary_genome[current_tile*4+current_orientation]<<" ^ "<<reverse(binary_genome[tile*4+face])<<" ("<<binary_genome[tile*4+face]<<")  = "<<+samming_energy<<std::endl;
-        //if(uniform(RNG_Engine)<std::exp(-1*samming_energy)) {
-        //  std::cout<<"prob bind"<<std::endl;
-        //}
         if(uniform(RNG_Engine)<std::exp(-1*samming_energy/temperature)) {
-         
           placed_tiles.insert(placed_tiles.end(),{current_x,current_y,static_cast<int8_t>(tile)});//,(4+current_direction-face)%4});
           PerimeterGrowth(current_x,current_y,(4+current_direction-face)%4,current_direction,tile,growing_perimeter,placed_tiles);
           return;
@@ -181,9 +173,7 @@ namespace interface_model
     return spatial_grid;
   }
 
-  
-
-  bool ComparePolyominoes(std::vector<uint8_t>& Spatial_Occupation_Check,uint8_t Delta_X_Check,uint8_t Delta_Y_Check, std::vector<uint8_t>& Spatial_Occupation_Compare,uint8_t Delta_X_Compare,uint8_t Delta_Y_Compare) {
+  bool ComparePolyominoes(std::vector<uint8_t>& Spatial_Occupation_Check,uint8_t& Delta_X_Check,uint8_t& Delta_Y_Check, std::vector<uint8_t>& Spatial_Occupation_Compare,uint8_t& Delta_X_Compare,uint8_t& Delta_Y_Compare) {
     if(std::accumulate(Spatial_Occupation_Check.begin(),Spatial_Occupation_Check.end(),0)!=std::accumulate(Spatial_Occupation_Compare.begin(),Spatial_Occupation_Compare.end(),0))
       return false;
     if(Delta_X_Check==Delta_X_Compare && Delta_Y_Check==Delta_Y_Compare && Delta_X_Check==Delta_Y_Check) { //bounding boxes match, symmetric
