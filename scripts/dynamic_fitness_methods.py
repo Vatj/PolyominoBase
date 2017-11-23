@@ -61,29 +61,52 @@ def SolutionCDF(needle_length=30,A=2,mu=4,O=3,runs=1):
 
     print "seen {} times for a fraction of {}".format(occ,occ*1./runs)
     return firsts
-
+x=[]
 def SolutionCDF_Partials(pop_amount=500,A=2,mu=4,O=3,runs=1):
     firsts=np.zeros((runs,4))
     Mu_Sets={32:'0.001563',16:'0.003125',8:'0.006250',4:'0.012500',1:'0.050000'}
      
     
     for r in xrange(runs):
-        subfile_name='A{}_T20_C200_N1000_Mu{}_O{}_K10000_I0_Run{}'.format(A,Mu_Sets[mu],O,r)
-        fitness_import=np.loadtxt('/scratch/asl47/Data_Runs/Dynamic_V2/{}_Fitness.txt'.format(subfile_name))
+
+        subfile_name='A{}_T20_C200_N1000_Mu{}_O{}_K50000_I0_Run{}'.format(A,Mu_Sets[mu],O,r)
+        fitness_import=np.loadtxt('/scratch/asl47/Data_Runs/Dynamic_T2/Mu{}/{}_Fitness.txt'.format(mu,subfile_name))
+        
         #return fitness_import
         try:
-            single_targets= (fitness_import[:,4:7]>pop_amount).argmax(axis=0)
-            single_target=single_targets[np.nonzero(single_targets)].min()
             
-            double_targets= (fitness_import[:,1:4]>pop_amount).argmax(axis=0)
-            double_target=double_targets[np.nonzero(double_targets)].min()
+        
+            triple_target=np.argmax(fitness_import[:,0]>=pop_amount)
+            if triple_target==0 and fitness_import.shape[0]!=50000:
+                raise Exception
 
-            triple_target=np.argmax(fitness_import[:,0]>pop_amount)
 
+            
+            double_targets= (fitness_import[:,1:4]>=pop_amount).argmax(axis=0)
+            if np.any(double_targets):
+                double_target=double_targets[np.nonzero(double_targets)].min()
+            else:
+                double_target=triple_target
+            
+                
+            single_targets= (fitness_import[:,4:7]>=pop_amount).argmax(axis=0)
+            if np.any(single_targets):
+                single_target=single_targets[np.nonzero(single_targets)].min()
+            else:
+                single_target=double_target
+
+            
+            
             if triple_target!=0:
                 firsts[r]=np.array([0,single_target,double_target,triple_target])
-        except:
-            pass
+        
+            
+        except Exception as e:
+            print r,"excepted",fitness_import.shape
+        
+
+
+            
     return firsts[~np.all(firsts == 0, axis=1)]
 
 def DifferentialDiscovery(target_times):

@@ -359,27 +359,27 @@ def Plot_Method_Testing(Ts,R):
     for K in Ks:
         S_ax.plot([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),markeredgecolor=k_colours[K],ls='',markeredgewidth=1.25,markerfacecolor='none',marker=K_ms[K],markersize=7,zorder=z_orders[K])
         
-        S_ax.plot([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),c=k_colours[K],ls='--',lw=0.75,alpha=0.75,zorder=z_orders[K])
-        S_ax.errorbar([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),yerr=np.std(results[K],axis=1,ddof=1)/np.sqrt(R),c=k_colours[K],ls='--',zorder=z_orders[K],lw=2)
+        S_ax.plot([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),c=k_colours[K],ls='',lw=0.75,alpha=0.75,zorder=z_orders[K])
+        S_ax.errorbar([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),yerr=np.std(results[K],axis=1,ddof=1)/np.sqrt(R),c=k_colours[K],ls='',zorder=z_orders[K],lw=2)
 
     results=accuracy_list[2]
     for K in Ks:
         A_ax.plot([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),markeredgecolor=k_colours[K],ls='',markeredgewidth=1.25,markerfacecolor='none',marker=K_ms[K],markersize=7,zorder=z_orders[K])
         
-        A_ax.plot([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),c=k_colours[K],ls='--',lw=0.75,alpha=0.75,zorder=z_orders[K])
-        A_ax.errorbar([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),yerr=np.std(results[K],axis=1,ddof=1)/np.sqrt(R),c=k_colours[K],ls='--',zorder=z_orders[K],lw=2)
+        A_ax.plot([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),c=k_colours[K],ls='',lw=0.75,alpha=0.75,zorder=z_orders[K])
+        A_ax.errorbar([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),yerr=np.std(results[K],axis=1,ddof=1)/np.sqrt(R),c=k_colours[K],ls='',zorder=z_orders[K],lw=2)
 
     S_ax.xaxis.set(ticks=[T*4 for T in xrange(1,Ts+1)],ticklabels=[T for T in xrange(1,Ts+1)])
     A_ax.xaxis.set(ticks=[T*4 for T in xrange(1,Ts+1)],ticklabels=[T for T in xrange(1,Ts+1)])
     S_ax.set_yscale('log',nonposy='mask')
     A_ax.set_yscale('log',nonposy='mask')
 
-    A_ax.set_xlabel(r'$N_{T}$')
+    A_ax.set_xlabel(r'$N$')
     A_ax.set_ylabel(r'Misclassifications')
     S_ax.set_ylabel(r'CPU Time (s)')
 
-    S_ax.text(8,65,'K=10',ha='left',va='bottom',fontsize=15)
-    S_ax.text(8,6.1,'Graph',ha='left',va='top',fontsize=15)
+    S_ax.text(10,65,'K=10',ha='left',va='bottom',fontsize=15)
+    S_ax.text(10,6.1,'Graph',ha='left',va='top',fontsize=15)
 
     plt.figure()
     results=timing_list[2]
@@ -390,5 +390,5 @@ def Plot_Method_Testing(Ts,R):
     
 
     plt.show(block=False)
-    return accuracy_list[2]
+    #return accuracy_list[2]
 

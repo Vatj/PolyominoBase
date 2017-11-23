@@ -5,6 +5,7 @@ CXX         := g++
 EV_TARGET  := EvolutionSimulator
 BR_TARGET   := StochasticAssembler
 PR_TARGET   := BulkProcessor
+PE_TARGET   := ProteinEvolution
 
 
 #The Directories, Source, Includes, Objects, Binary and Resources
@@ -27,12 +28,14 @@ INCDEP      := -I$(INCDIR)
 COMMON_SOURCES     := $(shell find $(SRCDIR) -type f -name graph_*.$(SRCEXT)) $(SRCDIR)/xorshift.$(SRCEXT)
 EV_SOURCES   := $(shell find $(SRCDIR) -type f -name evolution_*.$(SRCEXT))
 BR_SOURCES := $(shell find $(SRCDIR) -type f -name brute_*.$(SRCEXT)) 
-PR_SOURCES := $(shell find $(SRCDIR) -type f -name processing_*.$(SRCEXT)) 
+PR_SOURCES := $(shell find $(SRCDIR) -type f -name processing_*.$(SRCEXT))
+PE_SOURCES := $(shell find $(SRCDIR) -type f -name interface_*.$(SRCEXT)) 
 
 COMMON_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(COMMON_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 EV_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(EV_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 BR_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(BR_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 PR_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(PR_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
+PE_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(PE_SOURCES:.$(SRCEXT)=.$(OBJEXT))) $(BUILDDIR)/xorshift.$(OBJEXT)
 
 #Default Make
 all: Ev Br Pr
@@ -45,6 +48,8 @@ clean:
 -include $(COMMON_OBJECTS:.$(OBJEXT)=.$(DEPEXT))
 -include $(EV_OBJECTS:.$(OBJEXT)=.$(DEPEXT))
 -include $(BR_OBJECTS:.$(OBJEXT)=.$(DEPEXT))
+-include $(PR_OBJECTS:.$(OBJEXT)=.$(DEPEXT))
+-include $(PE_OBJECTS:.$(OBJEXT)=.$(DEPEXT))
 
 #Link
 #$(TARGET): $(OBJECTS)
@@ -60,7 +65,11 @@ Br: $(BR_OBJECTS) $(COMMON_OBJECTS)
 
 Pr: $(PR_OBJECTS) $(COMMON_OBJECTS)
 	@mkdir -p $(TARGETDIR)
-	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(PR_TARGET) $^
+	$(CXX) $(CXXFLAGS)  -o $(TARGETDIR)/$(PR_TARGET) $^
+
+Pe: $(PE_OBJECTS)
+	@mkdir -p $(TARGETDIR)
+	$(CXX) $(CXXFLAGS)  -o $(TARGETDIR)/$(PE_TARGET) $^
 
 #Compile
 $(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
@@ -73,4 +82,4 @@ $(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 	@rm -f $(BUILDDIR)/$*.$(DEPEXT).tmp
 
 #Non-File Targets
-.PHONY: all clean Ev Br Pr
+.PHONY: all clean Ev Br Pr Pe
