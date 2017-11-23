@@ -1,10 +1,11 @@
-#include <cstdint>
 #include <limits>
+#include "stdint.h"
+#include <random>
 
 
 class xorshift {
 public:
-    typedef std::uint32_t result_type;
+    typedef uint32_t result_type;
 
     struct state_type {
         result_type x;

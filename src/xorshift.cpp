@@ -1,11 +1,12 @@
 #include "xorshift.hpp"
+static std::random_device rd;
 
 static const xorshift::state_type s_default_seed = {
     123456789, 362436069, 521288629, 88675123
 };
 
 xorshift::xorshift(void)
-    : state_(s_default_seed)
+  : state_({s_default_seed.x, s_default_seed.y, s_default_seed.z, rd()})//s_default_seed)
 {}
 
 xorshift::xorshift(const state_type &seed)
