@@ -56,29 +56,31 @@ namespace interface_model
     uint8_t dx,dy,dx_prime,dy_prime;
     std::vector<int8_t> assembly_information=AssembleProtein(binary_genome),assembly_information_prime;
     std::vector<uint8_t> spatial_information,spatial_information_prime;
-    uint8_t UND_failures=0;
     std::vector<uint8_t> phenotype_IDs;phenotype_IDs.reserve(N_repeats);
 
-
-    if(!assembly_information.empty())
+    if(assembly_information.empty())
+      phenotype_IDs.emplace_back(0);
+    else {
       spatial_information=SpatialGrid(assembly_information,dx,dy);
-    else
-      phenotype_IDs.emplace_back(-1);
+      phenotype_IDs.emplace_back(pt->PhenotypeCheck(spatial_information,dx,dy));
+    }
+
+    
+
+      
 
     for(uint8_t nth=0;nth<N_repeats;++nth) {
       assembly_information_prime=AssembleProtein(binary_genome);
-      if(!assembly_information_prime.empty()) {
+      if(assembly_information_prime.empty())
+	phenotype_IDs.emplace_back(0);
+      else {
         spatial_information_prime=SpatialGrid(assembly_information_prime,dx_prime,dy_prime);
-        if(!ComparePolyominoes(spatial_information,dx,dy,spatial_information_prime,dx_prime,dy_prime))
-          ++UND_failures;
+	phenotype_IDs.emplace_back(pt->PhenotypeCheck(spatial_information_prime,dx_prime,dy_prime));
       }
-      else 
-        ++UND_failures;
+
       
-      if(UND_failures*1./N_repeats>FAIL_THRESHOLD)
-        return 0;      
     }
-    return UND_failures*1./N_repeats>FAIL_THRESHOLD ? 0 : 1;
+    return pt->GenotypeFitness(phenotype_IDs);
     
   }
   
@@ -114,9 +116,7 @@ namespace interface_model
 
         }
       }
-      endplacing:
-
-      
+      endplacing:      
       if(placed_tiles.size()>(binary_genome.size()*binary_genome.size()/4.)) {
         placed_tiles.clear();
         break;

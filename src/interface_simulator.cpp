@@ -8,10 +8,11 @@
 void EvolvePopulation(const int pop_size) {
 
   //initialise pool of genomes (all zeroed)
+  
   std::vector< std::vector<interface_model::interface_type> > v(pop_size, std::vector<interface_model::interface_type>(16, 0));
 
   
-
+  /*
   for(std::vector<interface_model::interface_type>& g : v) {
     for(interface_model::interface_type b : g) {
       std::cout<<b<<" ";
@@ -25,16 +26,20 @@ void EvolvePopulation(const int pop_size) {
     std::cout<<std::endl;
   }
   }
+  */
+  std::vector<uint16_t> g{0,0,0,0, 65535,31,3,31, 31,31,100,16383, 31,31,31,55807};
+  interface_model::PhenotypeTable pt = interface_model::PhenotypeTable();
+  std::cout<<"N_p "<<pt.n_phenotypes<<std::endl;
+  interface_model::ProteinAssemblyOutcome(g,10,&pt);
 
-  interface_model::PhenotypeTable pt;
+  
   std::vector<uint8_t> ps{1,1,1,1};
   std::vector<uint8_t> ps2{1,1,1,0};
   
-  pt.PhenotypeCheck(ps,2,2);
+  //pt.PhenotypeCheck(ps,2,2);
 
   std::cout<<"N_P "<<pt.n_phenotypes<<std::endl;
-  pt.PhenotypeCheck(ps2,2,2);
-  std::cout<<"N_P "<<pt.n_phenotypes<<std::endl;
+
 }
   
  
@@ -42,11 +47,12 @@ void EvolvePopulation(const int pop_size) {
 
 
 int main(int argc, char* argv[]) {
-  EvolvePopulation(std::stoi(argv[1]));
+  params::temperature=std::stod(argv[1]);
+  EvolvePopulation(std::stoi(argv[2]));
   return 0;
 
   std::vector<uint16_t> g{0,0,0,0, 65535,31,3,31, 31,31,100,16383, 31,31,31,55807};
-  params::temperature=std::stod(argv[1]);
+  
 
 
 

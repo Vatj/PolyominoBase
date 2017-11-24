@@ -55,12 +55,16 @@ namespace interface_model
     std::vector<uint8_t> known_phenotypes;
     std::vector<double> phenotype_fitnesses;
 
-    PhenotypeTable(void) : n_phenotypes(0) {known_phenotypes.reserve(1000);phenotype_fitnesses.reserve(1000);};
+    PhenotypeTable(void) : n_phenotypes(0) {known_phenotypes.reserve(1000);phenotype_fitnesses.reserve(1000); phenotype_fitnesses.emplace_back(0);};
+
 
     uint16_t PhenotypeCheck(std::vector<uint8_t>& phenotype, uint8_t dx, uint8_t dy) {
-      int phenotype_ID=0;
+      int phenotype_ID=1;
+      std::cout<<"pere"<<std::endl;
       std::vector<uint8_t> temp_phenotype;
-      for(std::vector<uint8_t>::const_iterator phen_iter = known_phenotypes.begin();phen_iter!=known_phenotypes.end();) {
+      std::cout<<"Size: "<< known_phenotypes.size()<<std::endl;
+      for(std::vector<uint8_t>::iterator phen_iter = known_phenotypes.begin();phen_iter!=known_phenotypes.end();) {
+	std::cout<<"xere"<<std::endl;
         temp_phenotype.assign(phen_iter+2,phen_iter+2+*phen_iter* *(phen_iter+1));
         if(ComparePolyominoes(phenotype,dx,dy,temp_phenotype,*phen_iter,*(phen_iter+1)))
           return phenotype_ID;
@@ -69,11 +73,20 @@ namespace interface_model
       }      
       known_phenotypes.emplace_back(dx);
       known_phenotypes.emplace_back(dy);
+      
       known_phenotypes.insert(known_phenotypes.end(),phenotype.begin(),phenotype.end());
       phenotype_fitnesses.emplace_back(params::real_dist(RNG_Engine));
       ++n_phenotypes;
       return phenotype_ID;
     }
+    double GenotypeFitness(std::vector<uint8_t>& phenotype_IDs) {
+      double fitness=0;
+      for(std::vector<uint8_t>::const_iterator ID = phenotype_IDs.begin(); ID != phenotype_IDs.end(); ++ID) {
+	fitness+=phenotype_fitnesses[*ID];
+      }
+      return fitness;
+    }
+      
 
   };
 }
