@@ -8,6 +8,7 @@
 #include <tuple>
 #include <array>
 #include <numeric>
+#include <unordered_map>
 
 		
 
@@ -60,11 +61,8 @@ namespace interface_model
 
     uint16_t PhenotypeCheck(std::vector<uint8_t>& phenotype, uint8_t dx, uint8_t dy) {
       int phenotype_ID=1;
-      std::cout<<"pere"<<std::endl;
       std::vector<uint8_t> temp_phenotype;
-      std::cout<<"Size: "<< known_phenotypes.size()<<std::endl;
       for(std::vector<uint8_t>::iterator phen_iter = known_phenotypes.begin();phen_iter!=known_phenotypes.end();) {
-	std::cout<<"xere"<<std::endl;
         temp_phenotype.assign(phen_iter+2,phen_iter+2+*phen_iter* *(phen_iter+1));
         if(ComparePolyominoes(phenotype,dx,dy,temp_phenotype,*phen_iter,*(phen_iter+1)))
           return phenotype_ID;
@@ -81,9 +79,22 @@ namespace interface_model
     }
     double GenotypeFitness(std::vector<uint8_t>& phenotype_IDs) {
       double fitness=0;
-      for(std::vector<uint8_t>::const_iterator ID = phenotype_IDs.begin(); ID != phenotype_IDs.end(); ++ID) {
-	fitness+=phenotype_fitnesses[*ID];
+      std::cout<<"IDs :";
+      std::unordered_map<uint8_t,uint16_t> ID_counter;
+      for(std::vector<uint8_t>::const_iterator ID_iter = phenotype_IDs.begin(); ID_iter!=phenotype_IDs.end(); ++ID_iter)
+        ++ID_counter[*ID_iter];
+
+      for(std::unordered_map<uint8_t,uint16_t>::iterator frequency_iter =ID_counter.begin();frequency_iter!=ID_counter.end();++frequency_iter) {
+	fitness+=phenotype_fitnesses[frequency_iter->first]*frequency_iter->second /phenotype_IDs.size();
+	std::cout<<"ID "<<+frequency_iter->first<<" count "<<+frequency_iter->second<<std::endl;
       }
+
+	
+      //for(std::vector<uint8_t>::const_iterator ID = phenotype_IDs.begin(); ID != phenotype_IDs.end(); ++ID) {
+      //fitness+=phenotype_fitnesses[*ID];
+      //	std::cout<<+*ID<<" ";
+      //}
+      std::cout<<"\n";
       return fitness;
     }
       

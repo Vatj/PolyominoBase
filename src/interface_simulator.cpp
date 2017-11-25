@@ -8,8 +8,10 @@
 void EvolvePopulation(const int pop_size) {
 
   //initialise pool of genomes (all zeroed)
+  uint32_t GENERATION_LIMIT=10;
   
   std::vector< std::vector<interface_model::interface_type> > v(pop_size, std::vector<interface_model::interface_type>(16, 0));
+  std::vector<double> population_fitnesses(pop_size);
 
   
   /*
@@ -27,16 +29,17 @@ void EvolvePopulation(const int pop_size) {
   }
   }
   */
-  std::vector<uint16_t> g{0,0,0,0, 65535,31,3,31, 31,31,100,16383, 31,31,31,55807};
-  interface_model::PhenotypeTable pt = interface_model::PhenotypeTable();
-  std::cout<<"N_p "<<pt.n_phenotypes<<std::endl;
-  interface_model::ProteinAssemblyOutcome(g,10,&pt);
+  std::vector<uint16_t> g{0,0,0,0, 0,0,0,0};//{0,0,0,0, 65535,31,3,31, 31,31,100,16383, 31,31,31,55807};
 
+  interface_model::PhenotypeTable pt = interface_model::PhenotypeTable();
+  for(uint32_t generation=0;generation<GENERATION_LIMIT;++generation) {
+    std::cout<<"fitness "<<interface_model::ProteinAssemblyOutcome(g,10,&pt)<<std::endl;
+    interface_model::MutateInterfaces(g);
   
-  std::vector<uint8_t> ps{1,1,1,1};
-  std::vector<uint8_t> ps2{1,1,1,0};
+  }
   
-  //pt.PhenotypeCheck(ps,2,2);
+  
+  
 
   std::cout<<"N_P "<<pt.n_phenotypes<<std::endl;
 

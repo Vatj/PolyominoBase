@@ -6,7 +6,7 @@
 namespace params
 {
 
-  double temperature=1,mu_prob=0.2;
+  double temperature=1,mu_prob=0.2,unbound_factor=2;
   uint8_t interface_size=16;
   std::vector<uint8_t> interface_indices{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
   //std::array<uint8_t, 16> interface_indices{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
@@ -18,13 +18,7 @@ namespace params
 
 namespace interface_model
 {
-
-  
-
-  
   xorshift RNG_Engine;  
-
-  const static double FAIL_THRESHOLD=0.25;
   
   inline interface_type reverse_bits(interface_type v) {
     interface_type s = sizeof(v) * 8; // bit size; must be power of 2
@@ -45,7 +39,6 @@ namespace interface_model
     std::vector<uint8_t> interface_indices{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
     for(interface_type& base : binary_genome) {
       std::shuffle(interface_indices.begin(), interface_indices.end(), RNG_Engine);
-      //uint8_t num_mutations= ;
       for(uint8_t nth=0;nth<params::b_dist(RNG_Engine);++nth)
         base ^= (1U << interface_indices[nth]);
     }
@@ -63,13 +56,9 @@ namespace interface_model
     else {
       spatial_information=SpatialGrid(assembly_information,dx,dy);
       phenotype_IDs.emplace_back(pt->PhenotypeCheck(spatial_information,dx,dy));
-    }
+    } 
 
-    
-
-      
-
-    for(uint8_t nth=0;nth<N_repeats;++nth) {
+    for(uint8_t nth=1;nth<N_repeats;++nth) {
       assembly_information_prime=AssembleProtein(binary_genome);
       if(assembly_information_prime.empty())
 	phenotype_IDs.emplace_back(0);
@@ -77,8 +66,6 @@ namespace interface_model
         spatial_information_prime=SpatialGrid(assembly_information_prime,dx_prime,dy_prime);
 	phenotype_IDs.emplace_back(pt->PhenotypeCheck(spatial_information_prime,dx_prime,dy_prime));
       }
-
-      
     }
     return pt->GenotypeFitness(phenotype_IDs);
     
@@ -117,7 +104,7 @@ namespace interface_model
         }
       }
       endplacing:      
-      if(placed_tiles.size()>(binary_genome.size()*binary_genome.size()/4.)) {
+      if(placed_tiles.size()>(params::unbound_factor*binary_genome.size()*binary_genome.size()/4.)) {
         placed_tiles.clear();
         break;
       }
