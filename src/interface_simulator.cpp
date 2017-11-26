@@ -37,7 +37,15 @@ void EvolvePopulation(const int pop_size) {
     interface_model::MutateInterfaces(g);
   
   }
-  
+
+  /* TO DO
+
+     STORE FITNESS
+     SELECTION
+     
+     SYMMETRY OF INTERFACE
+
+   */
   
   
 
