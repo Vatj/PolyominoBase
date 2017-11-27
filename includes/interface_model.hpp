@@ -78,24 +78,39 @@ namespace interface_model
       return phenotype_ID;
     }
     double GenotypeFitness(std::vector<uint8_t>& phenotype_IDs) {
-      double fitness=0;
-      std::cout<<"IDs :";
+      //std::cout<<"IDs :";
       std::unordered_map<uint8_t,uint16_t> ID_counter;
       for(std::vector<uint8_t>::const_iterator ID_iter = phenotype_IDs.begin(); ID_iter!=phenotype_IDs.end(); ++ID_iter)
         ++ID_counter[*ID_iter];
-
+      
+      if(ID_counter.size()==1) 
+        return phenotype_fitnesses[ID_counter.begin()->first];
+      
+      double fitness=0,fitness_normalisation=0;
+      /*
+      std::cout<<"IDs ";
       for(std::unordered_map<uint8_t,uint16_t>::iterator frequency_iter =ID_counter.begin();frequency_iter!=ID_counter.end();++frequency_iter) {
-	fitness+=phenotype_fitnesses[frequency_iter->first]*frequency_iter->second /phenotype_IDs.size();
-	std::cout<<"ID "<<+frequency_iter->first<<" count "<<+frequency_iter->second<<std::endl;
+        std::cout<<"ID "<<+frequency_iter->first<<" count "<<+frequency_iter->second<<" fitness "<<phenotype_fitnesses[frequency_iter->first]<<std::endl;
+ 
       }
+      std::cout<<"\n";
+      */
+      for(std::unordered_map<uint8_t,uint16_t>::iterator frequency_iter =ID_counter.begin();frequency_iter!=ID_counter.end();++frequency_iter) {
+        fitness+=phenotype_fitnesses[frequency_iter->first] * std::pow(static_cast<double>(frequency_iter->second)/phenotype_IDs.size(),2);
+	//fitness+=phenotype_fitnesses[frequency_iter->first] * std::log(1-static_cast<double>(frequency_iter->second)/phenotype_IDs.size());//frequency_iter->second /phenotype_IDs.size();
+        //fitness_normalisation+=std::log(1-static_cast<double>(frequency_iter->second) /phenotype_IDs.size());
+        //std::cout<<"Norm "<<std::log(1-static_cast<double>(frequency_iter->second) /phenotype_IDs.size())<<std::endl;
+	//std::cout<<"ID "<<+frequency_iter->first<<" count "<<+frequency_iter->second<<std::endl;
+      }    
 
 	
       //for(std::vector<uint8_t>::const_iterator ID = phenotype_IDs.begin(); ID != phenotype_IDs.end(); ++ID) {
       //fitness+=phenotype_fitnesses[*ID];
       //	std::cout<<+*ID<<" ";
       //}
-      std::cout<<"\n";
-      return fitness;
+      //std::cout<<"\n";
+      //std::cout<<fitness_normalisation<<", "<<fitness<<std::endl;
+      return fitness;//fitness_normalisation;
     }
       
 

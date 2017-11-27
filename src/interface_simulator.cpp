@@ -8,9 +8,9 @@
 void EvolvePopulation(const int pop_size) {
 
   //initialise pool of genomes (all zeroed)
-  uint32_t GENERATION_LIMIT=10;
+  uint32_t GENERATION_LIMIT=5;
   
-  std::vector< std::vector<interface_model::interface_type> > v(pop_size, std::vector<interface_model::interface_type>(16, 0));
+  std::vector< std::vector<interface_model::interface_type> > population_genotypes(pop_size, std::vector<interface_model::interface_type>(8, 0));
   std::vector<double> population_fitnesses(pop_size);
 
   
@@ -33,8 +33,20 @@ void EvolvePopulation(const int pop_size) {
 
   interface_model::PhenotypeTable pt = interface_model::PhenotypeTable();
   for(uint32_t generation=0;generation<GENERATION_LIMIT;++generation) {
-    std::cout<<"fitness "<<interface_model::ProteinAssemblyOutcome(g,10,&pt)<<std::endl;
-    interface_model::MutateInterfaces(g);
+    int nth_genotype=0;
+    for(std::vector< std::vector<interface_model::interface_type> >::iterator evolving_genotype_iter=population_genotypes.begin(); evolving_genotype_iter!=population_genotypes.end();++evolving_genotype_iter) {
+      population_fitnesses[nth_genotype++]=interface_model::ProteinAssemblyOutcome(*evolving_genotype_iter,10,&pt);
+      interface_model::MutateInterfaces(*evolving_genotype_iter);
+
+
+    }
+    for(double f : population_fitnesses)
+      std::cout<<f<<" ";
+    std::cout<<std::endl;
+    //interface_model::ProteinAssemblyOutcome(g,10,&pt)
+    //std::cout<<"fitness "<<<<std::endl;
+    
+    //interface_model::MutateInterfaces(g);
   
   }
 
