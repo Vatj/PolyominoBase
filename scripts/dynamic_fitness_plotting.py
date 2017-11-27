@@ -155,20 +155,20 @@ def PlotSolutions():
 
 def PlotTargetRates(data_frame):
     fig,(ax1,ax2)=plt.subplots(2,1)
-    for data_key,marker in zip(sorted(data_frame.keys(), key = lambda x: (x[1], int(x[3:]))),['^','v','o','s','h','x']):
+    for data_key,marker in zip(sorted(data_frame.keys(), key = lambda x: (x[1], int(x[3:]))),['^','v','>','s','H','o','x']):
         for row,c in zip((data_frame[data_key].T)[1:],['b','g','r']):
-            hist, bins = np.histogram(row, bins=np.logspace(np.log10(np.min(row)*.95),min(10000,np.log10(np.max(row)*1.05)),30))
+            hist, bins = np.histogram(row, bins=np.logspace(0,np.log10(50000),50))
             center = (bins[:-1] + bins[1:]) / 2
-            #ax1.scatter([np.mean(row)],[0.8],c=c,marker=marker)
+            ax1.scatter([np.mean(row)],[0.8],c=c,marker=marker)
             ax1.plot(center, hist*1./len(row),marker=marker,lw=0.5,c=c,mew=1)
         for row,c in zip(np.diff(data_frame[data_key],axis=1).T,['b','g','r']):
-            hist, bins = np.histogram(row, bins=np.logspace(np.log10(np.min(row)*.95),min(10000,np.log10(np.max(row)*1.05)),30))
+            hist, bins = np.histogram(row, bins=np.logspace(0,np.log10(50000),50))
             center = (bins[:-1] + bins[1:]) / 2
-            #ax2.scatter([np.mean(row)],[0.6],c=c,marker=marker)
+            ax2.scatter([np.mean(row)],[0.6],c=c,marker=marker)
             
             ax2.plot(center, hist*1./len(row),marker=marker,lw=0.5,c=c,mew=1)
             
-        #ax2.scatter([np.diff(np.mean(np.diff(data_frame[data_key],axis=1),axis=0))],[1]*2,c='k',marker=marker)
+        ax2.scatter([np.diff(np.mean(np.diff(data_frame[data_key],axis=1),axis=0))],[1]*2,c='k',marker=marker)
         ax1.plot([-10],[0],marker=marker,lw=0.5,c='k',mew=1,label='{}'.format('static' if '3' in data_key else r'$\Omega_{{{0}}}^{{{1}}} $'.format(int(data_key[data_key.index('O')+1:]),data_key[1])))
         
     ax2.set_xscale('log')
@@ -187,8 +187,8 @@ def PlotTargetRates(data_frame):
 def PlotCDF(data_frame,runs=1000):
     
     plt.figure()
-    for data_key,marker in zip(sorted(data_frame.keys(),key = lambda x: (x[1], int(x[3:]))),['^','v','o','s','H','x']):
-        hist,bins=np.histogram(data_frame[data_key][:,3],bins=np.logspace(np.log10(100),np.log10(10000),50))
+    for data_key,marker in zip(sorted(data_frame.keys(),key = lambda x: (x[1], int(x[3:]))),['^','v','>','s','H','o','x']):
+        hist,bins=np.histogram(data_frame[data_key][:,3],bins=np.logspace(np.log10(100),np.log10(50000),100))
         print min(data_frame[data_key][:,3])
         center = (bins[:-1] + bins[1:]) / 2
         plt.plot(center,np.cumsum(hist,dtype=np.float64)/runs,marker=marker,label=data_key,mew=2,markersize=7)

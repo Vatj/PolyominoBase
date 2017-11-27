@@ -21,16 +21,16 @@ def LoadExistingData2(needle,mu):
     data_dict={key:[int(v) for v in values.split()] for (key,values) in [line.rstrip('\n').split(':') for line in open('/rscratch/asl47/Processed/Dynamic/Evolution_Solution_Times3_Mu{}_Needle{}.txt'.format(mu,needle))]}
     return data_dict
 
-def LoadPartials(N=100):
+def LoadPartials(N=100,mu=16):
     d={}
-    for A,O in [(3,10000),(2,5),(2,25),(2,75),(1,5),(1,25)]:
+    for A,O in [(3,50000),(2,5),(2,25),(2,75),(1,5),(1,15),(1,25)]:
         print 'loading for A,O'
-        d['A{}O{}'.format(A,O)]=SolutionCDF_Partials(500,A,16,O,N)
+        d['A{}O{}'.format(A,O)]=SolutionCDF_Partials(500,A,mu,O,N)
     return d
-def SavePartial(d):
-        np.savez('/rscratch/asl47/Processed/Dynamic/fitness_increments',d.values(),args=d.keys(),allow_pickle=True)
-def ReadPartial():
-    loaded= np.load('/rscratch/asl47/Processed/Dynamic/fitness_increments.npz',allow_pickle=True)
+def SavePartial(d,mu):
+        np.savez('/rscratch/asl47/Processed/Dynamic/fitness_increments_Mu{}_K5000'.format(mu),d.values(),args=d.keys(),allow_pickle=True)
+def ReadPartial(mu):
+    loaded= np.load('/rscratch/asl47/Processed/Dynamic/fitness_increments_Mu{}_K5000.npz'.format(mu),allow_pickle=True)
     data={}
     for i,k in enumerate(loaded['args']):
         data[k]=loaded['arr_0'][i]
