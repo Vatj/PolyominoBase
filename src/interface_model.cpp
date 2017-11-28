@@ -3,15 +3,15 @@
 
 
 
-namespace params
+namespace model_params
 {
 
-  double temperature=1,mu_prob=0.2,unbound_factor=2;
+  double temperature=1,mu_prob=0.2,unbound_factor=2,misbinding_rate=0;
   uint8_t interface_size=16;
   std::vector<uint8_t> interface_indices{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
   //std::array<uint8_t, 16> interface_indices{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
   //std::array<uint8_t, 4> faces{0,1,2,3};
-  std::binomial_distribution<uint8_t> b_dist(16,mu_prob);
+  std::binomial_distribution<uint8_t> b_dist(interface_size,mu_prob);
   std::uniform_real_distribution<double> real_dist(0, 1);
 
 }
@@ -23,23 +23,34 @@ namespace interface_model
   inline interface_type reverse_bits(interface_type v) {
     interface_type s = sizeof(v) * 8; // bit size; must be power of 2
     interface_type mask = ~0;         
-    while ((s >>= 1) > 0) 
-      {
-        mask ^= (mask << s);
-        v = ((v >> s) & mask) | ((v << s) & ~mask);
-      }
+    while ((s >>= 1) > 0) {
+      mask ^= (mask << s);
+      v = ((v >> s) & mask) | ((v << s) & ~mask);
+    }
     return v;
   }
 
   uint8_t SammingDistance(interface_type face1,interface_type face2) {
-    return params::interface_size-__builtin_popcount(face1 ^ reverse_bits(face2));
+    uint8_t x =model_params::interface_size-__builtin_popcount(face1 ^ reverse_bits(face2));
+    //uint8_t y =__builtin_popcount(~face1 ^ reverse_bits(face2));
+    std::cout<<+x<<" vs "<<std::endl;
+    return model_params::interface_size-__builtin_popcount(face1 ^ reverse_bits(face2));
+    
+    //return __builtin_popcount(~face1 ^ reverse_bits(face2));
+  }
+
+  uint8_t SymmetryFactor(interface_type face1) {
+    //interface_type face2=reverse_bits(~face1);
+ 
+    return __builtin_popcount((face1 >> model_params::interface_size/2) ^ (reverse_bits(~face1) >> model_params::interface_size/2));
+
   }
 
   void MutateInterfaces(std::vector<interface_type>& binary_genome) {
     std::vector<uint8_t> interface_indices{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
     for(interface_type& base : binary_genome) {
       std::shuffle(interface_indices.begin(), interface_indices.end(), RNG_Engine);
-      for(uint8_t nth=0;nth<params::b_dist(RNG_Engine);++nth)
+      for(uint8_t nth=0;nth<model_params::b_dist(RNG_Engine);++nth)
         base ^= (1U << interface_indices[nth]);
     }
   }
@@ -95,7 +106,7 @@ namespace interface_model
       for(uint8_t tile : tile_types) {
         for(uint8_t face : faces) {
           uint8_t samming_energy=SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[tile*4+face]);
-          if(params::real_dist(RNG_Engine)<std::exp(-1*samming_energy/params::temperature)) { //+finite failure rate i.e. U=alpha+E/T
+          if(model_params::real_dist(RNG_Engine)<std::exp(-model_params::misbinding_rate-1*samming_energy/(model_params::interface_size*model_params::temperature))) { //+finite failure rate i.e. U=alpha+E/T
             placed_tiles.insert(placed_tiles.end(),{current_x,current_y});
             PerimeterGrowth(current_x,current_y,(4+current_direction-face)%4,current_direction,tile,growing_perimeter,placed_tiles);
             goto endplacing;
@@ -104,7 +115,7 @@ namespace interface_model
         }
       }
       endplacing:      
-      if(placed_tiles.size()>(params::unbound_factor*binary_genome.size()*binary_genome.size()/4.)) {
+      if(placed_tiles.size()>(model_params::unbound_factor*binary_genome.size()*binary_genome.size()/4.)) {
         placed_tiles.clear();
         break;
       }

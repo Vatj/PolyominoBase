@@ -13,9 +13,9 @@
 		
 
 
-namespace params
+namespace model_params
 {
-  extern double temperature;
+  extern double temperature,mu_prob,misbinding_rate;
   extern uint8_t interface_size;
   //extern std::array<uint8_t, 16> interface_indices;
   //extern std::array<uint8_t, 4> faces;
@@ -34,6 +34,7 @@ namespace interface_model
   inline interface_type reverse_bits(interface_type v);
   uint8_t SammingDistance(uint16_t face1,uint16_t face2);
   void MutateInterfaces(std::vector<interface_type>& binary_genome);
+  uint8_t SymmetryFactor(interface_type face1);
 
   /* ASSEMBLY */
   double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome,uint8_t N_repeats,PhenotypeTable* pt);
@@ -73,7 +74,7 @@ namespace interface_model
       known_phenotypes.emplace_back(dy);
       
       known_phenotypes.insert(known_phenotypes.end(),phenotype.begin(),phenotype.end());
-      phenotype_fitnesses.emplace_back(params::real_dist(RNG_Engine));
+      phenotype_fitnesses.emplace_back(model_params::real_dist(RNG_Engine));
       ++n_phenotypes;
       return phenotype_ID;
     }

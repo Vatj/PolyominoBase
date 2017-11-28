@@ -1,0 +1,4 @@
+
+
+std::vector<uint16_t> RouletteWheelSelection(std::vector<double>& fitnesses);
+void EvolvePopulation(const int pop_size);
