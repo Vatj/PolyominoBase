@@ -14,7 +14,7 @@ from matplotlib.colors import LogNorm
 from dynamic_fitness_methods import *
 
 
-RUNS=500
+RUNS=150
 RUN_TYPE=4
 
 def SetRuns(sr):
@@ -40,11 +40,11 @@ def SetPar(st,sr):
 def PlotMaximalOccupation():
     fig, axarr = plt.subplots(3,2, sharex=True, figsize=(10,8))
     Mu_Sets={32:'0.001563',16:'0.003125',8:'0.006250',4:'0.012500',1:'0.050000'}
-    K=451
+    K=80
     vals={2:[(0.690229,0.09594899999999995),(0.59705,0.0025),(0.64406,0.04951)],1:[(0.742176,0.147896),(0.76428,0.16973),(0.64977,0.05522)]}
 
     #for A,O,ax in zip([1,1,2,2],[25,50,25,50],axarr.reshape(-1)):#5,25,50,75,100,125
-    O=150
+    O=25
     for (A,mu),ax in zip([(1,32),(2,32),(1,16),(2,16),(1,8),(2,8)],axarr.reshape(-1)):
         avg_data_total=np.empty((RUNS,K))
         avg_data=np.empty((RUNS,K))
@@ -54,8 +54,8 @@ def PlotMaximalOccupation():
 
             avg_data_total[r]=fitness_import[:,1]
             avg_data[r]=fitness_import[:,0]#*(fitness_import[:,0]>=1)
-            ax.plot(range(0,fitness_import.shape[0]),avg_data[r],lw=0.5,alpha=0.6,zorder=10)
-            ax.plot(range(0,fitness_import.shape[0]),avg_data_total[r],lw=0.5,alpha=0.6,zorder=10)
+            #ax.plot(range(0,fitness_import.shape[0]),avg_data[r],lw=0.5,alpha=0.6,zorder=10)
+            #ax.plot(range(0,fitness_import.shape[0]),avg_data_total[r],lw=0.5,alpha=0.6,zorder=10)
 
 
         ax.plot(range(0,fitness_import.shape[0]),np.mean(avg_data,axis=0,dtype=np.float64),lw=1,c='k',ls='--')
@@ -153,51 +153,69 @@ def PlotSolutions():
     #return fitness_import
 
 
-def PlotTargetRates(data_frame):
+def PlotTargetRates(data_frame,mu=16):
     fig,(ax1,ax2)=plt.subplots(2,1)
-    for data_key,marker in zip(sorted(data_frame.keys(), key = lambda x: (x[1], int(x[3:]))),['^','v','>','s','H','o','x']):
+    tab1_txt=[[] for x in xrange(7)]
+    tab2_txt=[[] for x in xrange(7)]
+    i=0
+    for data_key,marker in zip(sorted(data_frame.keys(), key = lambda x: (x[1], int(x[3:]))),['^','v','>','s','D','o','x']):
         for row,c in zip((data_frame[data_key].T)[1:],['b','g','r']):
             hist, bins = np.histogram(row, bins=np.logspace(0,np.log10(50000),50))
             center = (bins[:-1] + bins[1:]) / 2
-            ax1.scatter([np.mean(row)],[0.8],c=c,marker=marker)
+            #ax1.scatter([np.mean(row)],[0.8],c=c,marker=marker)
             ax1.plot(center, hist*1./len(row),marker=marker,lw=0.5,c=c,mew=1)
+            tab1_txt[i].append(int(np.mean(row)))
         for row,c in zip(np.diff(data_frame[data_key],axis=1).T,['b','g','r']):
             hist, bins = np.histogram(row, bins=np.logspace(0,np.log10(50000),50))
             center = (bins[:-1] + bins[1:]) / 2
-            ax2.scatter([np.mean(row)],[0.6],c=c,marker=marker)
-            
+            #ax2.scatter([np.mean(row)],[0.6],c=c,marker=marker)
+            tab2_txt[i].append(int(np.mean(row)))
             ax2.plot(center, hist*1./len(row),marker=marker,lw=0.5,c=c,mew=1)
             
-        ax2.scatter([np.diff(np.mean(np.diff(data_frame[data_key],axis=1),axis=0))],[1]*2,c='k',marker=marker)
-        ax1.plot([-10],[0],marker=marker,lw=0.5,c='k',mew=1,label='{}'.format('static' if '3' in data_key else r'$\Omega_{{{0}}}^{{{1}}} $'.format(int(data_key[data_key.index('O')+1:]),data_key[1])))
+        #ax2.scatter([np.diff(np.mean(np.diff(data_frame[data_key],axis=1),axis=0))],[1]*2,c='k',marker=marker)
+        ax2.plot([-10],[0],marker=marker,lw=0.5,c='k',mew=1,label='{}'.format(r'$\Omega^3$' if '3' in data_key else r'$\Omega_{{{0}}}^{{{1}}} $'.format(int(data_key[data_key.index('O')+1:]),data_key[1])))
+        i+=1
         
     ax2.set_xscale('log')
     ax2.set_yscale('log',nonposy='mask')
     ax1.set_xscale('log')
     ax1.set_yscale('log',nonposy='mask')
-    ax1.legend()
+    ax2.legend(ncol=2,fontsize=10)
 
     ax2.set_xlabel('generation')
     ax2.set_ylabel('fraction')
     ax1.set_ylabel('fraction')
     ax1.set_title(r'$\tau_{A}$')
     ax2.set_title(r'$\Delta_{\tau}$')
+
+    omg_labs=['{}'.format(r'$\Omega^3$' if '3' in data_key else r'$\Omega_{{{0}}}^{{{1}}} $'.format(int(data_key[data_key.index('O')+1:]),data_key[1])) for data_key in sorted(data_frame.keys(), key = lambda x: (x[1], int(x[3:])))]
+    table1=ax1.table(cellText=tab1_txt,rowLabels=omg_labs, colLabels=['1','2','3'],loc='right')
+    table2=ax2.table(cellText=tab2_txt,rowLabels=omg_labs, colLabels=['1','2','3'],loc='right')
+
+    table1.set_fontsize(14)
+    table1.scale(.33, 1)
+
+    table2.set_fontsize(14)
+    table2.scale(.33, 1) 
+
+    fig.suptitle(r'$\langle \mu L \rangle=${}'.format(mu))
     plt.show(block=False)
 
 def PlotCDF(data_frame,runs=1000):
-    
+    labs={'A2O5':r'$\Omega^2_{5}$','A2O25':r'$\Omega^2_{25}$','A2O75':r'$\Omega^2_{75}$','A1O5':r'$\Omega^1_{5}$','A1O15':r'$\Omega^1_{15}$','A1O25':r'$\Omega^1_{25}$','A3O50000':r'$\Omega^3$'}
     plt.figure()
-    for data_key,marker in zip(sorted(data_frame.keys(),key = lambda x: (x[1], int(x[3:]))),['^','v','>','s','H','o','x']):
+    for data_key,marker in zip(sorted(data_frame.keys(),key = lambda x: (x[1], int(x[3:]))),['^','v','>','s','D','o','x']):
         hist,bins=np.histogram(data_frame[data_key][:,3],bins=np.logspace(np.log10(100),np.log10(50000),100))
         print min(data_frame[data_key][:,3])
         center = (bins[:-1] + bins[1:]) / 2
-        plt.plot(center,np.cumsum(hist,dtype=np.float64)/runs,marker=marker,label=data_key,mew=2,markersize=7)
+        plt.plot(center,np.cumsum(hist,dtype=np.float64)/runs,marker=marker,label=labs[data_key],mew=2,markersize=7)
         
         
     plt.xscale('log')
     plt.xlabel('Generations')
     plt.ylabel(r'$\Pr_{\mathrm{success}}$')
     plt.legend(ncol=2)
+    plt.title(r'$\langle \mu \mathrm{L} \rangle = 1/4$')
     plt.show(block=False)
 
     

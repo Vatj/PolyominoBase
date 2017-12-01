@@ -111,6 +111,21 @@ def PlotShapeDistrs(mu):
     fig.set_tight_layout(True)
     #plt.show(block=False)
     return fig
+
+def PlotInterfaceSize(data,labs):
+    plt.figure()
+    for d,la in zip(data,labs):
+        dx=[sum(s[2:]) for s in d]
+        hist,bins=np.histogram(dx,range=(1,37),bins=36)
+        plt.plot(bins[:-1],hist,label=la)
+    
+
+    plt.xlabel('Phenotype Size')
+    plt.ylabel('Frequency')
+    plt.title('1000 generations, population N=10,000')
+    plt.yscale('log')
+    plt.legend()
+    plt.show(block=False)
     
 def smooth(y, box_pts):
     box = np.ones(box_pts)/box_pts
@@ -124,8 +139,9 @@ def Visualise_Shape_From_Binary(Shape_String_X,count,currentAxis,X_Y_LIMS,tightB
         currentAxis.text(.5, .5,d[Shape_String],horizontalalignment='center',verticalalignment='top',transform = currentAxis.transAxes)
 
     else:
-        Shape_String=Shape_String_X[:-2]
-        valid=Shape_String_X[-2]
+        Shape_String=Shape_String_X#[:-2]
+        count=sum(Shape_String[2:])
+        valid=1#Shape_String_X[-2]
         DELTA_X=Shape_String[0]
         DELTA_Y=Shape_String[1]
         for i in xrange(DELTA_X):
@@ -274,14 +290,14 @@ def sortShapes(Shapes,Counts):
     np_counts=np_counts[inds]
     sortedShapes=[Shapes[i] for i in inds]
     
-    return sortedShapes[::-1],np_counts[::-1]
+    return sortedShapes[::1],np_counts[::1]
     
 def Visualise_Shapes(Shape_Strings,Shape_Counts,X_Y_LIMS,saving=False,fileSave="Test"):
     sortShape,np_count=sortShapes(Shape_Strings,Shape_Counts)
     X_rows=5
     Y_rows=4
     totalC=sum(Shape_Counts.values())*1.
-    fname="Output/{}.pdf".format(fileSave)
+    fname="{}.pdf".format(fileSave)
     pdf = PdfPages(fname)
     pgN=0
     for pg in xrange(int(ceil(len(Shape_Strings)/(X_rows*Y_rows*1.)))):

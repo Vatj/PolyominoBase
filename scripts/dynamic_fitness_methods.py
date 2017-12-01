@@ -32,7 +32,7 @@ def SavePartial(d,mu):
 def ReadPartial(mu):
     loaded= np.load('/rscratch/asl47/Processed/Dynamic/fitness_increments_Mu{}_K5000.npz'.format(mu),allow_pickle=True)
     data={}
-    for i,k in enumerate(loaded['args']):
+    for i,k in enumerate(loaded['args']):q
         data[k]=loaded['arr_0'][i]
     return data
         
