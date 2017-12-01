@@ -15,10 +15,9 @@
 
 namespace model_params
 {
-  extern double temperature,mu_prob,misbinding_rate;
+  extern double temperature,mu_prob,misbinding_rate,fitness_factor,unbound_factor;
   extern uint8_t interface_size;
-  //extern std::array<uint8_t, 16> interface_indices;
-  //extern std::array<uint8_t, 4> faces;
+
   extern std::binomial_distribution<uint8_t> b_dist;
   extern std::uniform_real_distribution<double> real_dist;
 
@@ -34,7 +33,7 @@ namespace interface_model
   inline interface_type reverse_bits(interface_type v);
   uint8_t SammingDistance(uint16_t face1,uint16_t face2);
   void MutateInterfaces(std::vector<interface_type>& binary_genome);
-  uint8_t SymmetryFactor(interface_type face1);
+  double SymmetryFactor(interface_type face1);
 
   /* ASSEMBLY */
   double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome,uint8_t N_repeats,PhenotypeTable* pt);
@@ -87,7 +86,7 @@ namespace interface_model
       if(ID_counter.size()==1) 
         return phenotype_fitnesses[ID_counter.begin()->first];
       
-      double fitness=0,fitness_normalisation=0;
+      double fitness=0;//,fitness_normalisation=0;
       /*
       std::cout<<"IDs ";
       for(std::unordered_map<uint8_t,uint16_t>::iterator frequency_iter =ID_counter.begin();frequency_iter!=ID_counter.end();++frequency_iter) {
@@ -97,7 +96,7 @@ namespace interface_model
       std::cout<<"\n";
       */
       for(std::unordered_map<uint8_t,uint16_t>::iterator frequency_iter =ID_counter.begin();frequency_iter!=ID_counter.end();++frequency_iter) {
-        fitness+=phenotype_fitnesses[frequency_iter->first] * std::pow(static_cast<double>(frequency_iter->second)/phenotype_IDs.size(),2);
+        fitness+=phenotype_fitnesses[frequency_iter->first] * std::pow(static_cast<double>(frequency_iter->second)/phenotype_IDs.size(),model_params::fitness_factor);
 	//fitness+=phenotype_fitnesses[frequency_iter->first] * std::log(1-static_cast<double>(frequency_iter->second)/phenotype_IDs.size());//frequency_iter->second /phenotype_IDs.size();
         //fitness_normalisation+=std::log(1-static_cast<double>(frequency_iter->second) /phenotype_IDs.size());
         //std::cout<<"Norm "<<std::log(1-static_cast<double>(frequency_iter->second) /phenotype_IDs.size())<<std::endl;
@@ -117,3 +116,5 @@ namespace interface_model
 
   };
 }
+
+

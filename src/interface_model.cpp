@@ -5,12 +5,11 @@
 
 namespace model_params
 {
-
-  double temperature=1,mu_prob=0.2,unbound_factor=2,misbinding_rate=0;
+  //HARD CODED TO MATCH typedef//
   uint8_t interface_size=16;
-  std::vector<uint8_t> interface_indices{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-  //std::array<uint8_t, 16> interface_indices{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-  //std::array<uint8_t, 4> faces{0,1,2,3};
+  
+  double temperature=1,mu_prob=0.2,unbound_factor=2,misbinding_rate=0,fitness_factor=2;
+ 
   std::binomial_distribution<uint8_t> b_dist(interface_size,mu_prob);
   std::uniform_real_distribution<double> real_dist(0, 1);
 
@@ -31,19 +30,18 @@ namespace interface_model
   }
 
   uint8_t SammingDistance(interface_type face1,interface_type face2) {
-    uint8_t x =model_params::interface_size-__builtin_popcount(face1 ^ reverse_bits(face2));
+    //uint8_t x =model_params::interface_size-__builtin_popcount(face1 ^ reverse_bits(face2));
     //uint8_t y =__builtin_popcount(~face1 ^ reverse_bits(face2));
-    std::cout<<+x<<" vs "<<std::endl;
+    //std::cout<<+x<<" vs "<<std::endl;
     return model_params::interface_size-__builtin_popcount(face1 ^ reverse_bits(face2));
     
     //return __builtin_popcount(~face1 ^ reverse_bits(face2));
   }
 
-  uint8_t SymmetryFactor(interface_type face1) {
+  double SymmetryFactor(interface_type face1) {
     //interface_type face2=reverse_bits(~face1);
- 
-    return __builtin_popcount((face1 >> model_params::interface_size/2) ^ (reverse_bits(~face1) >> model_params::interface_size/2));
-
+    return static_cast<double>(__builtin_popcount((face1) ^ reverse_bits(face1)))/model_params::interface_size;
+    //return static_cast<double>(__builtin_popcount((face1 >> model_params::interface_size/2) ^ (reverse_bits(~face1) >> model_params::interface_size/2)))/model_params::interface_size;
   }
 
   void MutateInterfaces(std::vector<interface_type>& binary_genome) {
@@ -84,7 +82,6 @@ namespace interface_model
   
 
   std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome) {
-    
     std::vector<uint8_t> tile_types(binary_genome.size()/(4.));
     std::iota(tile_types.begin(), tile_types.end(), 0);
     std::vector<int8_t> placed_tiles{0,0}; //(x,y,tile type, orientation)
