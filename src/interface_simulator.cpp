@@ -131,23 +131,124 @@ void EvolvePopulation() {
   //std::cout<<"N_P "<<pt.n_phenotypes<<std::endl;
   out_file_f.close();
 }
+
+void EvolvePopulation_Off() {
+  std::string out_name_f="Test3.txt";
+  std::ofstream out_file_f(out_name_f, std::ios_base::out);
+  
+  std::vector< std::vector<interface_model::interface_type> > population_genotypes(simulation_params::population_size, std::vector<interface_model::interface_type>(simulation_params::n_tiles*4, 0));
+  std::vector< std::vector<interface_model::interface_type> > reproducing_genotypes(simulation_params::population_size, std::vector<interface_model::interface_type>(simulation_params::n_tiles*4, 0));
+  std::vector<double> population_fitnesses(simulation_params::population_size);
+  std::vector<double> symmetries;
+  
+
+  interface_model::PhenotypeTable pt = interface_model::PhenotypeTable();
+  for(uint32_t generation=0;generation<simulation_params::generation_limit;++generation) {
+    //std::cout<<"generation: "<<generation<<std::endl;
+    int nth_genotype=0;
+    for(std::vector< std::vector<interface_model::interface_type> >::iterator evolving_genotype_iter=population_genotypes.begin(); evolving_genotype_iter!=population_genotypes.end();++evolving_genotype_iter) {
+      population_fitnesses[nth_genotype++]=1;//
+      interface_model::ProteinAssemblyOutcome(*evolving_genotype_iter,simulation_params::phenotype_builds,&pt);
+      interface_model::MutateInterfaces(*evolving_genotype_iter);
+
+      
+
+    }
+    std::vector<double> syms;
+    for(std::vector< std::vector<interface_model::interface_type> >::iterator evolving_genotype_iter=population_genotypes.begin(); evolving_genotype_iter!=population_genotypes.end();++evolving_genotype_iter) {
+      for(std::vector<interface_model::interface_type>::iterator face = evolving_genotype_iter->begin();face!=evolving_genotype_iter->end();++face) {
+        //std::cout<<*face<<", "<< interface_model::SymmetryFactor(*face)<<" ";//std::endl;
+        syms.emplace_back(interface_model::SymmetryFactor(*face));
+      }
+      //std::cout<<std::endl;
+      
+
+      }
+    symmetries.emplace_back(std::accumulate(syms.begin(),syms.end(),0.0)/(4*simulation_params::n_tiles*simulation_params::population_size));
+
+    std::vector<simulation_params::population_size_type> selection_indices=RouletteWheelSelection(population_fitnesses);
+    for(simulation_params::population_size_type nth_reproduction = 0; nth_reproduction<simulation_params::population_size;++nth_reproduction) {
+      reproducing_genotypes[nth_reproduction]=population_genotypes[selection_indices[nth_reproduction]];
+    }
+    population_genotypes.assign(reproducing_genotypes.begin(),reproducing_genotypes.end());
+  
+  }
+
+  /* TO DO
+
+     SELECTION
+     
+     SYMMETRY OF INTERFACE
+
+  
+  for(double s:symmetries)
+    out_file_f<<s<<" ";
+  out_file_f.close();
+  */
+  
+  std::cout<<"printng table"<<std::endl;
+  std::cout<<"N_P "<<pt.n_phenotypes<<std::endl;
+  for(double i : pt.interface_strengths)
+    std::cout<<i<<" ";
+  std::cout<<std::endl;
+  
+  std::vector<uint8_t> temp_phenotype;
+  for(std::vector<uint8_t>::iterator phen_iter = pt.known_phenotypes.begin();phen_iter!=pt.known_phenotypes.end();) {
+    out_file_f<<static_cast<int>(*phen_iter)<<" "<<static_cast<int>(*(phen_iter+1))<<" ";
+    temp_phenotype.assign(phen_iter+2,phen_iter+2+*phen_iter* *(phen_iter+1));
+    for(uint8_t m :temp_phenotype)
+      out_file_f<<static_cast<int>(m)<<" ";
+    out_file_f<<"\n";
+    //std::cout<<std::endl;
+    // if(ComparePolyominoes(phenotype,dx,dy,temp_phenotype,*phen_iter,*(phen_iter+1)))
+    //     return phenotype_ID;
+        phen_iter+=*phen_iter* *(phen_iter+1)+2;
+        //++phenotype_ID;
+      }    
+
+  
+
+  //std::cout<<"N_P "<<pt.n_phenotypes<<std::endl;
+  out_file_f.close();
+}
+
+
+
   
  
 
 
 
 int main(int argc, char* argv[]) {
+  char run_option;
   if(argc<2) {
     std::cout<<"no Params"<<std::endl;
-    return 0;
+    run_option='H';
   }
-  SetRuntimeConfigurations(argc,argv);
-  
+  else {
+    run_option=argv[1][1];
+    SetRuntimeConfigurations(argc,argv);
+  }
+  switch(run_option) {
+  case 'R':
+    EvolvePopulation_Off();
+    break;
+  case 'E':
+    EvolvePopulation();
+    break;
+  case 'H':
+  default:
+    std::cout<<"Protein interface model\n**Simulation Parameters**\nN: number of tiles\nP: population size\nK: generation limit\nB: number of phenotype builds\n";
+    std::cout<<"\n**Model Parameters**\nU: mutation probability (per interface)\nT: temperature\nI: unbound size factor\nA: misbinding rate\nM: Fitness factor\n";
+    std::cout<<"\n**Run options**\nR: evolution without fitness\nE: evolution with fitness\n";
+    break;
+
+  }
   //model_params::temperature=std::stod(argv[1]);
   //simulation_params::population_size=std::stoi(argv[2]);
   //model_params::mu_prob=std::stod(argv[3]);
   
-  EvolvePopulation();
+  //EvolvePopulation();
   //uint16_t x=49164;
   //std::cout<<+interface_model::SymmetryFactor(x)<<std::endl;
   return 0;
@@ -212,7 +313,7 @@ int main(int argc, char* argv[]) {
 
 
 void SetRuntimeConfigurations(int argc, char* argv[]) {
-  if(argc<3) {
+  if(argc<3 && argv[1][1]!='H') {
     std::cout<<"Invalid Parameters"<<std::endl;
   }
   else {

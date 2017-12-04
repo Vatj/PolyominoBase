@@ -56,7 +56,7 @@ namespace interface_model
 
   double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome,uint8_t N_repeats,PhenotypeTable* pt) {
     uint8_t dx,dy,dx_prime,dy_prime;
-    std::vector<int8_t> assembly_information=AssembleProtein(binary_genome),assembly_information_prime;
+    std::vector<int8_t> assembly_information=AssembleProtein(binary_genome,pt),assembly_information_prime;
     std::vector<uint8_t> spatial_information,spatial_information_prime;
     std::vector<uint8_t> phenotype_IDs;phenotype_IDs.reserve(N_repeats);
 
@@ -68,7 +68,7 @@ namespace interface_model
     } 
 
     for(uint8_t nth=1;nth<N_repeats;++nth) {
-      assembly_information_prime=AssembleProtein(binary_genome);
+      assembly_information_prime=AssembleProtein(binary_genome,pt);
       if(assembly_information_prime.empty())
 	phenotype_IDs.emplace_back(0);
       else {
@@ -81,7 +81,7 @@ namespace interface_model
   }
   
 
-  std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome) {
+  std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome,PhenotypeTable* pt) {
     std::vector<uint8_t> tile_types(binary_genome.size()/(4.));
     std::iota(tile_types.begin(), tile_types.end(), 0);
     std::vector<int8_t> placed_tiles{0,0}; //(x,y,tile type, orientation)
@@ -104,15 +104,15 @@ namespace interface_model
         for(uint8_t face : faces) {
           uint8_t samming_energy=SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[tile*4+face]);
           if(model_params::real_dist(RNG_Engine)<std::exp(-model_params::misbinding_rate-1*samming_energy/(model_params::interface_size*model_params::temperature))) { //+finite failure rate i.e. U=alpha+E/T
+	    pt->interface_strengths.emplace_back(samming_energy/(model_params::interface_size*model_params::temperature));
             placed_tiles.insert(placed_tiles.end(),{current_x,current_y});
             PerimeterGrowth(current_x,current_y,(4+current_direction-face)%4,current_direction,tile,growing_perimeter,placed_tiles);
             goto endplacing;
           }
-
         }
       }
       endplacing:      
-      if(placed_tiles.size()>(model_params::unbound_factor*binary_genome.size()*binary_genome.size()/4.)) {
+      if(placed_tiles.size()>(model_params::unbound_factor*binary_genome.size()*binary_genome.size()/2.)) {
         placed_tiles.clear();
         break;
       }

@@ -14,5 +14,6 @@ namespace simulation_params
 
 std::vector<uint16_t> RouletteWheelSelection(std::vector<double>& fitnesses);
 void EvolvePopulation();
+void EvolvePopulation_Off();
 
 void SetRuntimeConfigurations(int argc, char* argv[]);
