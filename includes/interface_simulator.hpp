@@ -15,5 +15,5 @@ namespace simulation_params
 std::vector<simulation_params::population_size_type> RouletteWheelSelection(std::vector<double>& fitnesses);
 
 void EvolvePopulation(std::string run_details); 
-RandomStrings()
+void RandomStrings();
 void SetRuntimeConfigurations(int argc, char* argv[]);
