@@ -31,7 +31,8 @@ namespace interface_model
   
   extern xorshift RNG_Engine;
   inline interface_type reverse_bits(interface_type v);
-  uint8_t SammingDistance(uint16_t face1,uint16_t face2);
+  inline uint8_t ArbitraryPopcount(interface_type face1);
+  uint8_t SammingDistance(interface_type face1,interface_type face2);
   void MutateInterfaces(std::vector<interface_type>& binary_genome);
   double SymmetryFactor(interface_type face1);
 
@@ -97,6 +98,8 @@ namespace interface_model
       */
       for(std::unordered_map<uint8_t,uint16_t>::iterator frequency_iter =ID_counter.begin();frequency_iter!=ID_counter.end();++frequency_iter) {
         fitness+=phenotype_fitnesses[frequency_iter->first] * std::pow(static_cast<double>(frequency_iter->second)/phenotype_IDs.size(),model_params::fitness_factor);
+        
+        //std::cout<<"F "<<frequency_iter->second<<" "<<phenotype_IDs.size()<<" "<<model_params::fitness_factor<<" = "<<std::pow(static_cast<double>(frequency_iter->second)/phenotype_IDs.size(),model_params::fitness_factor)<<std::endl;
 	//fitness+=phenotype_fitnesses[frequency_iter->first] * std::log(1-static_cast<double>(frequency_iter->second)/phenotype_IDs.size());//frequency_iter->second /phenotype_IDs.size();
         //fitness_normalisation+=std::log(1-static_cast<double>(frequency_iter->second) /phenotype_IDs.size());
         //std::cout<<"Norm "<<std::log(1-static_cast<double>(frequency_iter->second) /phenotype_IDs.size())<<std::endl;
@@ -117,4 +120,6 @@ namespace interface_model
   };
 }
 
+void DistributionStatistics(std::vector<double>& intf, double& mean, double& variance);
 
+std::vector<double> InterfaceStrengths(std::vector<interface_model::interface_type>& interfaces);

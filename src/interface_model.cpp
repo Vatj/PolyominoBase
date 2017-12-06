@@ -28,20 +28,25 @@ namespace interface_model
     }
     return v;
   }
+  inline uint8_t ArbitraryPopcount(interface_type face) {
+    uint8_t c;
+    for(c = 0; face; c++)
+      face &= face - 1;
+    return c;
+  }
+  
 
   uint8_t SammingDistance(interface_type face1,interface_type face2) {
     //uint8_t x =model_params::interface_size-__builtin_popcount(face1 ^ reverse_bits(face2));
     //uint8_t y =__builtin_popcount(~face1 ^ reverse_bits(face2));
     //std::cout<<+x<<" vs "<<std::endl;
-    return model_params::interface_size-__builtin_popcount(face1 ^ reverse_bits(face2));
+    return ArbitraryPopcount(face1 ^ reverse_bits(~face2));
     
-    //return __builtin_popcount(~face1 ^ reverse_bits(face2));
+    //return 16-__builtin_popcount(face1 ^ reverse_bits(face2));
   }
 
   double SymmetryFactor(interface_type face1) {
-    //interface_type face2=reverse_bits(~face1);
-    return static_cast<double>(__builtin_popcount((face1) ^ reverse_bits(face1)))/model_params::interface_size;
-    //return static_cast<double>(__builtin_popcount((face1 >> model_params::interface_size/2) ^ (reverse_bits(~face1) >> model_params::interface_size/2)))/model_params::interface_size;
+    return static_cast<double>(ArbitraryPopcount((face1) ^ reverse_bits(face1)))/model_params::interface_size;
   }
 
   void MutateInterfaces(std::vector<interface_type>& binary_genome) {
@@ -89,7 +94,6 @@ namespace interface_model
     PerimeterGrowth(0,0,0,-1,0,growing_perimeter,placed_tiles);
     int8_t current_orientation, current_tile, current_direction, current_x, current_y;
     std::vector<uint8_t> faces{0,1,2,3};
-
     
     while(!growing_perimeter.empty()) {
       current_orientation=growing_perimeter.back();growing_perimeter.pop_back();
@@ -214,3 +218,26 @@ namespace interface_model
 }//end interface_model namespace
 
 
+void DistributionStatistics(std::vector<double>& intf, double& mean, double& variance) {
+  uint16_t N = 0;
+  double Mprev = 0;
+  for(double x : intf) {
+    ++N;
+    Mprev = mean;
+    mean += (x - Mprev) / N;
+    variance += (x - Mprev) * (x - mean);
+  }
+  variance /=(N-1);
+}
+
+std::vector<double> InterfaceStrengths(std::vector<interface_model::interface_type>& interfaces) {
+  std::vector<double> strengths;
+  strengths.reserve(interfaces.size()*(interfaces.size()+1)/2);
+  for(std::vector<interface_model::interface_type>::const_iterator outer_face=interfaces.begin(); outer_face!=interfaces.end(); ++outer_face) {
+    for(std::vector<interface_model::interface_type>::const_iterator inner_face=outer_face; inner_face!=interfaces.end(); ++inner_face) {
+      strengths.emplace_back(1-static_cast<double>(interface_model::SammingDistance(*outer_face,*inner_face))/model_params::interface_size);
+      //std::cout<<+*outer_face<<" "<<+*inner_face<<" = "<< 1-static_cast<double>(interface_model::SammingDistance(*outer_face,*inner_face))/model_params::interface_size<<std::endl;
+    }
+  }
+  return strengths;
+}
