@@ -9,7 +9,7 @@ namespace simulation_params
   
   population_size_type population_size=10;
   uint8_t phenotype_builds=10,n_tiles=2;
-  uint32_t generation_limit=5;
+  uint32_t generation_limit=5,independent_trials=1,run_offset=0;
   bool fitness_selection=false;
 
 }
@@ -24,11 +24,13 @@ std::vector<simulation_params::population_size_type> RouletteWheelSelection(std:
 }
 
 void EvolvePopulation(std::string run_details) {
-  std::string out_name_f="//rscratch//asl47//Bulk_Run//Interfaces//Strengths_"+std::string(simulation_params::fitness_selection? "E":"R")+".txt";
-  std::string out_name_r="//rscratch//asl47//Bulk_Run//Interfaces//Sizes_"+std::string(simulation_params::fitness_selection? "E":"R")+".txt";
-  std::string out_name_p="//rscratch//asl47//Bulk_Run//Interfaces//Fitness_"+std::string(simulation_params::fitness_selection? "E":"R")+".txt";
+  std::string out_name_f="//rscratch//asl47//Bulk_Run//Interfaces//Strengths_"+std::string(simulation_params::fitness_selection? "E":"R")+"_T"+std::to_string(model_params::temperature)+run_details+".txt";
+  //std::string out_name_g="//rscratch//asl47//Bulk_Run//Interfaces//Symmetries_"+std::string(simulation_params::fitness_selection? "E":"R")+"_T"+std::to_string(model_params::temperature)+run_details+".txt";
+  std::string out_name_r="//rscratch//asl47//Bulk_Run//Interfaces//Sizes_"+std::string(simulation_params::fitness_selection? "E":"R")+"_T"+std::to_string(model_params::temperature)+run_details+".txt";
+  std::string out_name_p="//rscratch//asl47//Bulk_Run//Interfaces//Fitness_"+std::string(simulation_params::fitness_selection? "E":"R")+"_T"+std::to_string(model_params::temperature)+run_details+".txt";
   
   std::ofstream out_file_r(out_name_r, std::ios_base::out);
+  //std::ofstream out_file_g(out_name_g, std::ios_base::out);
   std::ofstream out_file_f(out_name_f, std::ios_base::out);
   std::ofstream out_file_p(out_name_p, std::ios_base::out);
   
@@ -40,12 +42,13 @@ void EvolvePopulation(std::string run_details) {
   
   interface_model::PhenotypeTable pt = interface_model::PhenotypeTable();
   for(uint32_t generation=0;generation<simulation_params::generation_limit;++generation) {
-    std::vector<double> ds;
+    //std::vector<double> ds;
     std::unordered_map<double,uint32_t> interface_counter;
+    std::unordered_map<double,uint32_t> symmetry_counter;
     int nth_genotype=0;
     for(std::vector< std::vector<interface_model::interface_type> >::iterator evolving_genotype_iter=population_genotypes.begin(); evolving_genotype_iter!=population_genotypes.end();++evolving_genotype_iter) {
-      ds = InterfaceStrengths(*evolving_genotype_iter);
-      for(double d: ds)
+      //ds = InterfaceStrengths(*evolving_genotype_iter);
+      for(double d: InterfaceStrengths(*evolving_genotype_iter))
         ++interface_counter[d];
       population_fitnesses[nth_genotype++]=interface_model::ProteinAssemblyOutcome(*evolving_genotype_iter,simulation_params::phenotype_builds,&pt);
       interface_model::MutateInterfaces(*evolving_genotype_iter);
@@ -146,16 +149,18 @@ void RandomStrings() {
 
   
  
+void EvolutionRunner() {
+#pragma omp parallel for schedule(dynamic)
+  for(uint16_t r=0;r<simulation_params::independent_trials;++r) {
+    std::string run_details="_Run"+std::to_string(r+simulation_params::run_offset);
+    EvolvePopulation(run_details);
+  }
+}
+
 
 
 
 int main(int argc, char* argv[]) {
-
-  std::vector<interface_model::interface_type> v{0,0,0,65535, 100,31,31,55807};
-
-  
-  
-    
   char run_option;
   if(argc<2) {
     std::cout<<"no Params"<<std::endl;
@@ -164,13 +169,10 @@ int main(int argc, char* argv[]) {
   else {
     run_option=argv[1][1];
     SetRuntimeConfigurations(argc,argv);
-  }
-
- 
-  
+  }  
   switch(run_option) {
   case 'E':
-    EvolvePopulation();
+    EvolutionRunner();
     break;
   case 'X':
     RandomStrings();
@@ -181,35 +183,30 @@ int main(int argc, char* argv[]) {
     std::cout<<"\n**Model Parameters**\nU: mutation probability (per interface)\nT: temperature\nI: unbound size factor\nA: misbinding rate\nM: Fitness factor\n";
     std::cout<<"\n**Run options**\nR: evolution without fitness\nE: evolution with fitness\n";
     break;
-
   }
   return 0;
-
 }
 
-
 void SetRuntimeConfigurations(int argc, char* argv[]) {
-  if(argc<3 && argv[1][1]!='H') {
+  if(argc<3 && argv[1][1]!='H')
     std::cout<<"Invalid Parameters"<<std::endl;
-  }
   else {
     for(uint8_t arg=2;arg<argc;arg+=2) {
       switch(argv[arg][1]) {
-        //BASIC PARAMETERS//
       case 'N': simulation_params::n_tiles=std::stoi(argv[arg+1]);break;
       case 'P': simulation_params::population_size=std::stoi(argv[arg+1]);break;
       case 'K': simulation_params::generation_limit=std::stoi(argv[arg+1]);break;
       case 'B': simulation_params::phenotype_builds=std::stoi(argv[arg+1]);break;
       case 'S': simulation_params::fitness_selection=std::stoi(argv[arg+1])>0;break;
+      case 'D': simulation_params::independent_trials=std::stoi(argv[arg+1]);break;
+      case 'V': simulation_params::run_offset=std::stoi(argv[arg+1]);break;
         
       case 'F': model_params::fitness_factor=std::stod(argv[arg+1]);break;
       case 'A': model_params::misbinding_rate=std::stod(argv[arg+1]);break;
       case 'M': model_params::mu_prob=std::stod(argv[arg+1]);break;
       case 'T': model_params::temperature=std::stod(argv[arg+1]);break;
       case 'U': model_params::unbound_factor=std::stod(argv[arg+1]);break;
-
-
-        //Default//
+        
       default: std::cout<<"Unknown Parameter Flag: "<<argv[arg][1]<<std::endl;
       }
     }

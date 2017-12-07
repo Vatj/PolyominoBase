@@ -6,7 +6,7 @@ namespace simulation_params
 {
   typedef uint32_t population_size_type;
   extern population_size_type population_size;
-  extern uint32_t generation_limit;
+  extern uint32_t generation_limit,independent_trials,run_offset;
   extern uint8_t n_tiles,phenotype_builds;
 
 }

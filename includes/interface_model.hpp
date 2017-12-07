@@ -32,13 +32,13 @@ namespace interface_model
   extern xorshift RNG_Engine;
   inline interface_type reverse_bits(interface_type v);
   inline uint8_t ArbitraryPopcount(interface_type face1);
-  uint8_t SammingDistance(interface_type face1,interface_type face2);
+  double SammingDistance(interface_type face1,interface_type face2);
   void MutateInterfaces(std::vector<interface_type>& binary_genome);
   double SymmetryFactor(interface_type face1);
 
   /* ASSEMBLY */
   double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome,uint8_t N_repeats,PhenotypeTable* pt);
-  std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome,PhenotypeTable* pt);
+  std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome);
   void PerimeterGrowth(int8_t x,int8_t y,int8_t theta,int8_t direction, int8_t tile_type,std::vector<int8_t>& growing_perimeter,std::vector<int8_t>& placed_tiles);
 
   /* SPATIAL */
@@ -55,9 +55,9 @@ namespace interface_model
   struct PhenotypeTable {
     uint16_t n_phenotypes;
     std::vector<uint8_t> known_phenotypes;
-    std::vector<double> phenotype_fitnesses,interface_strengths;
+    std::vector<double> phenotype_fitnesses;
 
-    PhenotypeTable(void) : n_phenotypes(0) {known_phenotypes.reserve(1000);phenotype_fitnesses.reserve(1000);interface_strengths.reserve(1000); phenotype_fitnesses.emplace_back(0);};
+    PhenotypeTable(void) : n_phenotypes(0) {known_phenotypes.reserve(1000);phenotype_fitnesses.reserve(1000); phenotype_fitnesses.emplace_back(0);};
 
 
     uint16_t PhenotypeCheck(std::vector<uint8_t>& phenotype, uint8_t dx, uint8_t dy) {

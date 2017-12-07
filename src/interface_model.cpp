@@ -36,11 +36,11 @@ namespace interface_model
   }
   
 
-  uint8_t SammingDistance(interface_type face1,interface_type face2) {
+  double SammingDistance(interface_type face1,interface_type face2) {
     //uint8_t x =model_params::interface_size-__builtin_popcount(face1 ^ reverse_bits(face2));
     //uint8_t y =__builtin_popcount(~face1 ^ reverse_bits(face2));
     //std::cout<<+x<<" vs "<<std::endl;
-    return ArbitraryPopcount(face1 ^ reverse_bits(~face2));
+    return static_cast<double>(ArbitraryPopcount(face1 ^ reverse_bits(~face2)))/model_params::interface_size;
     
     //return 16-__builtin_popcount(face1 ^ reverse_bits(face2));
   }
@@ -61,7 +61,7 @@ namespace interface_model
 
   double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome,uint8_t N_repeats,PhenotypeTable* pt) {
     uint8_t dx,dy,dx_prime,dy_prime;
-    std::vector<int8_t> assembly_information=AssembleProtein(binary_genome,pt),assembly_information_prime;
+    std::vector<int8_t> assembly_information=AssembleProtein(binary_genome),assembly_information_prime;
     std::vector<uint8_t> spatial_information,spatial_information_prime;
     std::vector<uint8_t> phenotype_IDs;phenotype_IDs.reserve(N_repeats);
 
@@ -73,7 +73,7 @@ namespace interface_model
     } 
 
     for(uint8_t nth=1;nth<N_repeats;++nth) {
-      assembly_information_prime=AssembleProtein(binary_genome,pt);
+      assembly_information_prime=AssembleProtein(binary_genome);
       if(assembly_information_prime.empty())
 	phenotype_IDs.emplace_back(0);
       else {
@@ -86,7 +86,7 @@ namespace interface_model
   }
   
 
-  std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome,PhenotypeTable* pt) {
+  std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome) {
     std::vector<uint8_t> tile_types(binary_genome.size()/(4.));
     std::iota(tile_types.begin(), tile_types.end(), 0);
     std::vector<int8_t> placed_tiles{0,0}; //(x,y,tile type, orientation)
@@ -106,9 +106,7 @@ namespace interface_model
 
       for(uint8_t tile : tile_types) {
         for(uint8_t face : faces) {
-          uint8_t samming_energy=SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[tile*4+face]);
-          if(model_params::real_dist(RNG_Engine)<std::exp(-model_params::misbinding_rate-1*samming_energy/(model_params::interface_size*model_params::temperature))) { //+finite failure rate i.e. U=alpha+E/T
-	    pt->interface_strengths.emplace_back(samming_energy/(model_params::interface_size*model_params::temperature));
+          if(model_params::real_dist(RNG_Engine)<std::exp(-model_params::misbinding_rate-1*SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[tile*4+face])/model_params::temperature)) {
             placed_tiles.insert(placed_tiles.end(),{current_x,current_y});
             PerimeterGrowth(current_x,current_y,(4+current_direction-face)%4,current_direction,tile,growing_perimeter,placed_tiles);
             goto endplacing;
@@ -235,9 +233,10 @@ std::vector<double> InterfaceStrengths(std::vector<interface_model::interface_ty
   strengths.reserve(interfaces.size()*(interfaces.size()+1)/2);
   for(std::vector<interface_model::interface_type>::const_iterator outer_face=interfaces.begin(); outer_face!=interfaces.end(); ++outer_face) {
     for(std::vector<interface_model::interface_type>::const_iterator inner_face=outer_face; inner_face!=interfaces.end(); ++inner_face) {
-      strengths.emplace_back(1-static_cast<double>(interface_model::SammingDistance(*outer_face,*inner_face))/model_params::interface_size);
+      strengths.emplace_back(1-interface_model::SammingDistance(*outer_face,*inner_face));
       //std::cout<<+*outer_face<<" "<<+*inner_face<<" = "<< 1-static_cast<double>(interface_model::SammingDistance(*outer_face,*inner_face))/model_params::interface_size<<std::endl;
     }
   }
   return strengths;
 }
+
