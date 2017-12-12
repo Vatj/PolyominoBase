@@ -13,3 +13,5 @@ scripts/*.pdf
 # Ignore Mac specific files
 .DS_Store
 
+\#*\#
+.\#*
