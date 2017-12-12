@@ -24,10 +24,10 @@ std::vector<simulation_params::population_size_type> RouletteWheelSelection(std:
 }
 
 void EvolvePopulation(std::string run_details) {
-  std::string out_name_f="//rscratch//asl47//Bulk_Run//Interfaces//Strengths_"+std::string(simulation_params::fitness_selection? "E":"R")+"_T"+std::to_string(model_params::temperature)+run_details+".txt";
+  std::string out_name_f="//rscratch//asl47//Bulk_Run//Interfaces//Strengths_"+std::string(simulation_params::fitness_selection? "S":"R")+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+run_details+".txt";
   //std::string out_name_g="//rscratch//asl47//Bulk_Run//Interfaces//Symmetries_"+std::string(simulation_params::fitness_selection? "E":"R")+"_T"+std::to_string(model_params::temperature)+run_details+".txt";
-  std::string out_name_r="//rscratch//asl47//Bulk_Run//Interfaces//Sizes_"+std::string(simulation_params::fitness_selection? "E":"R")+"_T"+std::to_string(model_params::temperature)+run_details+".txt";
-  std::string out_name_p="//rscratch//asl47//Bulk_Run//Interfaces//Fitness_"+std::string(simulation_params::fitness_selection? "E":"R")+"_T"+std::to_string(model_params::temperature)+run_details+".txt";
+  std::string out_name_r="//rscratch//asl47//Bulk_Run//Interfaces//Sizes_"+std::string(simulation_params::fitness_selection? "S":"R")+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+run_details+".txt";
+  std::string out_name_p="//rscratch//asl47//Bulk_Run//Interfaces//Fitness_"+std::string(simulation_params::fitness_selection? "S":"R")+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+run_details+".txt";
   
   std::ofstream out_file_r(out_name_r, std::ios_base::out);
   //std::ofstream out_file_g(out_name_g, std::ios_base::out);
