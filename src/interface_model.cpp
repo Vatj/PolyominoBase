@@ -60,26 +60,18 @@ namespace interface_model
 
 
   double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome,uint8_t N_repeats,PhenotypeTable* pt) {
-    uint8_t dx,dy,dx_prime,dy_prime;
-    std::vector<int8_t> assembly_information=AssembleProtein(binary_genome),assembly_information_prime;
-    std::vector<uint8_t> spatial_information,spatial_information_prime;
-    std::vector<uint8_t> phenotype_IDs;phenotype_IDs.reserve(N_repeats);
+    uint8_t dx,dy;
+    std::vector<int8_t> assembly_information;//=AssembleProtein(binary_genome);//,assembly_information_prime;
+    std::vector<uint8_t> spatial_information;//spatial_information_prime;
+    std::vector<std::pair<uint8_t,uint32_t> > phenotype_IDs;phenotype_IDs.reserve(N_repeats);
 
-    if(assembly_information.empty())
-      phenotype_IDs.emplace_back(0);
-    else {
+    //spatial_information=SpatialGrid(assembly_information,dx,dy);
+    //phenotype_IDs.emplace_back(std::accumulate(spatial_information.begin(),spatial_information.end(),0),pt->PhenotypeCheck(spatial_information,dx,dy));
+    
+    for(uint8_t nth=0;nth<N_repeats;++nth) {
+      assembly_information=AssembleProtein(binary_genome);
       spatial_information=SpatialGrid(assembly_information,dx,dy);
-      phenotype_IDs.emplace_back(pt->PhenotypeCheck(spatial_information,dx,dy));
-    } 
-
-    for(uint8_t nth=1;nth<N_repeats;++nth) {
-      assembly_information_prime=AssembleProtein(binary_genome);
-      if(assembly_information_prime.empty())
-	phenotype_IDs.emplace_back(0);
-      else {
-        spatial_information_prime=SpatialGrid(assembly_information_prime,dx_prime,dy_prime);
-	phenotype_IDs.emplace_back(pt->PhenotypeCheck(spatial_information_prime,dx_prime,dy_prime));
-      }
+      phenotype_IDs.emplace_back(std::accumulate(spatial_information.begin(),spatial_information.end(),0),pt->PhenotypeCheck(spatial_information,dx,dy));
     }
     return pt->GenotypeFitness(phenotype_IDs);
     
@@ -101,9 +93,7 @@ namespace interface_model
       current_direction=growing_perimeter.back();growing_perimeter.pop_back();
       current_y=growing_perimeter.back();growing_perimeter.pop_back();
       current_x=growing_perimeter.back();growing_perimeter.pop_back();
-
       std::shuffle(faces.begin(), faces.end(), RNG_Engine);
-
       for(uint8_t tile : tile_types) {
         for(uint8_t face : faces) {
           if(model_params::real_dist(RNG_Engine)<std::exp(-model_params::misbinding_rate-1*SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[tile*4+face])/model_params::temperature)) {
@@ -141,15 +131,14 @@ namespace interface_model
           break;
         }
       }
-      if(!occupied_site) {
-        //std::cout<<"adding tile for "<<+static_cast<int8_t>(x+dx)<<","<<+static_cast<int8_t>(y+dy)<<std::endl;
-        growing_perimeter.insert(growing_perimeter.begin()+5*index_randomizer(RNG_Engine),{static_cast<int8_t>(x+dx),static_cast<int8_t>(y+dy),static_cast<int8_t>((f+2)%4),tile_type,static_cast<int8_t>((4+f-theta)%4)});
-      }
-      
+      if(!occupied_site)
+        growing_perimeter.insert(growing_perimeter.begin()+5*index_randomizer(RNG_Engine),{static_cast<int8_t>(x+dx),static_cast<int8_t>(y+dy),static_cast<int8_t>((f+2)%4),tile_type,static_cast<int8_t>((4+f-theta)%4)});      
     }
   }
   
   std::vector<uint8_t> SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,uint8_t& dy) {
+    if(placed_tiles.empty())
+      return {};
     std::vector<int8_t> x_locs, y_locs;
     x_locs.reserve(placed_tiles.size()/2);
     y_locs.reserve(placed_tiles.size()/2);

@@ -10,6 +10,7 @@
 #include <numeric>
 #include <unordered_map>
 
+
 		
 
 
@@ -53,67 +54,43 @@ namespace interface_model
   void PrintShape(std::vector<uint8_t>& spatial_information,uint8_t dx,uint8_t dy);
 
   struct PhenotypeTable {
-    uint16_t n_phenotypes;
-    std::vector<uint8_t> known_phenotypes;
-    std::vector<double> phenotype_fitnesses;
+    uint32_t n_phenotypes;
+    std::unordered_map<uint8_t,std::vector<uint8_t> > known_phenotypes;
+    std::unordered_map<uint8_t,std::vector<double> > phenotype_fitnesses{{0,{0}}};
 
-    PhenotypeTable(void) : n_phenotypes(0) {known_phenotypes.reserve(1000);phenotype_fitnesses.reserve(1000); phenotype_fitnesses.emplace_back(0);};
+    PhenotypeTable(void) : n_phenotypes(0) {};
 
-
-    uint16_t PhenotypeCheck(std::vector<uint8_t>& phenotype, uint8_t dx, uint8_t dy) {
-      int phenotype_ID=1;
+    uint32_t PhenotypeCheck(std::vector<uint8_t>& phenotype, uint8_t dx, uint8_t dy) {
+      if(phenotype.empty())
+        return 0;
+      uint32_t phenotype_ID=0;
+      uint8_t phenotype_size=std::accumulate(phenotype.begin(),phenotype.end(),0);
       std::vector<uint8_t> temp_phenotype;
-      for(std::vector<uint8_t>::iterator phen_iter = known_phenotypes.begin();phen_iter!=known_phenotypes.end();) {
+      for(std::vector<uint8_t>::iterator phen_iter = known_phenotypes[phenotype_size].begin();phen_iter!=known_phenotypes[phenotype_size].end();) {
         temp_phenotype.assign(phen_iter+2,phen_iter+2+*phen_iter* *(phen_iter+1));
         if(ComparePolyominoes(phenotype,dx,dy,temp_phenotype,*phen_iter,*(phen_iter+1)))
           return phenotype_ID;
         phen_iter+=*phen_iter* *(phen_iter+1)+2;
         ++phenotype_ID;
       }      
-      known_phenotypes.emplace_back(dx);
-      known_phenotypes.emplace_back(dy);
+      known_phenotypes[phenotype_size].emplace_back(dx);
+      known_phenotypes[phenotype_size].emplace_back(dy);
       
-      known_phenotypes.insert(known_phenotypes.end(),phenotype.begin(),phenotype.end());
-      phenotype_fitnesses.emplace_back(model_params::real_dist(RNG_Engine));
+      known_phenotypes[phenotype_size].insert(known_phenotypes[phenotype_size].end(),phenotype.begin(),phenotype.end());
+      phenotype_fitnesses[phenotype_size].emplace_back(model_params::real_dist(RNG_Engine));
       ++n_phenotypes;
       return phenotype_ID;
     }
-    double GenotypeFitness(std::vector<uint8_t>& phenotype_IDs) {
-      //std::cout<<"IDs :";
-      std::unordered_map<uint8_t,uint16_t> ID_counter;
-      for(std::vector<uint8_t>::const_iterator ID_iter = phenotype_IDs.begin(); ID_iter!=phenotype_IDs.end(); ++ID_iter)
-        ++ID_counter[*ID_iter];
-      
-      if(ID_counter.size()==1) 
-        return phenotype_fitnesses[ID_counter.begin()->first];
-      
-      double fitness=0;//,fitness_normalisation=0;
-      /*
-      std::cout<<"IDs ";
-      for(std::unordered_map<uint8_t,uint16_t>::iterator frequency_iter =ID_counter.begin();frequency_iter!=ID_counter.end();++frequency_iter) {
-        std::cout<<"ID "<<+frequency_iter->first<<" count "<<+frequency_iter->second<<" fitness "<<phenotype_fitnesses[frequency_iter->first]<<std::endl;
- 
-      }
-      std::cout<<"\n";
-      */
-      for(std::unordered_map<uint8_t,uint16_t>::iterator frequency_iter =ID_counter.begin();frequency_iter!=ID_counter.end();++frequency_iter) {
-        fitness+=phenotype_fitnesses[frequency_iter->first] * std::pow(static_cast<double>(frequency_iter->second)/phenotype_IDs.size(),model_params::fitness_factor);
-        
-        //std::cout<<"F "<<frequency_iter->second<<" "<<phenotype_IDs.size()<<" "<<model_params::fitness_factor<<" = "<<std::pow(static_cast<double>(frequency_iter->second)/phenotype_IDs.size(),model_params::fitness_factor)<<std::endl;
-	//fitness+=phenotype_fitnesses[frequency_iter->first] * std::log(1-static_cast<double>(frequency_iter->second)/phenotype_IDs.size());//frequency_iter->second /phenotype_IDs.size();
-        //fitness_normalisation+=std::log(1-static_cast<double>(frequency_iter->second) /phenotype_IDs.size());
-        //std::cout<<"Norm "<<std::log(1-static_cast<double>(frequency_iter->second) /phenotype_IDs.size())<<std::endl;
-	//std::cout<<"ID "<<+frequency_iter->first<<" count "<<+frequency_iter->second<<std::endl;
-      }    
-
-	
-      //for(std::vector<uint8_t>::const_iterator ID = phenotype_IDs.begin(); ID != phenotype_IDs.end(); ++ID) {
-      //fitness+=phenotype_fitnesses[*ID];
-      //	std::cout<<+*ID<<" ";
-      //}
-      //std::cout<<"\n";
-      //std::cout<<fitness_normalisation<<", "<<fitness<<std::endl;
-      return fitness;//fitness_normalisation;
+    
+    double GenotypeFitness(std::vector<std::pair<uint8_t, uint32_t> >& phenotype_IDs) {
+      std::unordered_map<uint8_t, std::unordered_map<uint32_t,uint8_t> > ID_counter;
+      for(std::vector<std::pair<uint8_t,uint32_t> >::const_iterator ID_iter = phenotype_IDs.begin(); ID_iter!=phenotype_IDs.end(); ++ID_iter)
+        ++ID_counter[ID_iter->first][ID_iter->second];
+      double fitness=0;
+      for(std::unordered_map<uint8_t, std::unordered_map<uint32_t,uint8_t> >::iterator size_iter =ID_counter.begin();size_iter!=ID_counter.end();++size_iter) 
+        for(std::unordered_map<uint32_t,uint8_t>::iterator frequency_iter =size_iter->second.begin();frequency_iter!=size_iter->second.end();++frequency_iter) 
+          fitness+=phenotype_fitnesses[size_iter->first][frequency_iter->first] * std::pow(static_cast<double>(frequency_iter->second)/phenotype_IDs.size(),model_params::fitness_factor);
+      return fitness;
     }
       
 
