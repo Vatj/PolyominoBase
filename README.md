@@ -9,6 +9,27 @@ Ongoing main development for polyomino model
 * Data processing
 * Visualisations
 
+---
+
+# Legit To Do 
+
+- [ ] clean and comment code gentley
+
+### General 
+
+- [ ] xorshift -> xorshiro128 benchmarking
+
+### Dynamic Evolution
+
+- [ ] Random landscape dynamics
+
+
+### Interface Model
+
+- [ ] mutator as a static function
+- [ ] benchmark pair -> double double version on phen IDs
+
+---
 
 ## Ongoing
 
