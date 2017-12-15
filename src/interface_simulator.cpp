@@ -40,13 +40,17 @@ void EvolvePopulation(std::string run_details) {
   interface_model::PhenotypeTable pt = interface_model::PhenotypeTable();
   for(uint32_t generation=0;generation<simulation_params::generation_limit;++generation) {
     //std::vector<double> ds;
-    std::unordered_map<double,uint32_t> interface_counter;
-    std::unordered_map<double,uint32_t> symmetry_counter;
+    std::vector<uint32_t> interface_counter(model_params::interface_size+1);
+    //std::unordered_map<double,uint32_t> symmetry_counter;
+    //for(uint8_t hd=0;hd<model_params::interface_size;++hd)
+    //  interface_counter[static_cast<double>(hd)/model_params::interface_size];
     int nth_genotype=0;
     for(std::vector< std::vector<interface_model::interface_type> >::iterator evolving_genotype_iter=population_genotypes.begin(); evolving_genotype_iter!=population_genotypes.end();++evolving_genotype_iter) {
       //ds = InterfaceStrengths(*evolving_genotype_iter);
-      for(double d: InterfaceStrengths(*evolving_genotype_iter))
-        ++interface_counter[d];
+
+      std::transform(interface_counter.begin(), interface_counter.end(),InterfaceStrengths(*evolving_genotype_iter).begin() , interface_counter.begin(),std::plus<uint32_t>());
+
+      // ++interface_counter[d];
       population_fitnesses[nth_genotype++]=interface_model::ProteinAssemblyOutcome(*evolving_genotype_iter,simulation_params::phenotype_builds,&pt);
       interface_model::MutateInterfaces(*evolving_genotype_iter);
 
@@ -56,8 +60,9 @@ void EvolvePopulation(std::string run_details) {
       
 
     }
-    for(std::unordered_map<double,uint32_t>::iterator frequency_iter =interface_counter.begin();frequency_iter!=interface_counter.end();++frequency_iter) 
-      fout_strength<<frequency_iter->first<<" "<<frequency_iter->second<<" ";
+    //for(std::unordered_map<double,uint32_t>::iterator frequency_iter =interface_counter.begin();frequency_iter!=interface_counter.end();++frequency_iter)
+    for(uint32_t count : interface_counter)
+      fout_strength<<count<<" ";
     fout_strength<<"\n";
     
     /* std::vector<double> syms;
@@ -84,8 +89,15 @@ void EvolvePopulation(std::string run_details) {
   
   std::cout<<"printing table"<<std::endl;
   std::cout<<"N_P "<<pt.n_phenotypes<<std::endl;
-  for(std::unordered_map<uint8_t,std::vector<uint8_t> >::iterator phen_iter=pt.known_phenotypes.begin();phen_iter!=pt.known_phenotypes.end();++phen_iter)
-    fout_size <<+phen_iter->first<<" "<<phen_iter->second.size()<<"\n";
+  for(std::unordered_map<uint8_t,std::vector<uint8_t> >::iterator phen_iter=pt.known_phenotypes.begin();phen_iter!=pt.known_phenotypes.end();++phen_iter) {
+    uint32_t n_sized_phenotypes=0;
+    for(std::vector<uint8_t>::iterator shape_iter=phen_iter->second.begin();shape_iter!=phen_iter->second.end();) {
+      ++n_sized_phenotypes;
+      shape_iter+=*(shape_iter) * *(shape_iter+1)+2;
+    }
+    fout_size <<+phen_iter->first<<" "<<n_sized_phenotypes<<"\n";
+  }
+
   /*
   for(std::vector<uint8_t>::iterator phen_iter = pt.known_phenotypes.begin();phen_iter!=pt.known_phenotypes.end();) {
   std::vector<uint8_t> temp_phenotype;
@@ -105,7 +117,7 @@ void EvolvePopulation(std::string run_details) {
   fout_size.close();
   fout_strength.close();
 }
-
+/*
 void RandomStrings() {
   std::string out_name_f="//rscratch//asl47//Bulk_Run//Interfaces//Strengths_R.txt";
   std::string out_name_p="//rscratch//asl47//Bulk_Run//Interfaces//Strengths_X.txt";
@@ -122,7 +134,7 @@ void RandomStrings() {
       out_file_p<<__builtin_popcount(*f)<<" ";
     }
 
-    ds = InterfaceStrengths(*evolving_genotype_iter);
+    ds = InterfaceStrengths(evolving_genotype_iter);
     for(double d: ds)
       ++interface_counter[d];
     //population_fitnesses[nth_genotype++]=simulation_params::fitness_selection? interface_model::ProteinAssemblyOutcome(*evolving_genotype_iter,simulation_params::phenotype_builds,&pt) : 1;
@@ -135,7 +147,7 @@ void RandomStrings() {
 
 }
 
-
+*/
   
  
 void EvolutionRunner() {
@@ -164,7 +176,8 @@ int main(int argc, char* argv[]) {
     EvolutionRunner();
     break;
   case 'X':
-    RandomStrings();
+    //RandomStrings();
+    std::cout<<"Unused at this time"<<std::endl;
     break;
   case 'H':
   default:

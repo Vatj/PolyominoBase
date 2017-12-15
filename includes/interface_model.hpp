@@ -17,7 +17,7 @@
 namespace model_params
 {
   extern double temperature,mu_prob,misbinding_rate,fitness_factor,unbound_factor;
-  extern uint8_t interface_size;
+  extern const uint8_t interface_size;
 
   extern std::binomial_distribution<uint8_t> b_dist;
   extern std::uniform_real_distribution<double> real_dist;
@@ -99,4 +99,4 @@ namespace interface_model
 
 void DistributionStatistics(std::vector<double>& intf, double& mean, double& variance);
 
-std::vector<double> InterfaceStrengths(std::vector<interface_model::interface_type>& interfaces);
+std::vector<uint16_t> InterfaceStrengths(std::vector<interface_model::interface_type>& interfaces);

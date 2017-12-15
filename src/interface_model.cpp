@@ -6,7 +6,7 @@
 namespace model_params
 {
   //HARD CODED TO MATCH typedef//
-  uint8_t interface_size=16;
+  const uint8_t interface_size=16;
   
   double temperature=1,mu_prob=0.2,unbound_factor=2,misbinding_rate=0,fitness_factor=2;
  
@@ -40,7 +40,7 @@ namespace interface_model
     //uint8_t x =model_params::interface_size-__builtin_popcount(face1 ^ reverse_bits(face2));
     //uint8_t y =__builtin_popcount(~face1 ^ reverse_bits(face2));
     //std::cout<<+x<<" vs "<<std::endl;
-    return static_cast<double>(ArbitraryPopcount(face1 ^ reverse_bits(~face2)))/model_params::interface_size;
+    return static_cast<double>(ArbitraryPopcount(face1 ^ reverse_bits(~face2)));
     
     //return 16-__builtin_popcount(face1 ^ reverse_bits(face2));
   }
@@ -96,7 +96,7 @@ namespace interface_model
       std::shuffle(faces.begin(), faces.end(), RNG_Engine);
       for(uint8_t tile : tile_types) {
         for(uint8_t face : faces) {
-          if(model_params::real_dist(RNG_Engine)<std::exp(-model_params::misbinding_rate-1*SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[tile*4+face])/model_params::temperature)) {
+          if(model_params::real_dist(RNG_Engine)<std::exp(-1*SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[tile*4+face])/(model_params::interface_size*model_params::temperature))) {
             placed_tiles.insert(placed_tiles.end(),{current_x,current_y});
             PerimeterGrowth(current_x,current_y,(4+current_direction-face)%4,current_direction,tile,growing_perimeter,placed_tiles);
             goto endplacing;
@@ -217,12 +217,13 @@ void DistributionStatistics(std::vector<double>& intf, double& mean, double& var
   variance /=(N-1);
 }
 
-std::vector<double> InterfaceStrengths(std::vector<interface_model::interface_type>& interfaces) {
-  std::vector<double> strengths;
-  strengths.reserve(interfaces.size()*(interfaces.size()+1)/2);
+std::vector<uint16_t> InterfaceStrengths(std::vector<interface_model::interface_type>& interfaces) {
+  std::vector<uint16_t> strengths(model_params::interface_size+1);
+  //strengths.reserve(interfaces.size()*(interfaces.size()+1)/2);
   for(std::vector<interface_model::interface_type>::const_iterator outer_face=interfaces.begin(); outer_face!=interfaces.end(); ++outer_face) {
     for(std::vector<interface_model::interface_type>::const_iterator inner_face=outer_face; inner_face!=interfaces.end(); ++inner_face) {
-      strengths.emplace_back(1-interface_model::SammingDistance(*outer_face,*inner_face));
+      ++strengths[model_params::interface_size-interface_model::SammingDistance(*outer_face,*inner_face)];
+      //std::cout<<"incremementing strenght on "<<model_params::interface_size-interface_model::SammingDistance(*outer_face,*inner_face)<<std::endl;
       //std::cout<<+*outer_face<<" "<<+*inner_face<<" = "<< 1-static_cast<double>(interface_model::SammingDistance(*outer_face,*inner_face))/model_params::interface_size<<std::endl;
     }
   }
