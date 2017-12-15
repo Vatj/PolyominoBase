@@ -28,6 +28,7 @@ Ongoing main development for polyomino model
 
 - [ ] mutator as a static function
 - [ ] benchmark pair -> double double version on phen IDs
+- [ ] phase space sweeping -> identify useful parameters (and fix statistics)
 
 ---
 
