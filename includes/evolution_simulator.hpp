@@ -10,6 +10,7 @@
 //void Run_Evolution_Simulation_Over_Range(std::string inFileName);
 
 
+void SetEvolutionTargets(std::vector<int>& targets,int generation);
 void EvolveFitnessDynamic(std::string Run_Details,double Mu);
 void FitnessEvolutionDynamic();
 

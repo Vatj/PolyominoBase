@@ -18,9 +18,10 @@ int mutation_cofactor=4;
 int active_targets=3;
 int initial_condition=0;
 int RUN=0;
+bool periodic_changes=true;
 
 std::random_device rd;
-xorshift RNG_Engine(rd());
+xorshift RNG_Engine;
 const double MINIMUM_FITNESS_THRESHOLD=0.0000001;
 
 /*
@@ -202,6 +203,7 @@ void Set_Runtime_Configurations(int argc, char* argv[]) {
         break;
       case 'U': mutation_cofactor=std::stoi(argv[arg+1]);
         break;
+      case 'P': periodic_changes=std::stoi(argv[arg+1])>0;
 
         //REGULATION PARAMETERS//
       case 'R': Regulated=std::stoi(argv[arg+1]);

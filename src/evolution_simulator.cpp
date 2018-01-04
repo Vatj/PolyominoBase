@@ -13,6 +13,30 @@ void FitnessEvolutionDynamic() {
   }
 }
 
+void SetEvolutionTargets(std::vector<int>& targets,int generation) {
+  if(periodic_changes) {
+    switch(((generation-1)/Fitness_Oscillation_Rate)%3) {
+    case 0:
+      targets={4,5,6};
+      break;
+    case 1:
+      targets={5,6,4};
+      break;
+    case 2:
+      targets={6,4,5};
+      break;
+    }
+  }
+  else {
+    std::shuffle(targets.begin(),targets.end(),RNG_Engine);
+    for(auto k : targets)
+      std::cout<<k<<" ";
+    std::cout<<std::endl;
+  }
+    
+
+  
+}
 void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
   std::string out_name_g="//rscratch//asl47//Bulk_Run//Modular//A"+std::to_string(active_targets)+Run_Details+"_Genotype.txt";
   std::string out_name_f="//rscratch//asl47//Bulk_Run//Modular//A"+std::to_string(active_targets)+Run_Details+"_Fitness.txt";
@@ -26,40 +50,18 @@ void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
   
   std::uniform_int_distribution<int> Mutated_Colour(0,Colour_Space);
   std::bernoulli_distribution Mutation_Chance(Mu);
-  std::vector<int> Initial_Genome(Num_Tiles*4,0),Evolving_Genome(Num_Tiles*4),target_types(TOTAL_TARGETS), Index_Selections(Num_Genomes);
+  std::vector<int> Initial_Genome(Num_Tiles*4,0),Evolving_Genome(Num_Tiles*4),target_types, Index_Selections(Num_Genomes);
+  target_types={4,5,6};
   
   //InitialGenotypeConfiguration(Initial_Genome);
   std::vector<std::vector<int> > Genome_Pool(Num_Genomes,Initial_Genome), Temporary_Pool(Num_Genomes);
   std::vector<double> Phenotype_Fitness_Sizes(Num_Genomes), Phenotype_Fitness_Sizes_Full(Num_Genomes),target_fitnesses(TOTAL_TARGETS);
   std::set< std::vector<int> > unique_genotypes;
 
-  /*
-  switch(initial_condition) {
-  case 0:
-    target_types={4,5,6};
-    break;
-  case 1:
-    target_types={5,6,4};
-    break;
-  case 2:
-    target_types={6,4,5};
-    break;      
-  }
-  */
-
   
   for(int g=1;g<=GENERATION_LIMIT;++g) {
-    switch(((g-1)/Fitness_Oscillation_Rate)%3) {
-    case 0:
-      target_types={4,5,6};
-      break;
-    case 1:
-      target_types={5,6,4};
-      break;
-    case 2:
-      target_types={6,4,5};
-      break;
-    }
+    if((g-1)%Fitness_Oscillation_Rate==0)
+      SetEvolutionTargets(target_types,g);
     
     int a=0,b=0,c=0,ab=0,bc=0,ac=0,abc=0;
     for(int n=0;n<Num_Genomes;++n) {
@@ -77,9 +79,9 @@ void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
         //Phenotype_Fitness_Sizes_Full[n]=std::accumulate(target_fitnesses.begin(),target_fitnesses.end(),0.0)/.;
         Phenotype_Fitness_Sizes_Full[n]=std::accumulate(target_fitnesses.begin(),target_fitnesses.end(),0.0)>=static_cast<double>(TOTAL_TARGETS) ? 1. : 0;
 
-        if(target_fitnesses[(3-((g-1)/Fitness_Oscillation_Rate)%3)%3]==1) {
-          if(target_fitnesses[(4-((g-1)/Fitness_Oscillation_Rate)%3)%3]==1) {
-            if(target_fitnesses[(5-((g-1)/Fitness_Oscillation_Rate)%3)%3]==1) {
+	if(target_fitnesses[std::find(target_types.begin(),target_types.end(),4)-target_types.begin()]==1) {
+	  if(target_fitnesses[std::find(target_types.begin(),target_types.end(),5)-target_types.begin()]==1) {
+	    if(target_fitnesses[std::find(target_types.begin(),target_types.end(),6)-target_types.begin()]==1) {
               ++abc;
             }
             else {
@@ -87,46 +89,46 @@ void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
             }
           }
           else {
-            if(target_fitnesses[(5-((g-1)/Fitness_Oscillation_Rate)%3)%3]==1) {
-            ++ac;
-          }
-          else {
-            ++a;
-          }
-        }
-      }
-      else {
-        if(target_fitnesses[(4-((g-1)/Fitness_Oscillation_Rate)%3)%3]==1) {
-          if(target_fitnesses[(5-((g-1)/Fitness_Oscillation_Rate)%3)%3]==1) {
-            ++bc;
-          }
-          else {
-            ++b;
-            
-          }
-        }
-        else {
-          if(target_fitnesses[(5-((g-1)/Fitness_Oscillation_Rate)%3)%3]==1) {
-            ++c;
-          }
-        }
-      }
+	    if(target_fitnesses[std::find(target_types.begin(),target_types.end(),6)-target_types.begin()]==1) {
+	      ++ac;
+	    }
+	    else {
+	      ++a;
+	    }
+	  }
+	}
+	else {
+	  if(target_fitnesses[std::find(target_types.begin(),target_types.end(),5)-target_types.begin()]==1) {
+	    if(target_fitnesses[std::find(target_types.begin(),target_types.end(),6)-target_types.begin()]==1) {
+	      ++bc;
+	    }
+	    else {
+	      ++b;
+	    }
+	  }
+	  else {
+	    if(target_fitnesses[std::find(target_types.begin(),target_types.end(),6)-target_types.begin()]==1) {
+	      ++c;
+	    }
+	  }
         
-    }
-    else {
-      Phenotype_Fitness_Sizes[n]=0;
-      Phenotype_Fitness_Sizes_Full[n]=0;
+	}
+      }
+      
+      else {
+	Phenotype_Fitness_Sizes[n]=0;
+	Phenotype_Fitness_Sizes_Full[n]=0;
       }
       Genome_Pool[n]=Evolving_Genome;
-      /*
-        if(Phenotype_Fitness_Sizes_Full[n]>=1.) {
-        std::vector<int> duplicate_genome=(Evolving_Genome);
-        Clean_Genome(duplicate_genome);
-        if(Disjointed_Check(duplicate_genome))
+	/*
+	  if(Phenotype_Fitness_Sizes_Full[n]>=1.) {
+	  std::vector<int> duplicate_genome=(Evolving_Genome);
+	  Clean_Genome(duplicate_genome);
+	  if(Disjointed_Check(duplicate_genome))
           duplicate_genome.erase(std::find(duplicate_genome.begin(),duplicate_genome.end(),-1),duplicate_genome.end());
-        unique_genotypes.insert(duplicate_genome);
-      }
-      */
+	  unique_genotypes.insert(duplicate_genome);
+	  }
+	*/
       
     } //END GENOME LOOP
 
@@ -329,17 +331,6 @@ int main(int argc, char* argv[]) {
     case 'R':
       ManyEvolutionSimulations();
       break;
-      /*
-    case '3':
-      FitnessEvolutionStatic();
-      break;
-    case '4':
-      FitnessEvolutionDynamicDoublet();
-      break;
-    case '5':
-      FitnessEvolutionDynamicSinglet();
-      break;   
-      */   
     case 'H':
       std::cout<<"\n**Evolution running options**\n -Z for oscillating\n -X for summed\n -Q for sequential\n -A for 5\n -B for 6\n"<<std::endl;
       break;

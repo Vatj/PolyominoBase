@@ -15,6 +15,7 @@ extern int mutation_cofactor;
 extern int RUN;
 extern int active_targets;
 extern int initial_condition;
+extern bool periodic_changes;
 
 extern std::random_device rd;
 extern xorshift RNG_Engine;
