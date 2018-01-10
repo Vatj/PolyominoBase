@@ -139,25 +139,15 @@ std::vector<int> Stochastic_Acceptance_Selection(std::vector<double>& Fitness_We
   return Selected_Indicies;
 }
 
-std::vector<int> Roulette_Wheel_Selection(std::vector<double>& Fitness_Weights,int K_Samples) {
-  std::vector<double> CDF(Fitness_Weights);
-  std::vector<int> Selected_Indicies(K_Samples);
-  double Total_Weight=std::accumulate(Fitness_Weights.begin(), Fitness_Weights.end(),0.0);
-  if(Total_Weight<MINIMUM_FITNESS_THRESHOLD)
-    return Random_Selection(Fitness_Weights.size(),K_Samples);
-  for(std::vector<double>::iterator CDF_iter=CDF.begin()+1;CDF_iter!=CDF.end();++CDF_iter) {
-    *CDF_iter+=*(CDF_iter-1);
-  }
-  std::uniform_real_distribution<> Random_Interval(0, Total_Weight-MINIMUM_FITNESS_THRESHOLD);
-  for(int n=0; n<K_Samples; ++n) {
-    unsigned int chosen=std::lower_bound(CDF.begin(),CDF.end(),Random_Interval(RNG_Engine))-CDF.begin();
-    while(chosen>=Fitness_Weights.size() || Fitness_Weights[chosen]==0) {
-      --chosen;
-    }
-    Selected_Indicies[n]=chosen;
-  }
-  return Selected_Indicies;
+std::vector<int> Roulette_Wheel_Selection(std::vector<double>& fitnesses) {
+  std::partial_sum(fitnesses.begin(), fitnesses.end(), fitnesses.begin());
+  std::vector<int> selected_indices(fitnesses.size());
+  std::uniform_real_distribution<double> random_interval(0,*(fitnesses.end()-1));
+  for(uint32_t nth_selection=0; nth_selection<fitnesses.size(); ++nth_selection) 
+    selected_indices[nth_selection]=static_cast<int>(std::lower_bound(fitnesses.begin(),fitnesses.end(),random_interval(RNG_Engine))-fitnesses.begin());
+  return selected_indices;
 }
+
 
 
 //Other
@@ -226,6 +216,7 @@ void Set_Runtime_Configurations(int argc, char* argv[]) {
         break;
       default: std::cout<<"Unknown Parameter Flag: "<<argv[arg][1]<<std::endl;
       }
+      
     }
   }
   std::cout<<"|||||||||||||||||||||||||||||||||||||"<<std::endl;

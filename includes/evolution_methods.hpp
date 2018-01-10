@@ -25,7 +25,7 @@ double Fitness_Function(double Phenotype_Size);
 
 std::vector<int> Random_Selection(int Num_Genomes,int K_Samples);
 std::vector<int> Stochastic_Acceptance_Selection(std::vector<double>& Fitness_Weights,int K_Samples);
-std::vector<int> Roulette_Wheel_Selection(std::vector<double>& Fitness_Weights,int K_Samples);
+std::vector<int> Roulette_Wheel_Selection(std::vector<double>& Fitness_Weights);
 
 
 int Find_Percentile_of_Vector(std::vector<int>& vec,double percentile);

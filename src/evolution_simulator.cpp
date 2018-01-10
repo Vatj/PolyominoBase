@@ -8,7 +8,7 @@ void FitnessEvolutionDynamic() {
   double mu=1.0/(Num_Tiles*mutation_cofactor);
 #pragma omp parallel for schedule(dynamic)
   for(int r=0;r<Num_Runs;++r) {
-    std::string runN="_T"+std::to_string(Num_Tiles)+"_C"+std::to_string(Colour_Space+1)+"_N"+std::to_string(Num_Genomes)+"_Mu"+std::to_string(mu)+"_O"+std::to_string(Fitness_Oscillation_Rate)+"_K"+std::to_string(GENERATION_LIMIT)+"_I"+std::to_string(initial_condition)+"_Run"+std::to_string(r+RUN);
+    std::string runN="_T"+std::to_string(Num_Tiles)+"_C"+std::to_string(Colour_Space+1)+"_N"+std::to_string(Num_Genomes)+"_Mu"+std::to_string(mu)+"_O"+std::to_string(Fitness_Oscillation_Rate)+"_K"+std::to_string(GENERATION_LIMIT)+"_P"+std::to_string(periodic_changes)+"_Run"+std::to_string(r+RUN);
     EvolveFitnessDynamic(runN,mu);
   }
 }
@@ -29,9 +29,6 @@ void SetEvolutionTargets(std::vector<int>& targets,int generation) {
   }
   else {
     std::shuffle(targets.begin(),targets.end(),RNG_Engine);
-    for(auto k : targets)
-      std::cout<<k<<" ";
-    std::cout<<std::endl;
   }
     
 
@@ -39,7 +36,7 @@ void SetEvolutionTargets(std::vector<int>& targets,int generation) {
 }
 void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
   std::string out_name_g="//rscratch//asl47//Bulk_Run//Modular//A"+std::to_string(active_targets)+Run_Details+"_Genotype.txt";
-  std::string out_name_f="//rscratch//asl47//Bulk_Run//Modular//A"+std::to_string(active_targets)+Run_Details+"_Fitness.txt";
+  std::string out_name_f=/*"//rscratch//asl47//Bulk_Run//Modular//*/"A"+std::to_string(active_targets)+Run_Details+"_Fitness.txt";
   //std::string out_name_r="//rscratch//asl47//Bulk_Run//Modular//A"+std::to_string(active_targets)+Run_Details+"_Robust.txt";
   //std::ofstream out_file_g(out_name_g, std::ios_base::out);
   std::ofstream out_file_f(out_name_f, std::ios_base::out);
@@ -147,7 +144,7 @@ void EvolveFitnessDynamic(std::string Run_Details,double Mu) {
 
     if(abc>=Num_Genomes/2)
       return;
-    Index_Selections=Roulette_Wheel_Selection(Phenotype_Fitness_Sizes,Num_Genomes);
+    Index_Selections=Roulette_Wheel_Selection(Phenotype_Fitness_Sizes);
     for(int nth_select=0;nth_select<Num_Genomes;++nth_select) {
       Temporary_Pool[nth_select]=Genome_Pool[Index_Selections[nth_select]];
     }    
@@ -216,7 +213,7 @@ void EvolveRegulated(int& Discovery_Generation, int& Adaptation_Generation,doubl
       Adaptation_Generation=g;
       return;
     }
-    Index_Selections=Roulette_Wheel_Selection(Phenotype_Fitness_Sizes,Num_Genomes);
+    Index_Selections=Roulette_Wheel_Selection(Phenotype_Fitness_Sizes);
     for(int nth_select=0;nth_select<Num_Genomes;++nth_select) {
       Temporary_Pool[nth_select]=Genome_Pool[Index_Selections[nth_select]];
     }   
@@ -258,7 +255,7 @@ void EvolveSimple(int& Discovery_Generation, int& Adaptation_Generation,double M
       Adaptation_Generation=g;
       return;
     }
-    Index_Selections=Roulette_Wheel_Selection(Phenotype_Fitness_Sizes,Num_Genomes);
+    Index_Selections=Roulette_Wheel_Selection(Phenotype_Fitness_Sizes);
     for(int nth_select=0;nth_select<Num_Genomes;++nth_select) {
       Temporary_Pool[nth_select]=Genome_Pool[Index_Selections[nth_select]];
     }   
