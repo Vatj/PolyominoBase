@@ -10,8 +10,6 @@ public:
     struct state_type {
         result_type x;
         result_type y;
-        result_type z;
-        result_type w;
     };
 
     xorshift(void);
@@ -38,7 +36,5 @@ private:
     state_type state_;
 };
 
-bool operator==(const xorshift &lhs, const xorshift &rhs);
-bool operator!=(const xorshift &lhs, const xorshift &rhs);
 
 

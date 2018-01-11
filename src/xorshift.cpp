@@ -1,86 +1,55 @@
 #include "xorshift.hpp"
 static std::random_device rd;
 
+static inline uint64_t rotl(const uint64_t x, int k) {
+	return (x << k) | (x >> (64 - k));
+}
+
+
 static const xorshift::state_type s_default_seed = {
-    123456789, 362436069, 521288629, 88675123
+  123456789, 362436069
 };
 
 xorshift::xorshift(void)
-  : state_({s_default_seed.x, s_default_seed.y, s_default_seed.z, rd()})//s_default_seed)
+  : state_({rd(), rd()})
 {}
 
-xorshift::xorshift(const state_type &seed)
-    : state_(seed)
-{}
 
-xorshift::xorshift(result_type r)
-    : state_({s_default_seed.x, s_default_seed.y, s_default_seed.z, r})
-{}
 
 void xorshift::seed(const state_type &seed) {
-    state(seed);
+  state(seed);
 }
 
 void xorshift::seed(void) {
-    state(s_default_seed);
-}
-
-void xorshift::seed(result_type r) {
-    auto seed = s_default_seed;
-    seed.w = r;
-    state(seed);
-}
-
-void xorshift::discard(unsigned long long z) {
-    while (z--)
-        (*this)();
+  state(s_default_seed);
 }
 
 const xorshift::state_type &xorshift::state(void) const {
-    return state_;
+  return state_;
 }
 
 void xorshift::state(const state_type &state) {
-    state_ = state;
+  state_ = state;
 }
 
 xorshift::result_type xorshift::min(void) {
-    return std::numeric_limits<result_type>::min();
+  
+  return std::numeric_limits<xorshift::result_type>::min();
 }
 
 xorshift::result_type xorshift::max(void) {
-    return std::numeric_limits<result_type>::max();
+  return std::numeric_limits<xorshift::result_type>::max();
 }
+
 
 xorshift::result_type xorshift::operator()(void) {
-    result_type t = state_.x ^ (state_.x << 15);
-    state_.x = state_.y; state_.y = state_.z; state_.z = state_.w;
-    return state_.w = state_.w ^ (state_.w >> 21) ^ (t ^ (t >> 4));
-}
+  const xorshift::result_type s0 = state_.x;
+  xorshift::result_type s1 = state_.y;
+  const xorshift::result_type  result = s0 + s1;
+  s1 ^= s0;
+  state_.x = rotl(s0, 27) ^ s1 ^ (s1 << 7); // a, b
+  state_.y = rotl(s1, 20); // c
 
-static bool operator==(
-    const xorshift::state_type &lhs, const xorshift::state_type &rhs)
-{
-    return lhs.x == rhs.x
-        && lhs.y == rhs.y
-        && lhs.z == rhs.z
-        && lhs.w == rhs.w;
-}
-
-static bool operator!=(
-    const xorshift::state_type &lhs, const xorshift::state_type &rhs)
-{
-    return lhs.x != rhs.x
-        || lhs.y != rhs.y
-        || lhs.z != rhs.z
-        || lhs.w != rhs.w;
-}
-
-bool operator==(const xorshift &lhs, const xorshift &rhs) {
-    return lhs.state() == rhs.state();
-}
-
-bool operator!=(const xorshift &lhs, const xorshift &rhs) {
-    return lhs.state() != rhs.state();
+  return result;
 }
 

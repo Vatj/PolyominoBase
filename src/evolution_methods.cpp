@@ -21,7 +21,7 @@ int RUN=0;
 bool periodic_changes=true;
 
 std::random_device rd;
-xorshift RNG_Engine;
+std::mt19937_64 RNG_Engine(rd());
 const double MINIMUM_FITNESS_THRESHOLD=0.0000001;
 
 /*
@@ -194,6 +194,7 @@ void Set_Runtime_Configurations(int argc, char* argv[]) {
       case 'U': mutation_cofactor=std::stoi(argv[arg+1]);
         break;
       case 'P': periodic_changes=std::stoi(argv[arg+1])>0;
+        break;
 
         //REGULATION PARAMETERS//
       case 'R': Regulated=std::stoi(argv[arg+1]);
@@ -251,6 +252,7 @@ void Set_Runtime_Configurations(int argc, char* argv[]) {
   std::cout<<"|||||||||||||||||||||||||||||||||||||"<<std::endl;
 }
 
+/*
 
 void InitialGenotypeConditions(std::vector<int>& genotype) {
   std::uniform_int_distribution<int> Mutated_Colour(0,Colour_Space);
@@ -339,3 +341,4 @@ void InitialGenotypeConfiguration(std::vector<int>& genotype) {
     break;
   }   
 }
+*/

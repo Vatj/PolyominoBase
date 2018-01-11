@@ -61,6 +61,7 @@ void EvolvePopulation(std::string run_details) {
 
     }
     //for(std::unordered_map<double,uint32_t>::iterator frequency_iter =interface_counter.begin();frequency_iter!=interface_counter.end();++frequency_iter)
+    uint16_t self_interaction_counter=
     for(uint32_t count : interface_counter)
       fout_strength<<count<<" ";
     fout_strength<<"\n";

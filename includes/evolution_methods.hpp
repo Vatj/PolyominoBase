@@ -18,7 +18,7 @@ extern int initial_condition;
 extern bool periodic_changes;
 
 extern std::random_device rd;
-extern xorshift RNG_Engine;
+extern std::mt19937_64 RNG_Engine;
 extern const double MINIMUM_FITNESS_THRESHOLD;
 
 double Fitness_Function(double Phenotype_Size);
