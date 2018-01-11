@@ -188,15 +188,15 @@ def PlotTargetRates(data_frame,mu=16):
     ax1.set_title(r'$\tau_{A}$')
     ax2.set_title(r'$\Delta_{\tau}$')
 
-    omg_labs=['{}'.format(r'$\Omega^3$' if '3' in data_key else r'$\Omega_{{{0}}}^{{{1}}} $'.format(int(data_key[data_key.index('O')+1:]),data_key[1])) for data_key in sorted(data_frame.keys(), key = lambda x: (x[1], int(x[3:])))]
-    table1=ax1.table(cellText=tab1_txt,rowLabels=omg_labs, colLabels=['1','2','3'],loc='right')
-    table2=ax2.table(cellText=tab2_txt,rowLabels=omg_labs, colLabels=['1','2','3'],loc='right')
+    #omg_labs=['{}'.format(r'$\Omega^3$' if '3' in data_key else r'$\Omega_{{{0}}}^{{{1}}} $'.format(int(data_key[data_key.index('O')+1:]),data_key[1])) for data_key in sorted(data_frame.keys(), key = lambda x: (x[1], int(x[3:])))]
+    #table1=ax1.table(cellText=tab1_txt,rowLabels=omg_labs, colLabels=['1','2','3'],loc='right')
+    #table2=ax2.table(cellText=tab2_txt,rowLabels=omg_labs, colLabels=['1','2','3'],loc='right')
 
-    table1.set_fontsize(14)
-    table1.scale(.33, 1)
+    #table1.set_fontsize(14)
+    #table1.scale(.33, 1)
 
-    table2.set_fontsize(14)
-    table2.scale(.33, 1) 
+    #table2.set_fontsize(14)
+    #table2.scale(.33, 1) 
 
     fig.suptitle(r'$\langle \mu L \rangle=${}'.format(mu))
     plt.show(block=False)

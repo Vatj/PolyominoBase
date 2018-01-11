@@ -32,7 +32,7 @@ def SavePartial(d,mu):
 def ReadPartial(mu):
     loaded= np.load('/rscratch/asl47/Processed/Dynamic/fitness_increments_Mu{}_K5000.npz'.format(mu),allow_pickle=True)
     data={}
-    for i,k in enumerate(loaded['args']):q
+    for i,k in enumerate(loaded['args']):
         data[k]=loaded['arr_0'][i]
     return data
         
@@ -62,16 +62,16 @@ def SolutionCDF(needle_length=30,A=2,mu=4,O=3,runs=1):
     print "seen {} times for a fraction of {}".format(occ,occ*1./runs)
     return firsts
 x=[]
-def SolutionCDF_Partials(pop_amount=500,A=2,mu=4,O=3,runs=1):
+def SolutionCDF_Partials(pop_amount=500,A=2,mu=4,O=3,p=0,runs=1):
     firsts=np.zeros((runs,4))
     Mu_Sets={32:'0.001563',16:'0.003125',8:'0.006250',4:'0.012500',1:'0.050000'}
      
     
     for r in xrange(runs):
 
-        subfile_name='A{}_T20_C200_N1000_Mu{}_O{}_K50000_I0_Run{}'.format(A,Mu_Sets[mu],O,r)
-        fitness_import=np.loadtxt('/scratch/asl47/Data_Runs/Dynamic_T2/Mu{}/{}_Fitness.txt'.format(mu,subfile_name))
-        
+        subfile_name='A{}_T20_C200_N1000_Mu{}_O{}_K20000_P{}_Run{}'.format(A,Mu_Sets[mu],O,p,r)
+        #fitness_import=np.loadtxt('/scratch/asl47/Data_Runs/Dynamic_T2/Mu{}/{}_Fitness.txt'.format(mu,subfile_name))
+        fitness_import=np.loadtxt('/rscratch/asl47/Bulk_Run/Modular/{}_Fitness.txt'.format(subfile_name))
         #return fitness_import
         try:
             

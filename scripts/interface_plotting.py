@@ -13,7 +13,7 @@ BASE_FILE_PATH='/scratch/asl47/Data_Runs/Interface/T{2:.6f}/{0}_{1}_T{2:.6f}_Mu{
 
 def LoadSizes(r_type,temperature,mu,gamma,runs=1):
      sizes=defaultdict(int)
-     for r in xrange(runs):
+     for r in xrange(250+runs):
           for line in open(BASE_FILE_PATH.format('Sizes',r_type,temperature,mu,gamma,r)):
                (size,count)=[int(i) for i in line.rstrip().split()]
                sizes[size]+=count
@@ -24,7 +24,7 @@ def LoadPairSizes(temperature,mu,gamma,runs=1):
 
 def LoadData(d_type,r_type,temperature,mu,gamma,runs=1):
      data=[]
-     for r in xrange(runs):
+     for r in xrange(250,250+runs):
           data.append(np.loadtxt(BASE_FILE_PATH.format(d_type,r_type,temperature,mu,gamma,r)))
      return np.stack(data,axis=2)
 
@@ -175,6 +175,7 @@ def PlotPhenotypeSizesOld(ss):
      plt.ylabel(r'$\langle f \rangle$')
      plt.xlabel(r'Phenotype Size')
      plt.legend()
+     fig.set_tight_layout(True)
      plt.show(block=False)    
 
 def LoadSizesOld(r_type,temperature,mu,runs=1):
