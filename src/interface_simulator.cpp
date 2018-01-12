@@ -1,17 +1,11 @@
 #include "interface_simulator.hpp"
 
-
-#include <omp.h>
-
-//typedef uint16_t interface_type;
 namespace simulation_params
 {
-  
   population_size_type population_size=10;
   uint8_t phenotype_builds=10,n_tiles=2;
   uint32_t generation_limit=5,independent_trials=1,run_offset=0;
   bool fitness_selection=false;
-
 }
 
 std::vector<simulation_params::population_size_type> RouletteWheelSelection(std::vector<double>& fitnesses) {
@@ -24,9 +18,10 @@ std::vector<simulation_params::population_size_type> RouletteWheelSelection(std:
 }
 
 void EvolvePopulation(std::string run_details) {
-  std::string out_name_strength="//rscratch//asl47//Bulk_Run//Interfaces//Strengths_"+std::string(simulation_params::fitness_selection? "S":"R")+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
-  std::string out_name_size="//rscratch//asl47//Bulk_Run//Interfaces//Sizes_"+std::string(simulation_params::fitness_selection? "S":"R")+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
-  std::string out_name_fitness="//rscratch//asl47//Bulk_Run//Interfaces//Fitness_"+std::string(simulation_params::fitness_selection? "S":"R")+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
+  std::string file_base_path="";//"//rscratch//asl47//Bulk_Run//Interfaces//";
+  std::string out_name_strength=file_base_path+"Strengths_"+std::string(simulation_params::fitness_selection? "S":"R")+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
+  std::string out_name_size=file_base_path+"//rscratch//asl47//Bulk_Run//Interfaces//Sizes_"+std::string(simulation_params::fitness_selection? "S":"R")+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
+  std::string out_name_fitness=file_base_path+"//rscratch//asl47//Bulk_Run//Interfaces//Fitness_"+std::string(simulation_params::fitness_selection? "S":"R")+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
   
   std::ofstream fout_size(out_name_size, std::ios_base::out);
   std::ofstream fout_strength(out_name_strength, std::ios_base::out);
@@ -35,46 +30,24 @@ void EvolvePopulation(std::string run_details) {
   std::vector< std::vector<interface_model::interface_type> > population_genotypes(simulation_params::population_size, std::vector<interface_model::interface_type>(simulation_params::n_tiles*4, 0));
   std::vector< std::vector<interface_model::interface_type> > reproducing_genotypes(simulation_params::population_size, std::vector<interface_model::interface_type>(simulation_params::n_tiles*4, 0));
   std::vector<double> population_fitnesses(simulation_params::population_size);
-  //std::vector<double> symmetries;//(simulation_params::generation_limit);
   
   interface_model::PhenotypeTable pt = interface_model::PhenotypeTable();
   for(uint32_t generation=0;generation<simulation_params::generation_limit;++generation) {
-    //std::vector<double> ds;
-    std::vector<uint32_t> interface_counter(model_params::interface_size+1);
-    //std::unordered_map<double,uint32_t> symmetry_counter;
-    //for(uint8_t hd=0;hd<model_params::interface_size;++hd)
-    //  interface_counter[static_cast<double>(hd)/model_params::interface_size];
+
+    std::vector<uint32_t> interface_counter(1.5*model_params::interface_size+2);
     int nth_genotype=0;
     for(std::vector< std::vector<interface_model::interface_type> >::iterator evolving_genotype_iter=population_genotypes.begin(); evolving_genotype_iter!=population_genotypes.end();++evolving_genotype_iter) {
-      //ds = InterfaceStrengths(*evolving_genotype_iter);
 
       std::transform(interface_counter.begin(), interface_counter.end(),InterfaceStrengths(*evolving_genotype_iter).begin() , interface_counter.begin(),std::plus<uint32_t>());
-
-      // ++interface_counter[d];
       population_fitnesses[nth_genotype++]=interface_model::ProteinAssemblyOutcome(*evolving_genotype_iter,simulation_params::phenotype_builds,&pt);
       interface_model::MutateInterfaces(*evolving_genotype_iter);
 
-      
-      //for(double d : ds)
-      //out_file_f<<d<<" ";
-      
-
     }
-    //for(std::unordered_map<double,uint32_t>::iterator frequency_iter =interface_counter.begin();frequency_iter!=interface_counter.end();++frequency_iter)
-    uint16_t self_interaction_counter=
+
     for(uint32_t count : interface_counter)
       fout_strength<<count<<" ";
     fout_strength<<"\n";
-    
-    /* std::vector<double> syms;
-    for(std::vector< std::vector<interface_model::interface_type> >::iterator evolving_genotype_iter=population_genotypes.begin(); evolving_genotype_iter!=population_genotypes.end();++evolving_genotype_iter)
-      for(std::vector<interface_model::interface_type>::iterator face = evolving_genotype_iter->begin();face!=evolving_genotype_iter->end();++face)
-        syms.emplace_back(interface_model::SymmetryFactor(*face));
-    symmetries.emplace_back(std::accumulate(syms.begin(),syms.end(),0.0)/(4*simulation_params::n_tiles*simulation_params::population_size));
-    std::cout<<"fitness: ";
-    for(double f : population_fitnesses)
-      std::cout<<f<<" ";
-    std::cout<<"\nselection: ";  */
+
     
     double mu=0,sigma=0;
     DistributionStatistics(population_fitnesses,mu,sigma);
@@ -118,37 +91,7 @@ void EvolvePopulation(std::string run_details) {
   fout_size.close();
   fout_strength.close();
 }
-/*
-void RandomStrings() {
-  std::string out_name_f="//rscratch//asl47//Bulk_Run//Interfaces//Strengths_R.txt";
-  std::string out_name_p="//rscratch//asl47//Bulk_Run//Interfaces//Strengths_X.txt";
-  std::ofstream out_file_f(out_name_f, std::ios_base::out);
-  std::ofstream out_file_p(out_name_p, std::ios_base::out);
-  xorshift RNG;
-  std::uniform_int_distribution<uint16_t> distr(0, 65535);
-  std::vector< std::vector<interface_model::interface_type> > population_genotypes(simulation_params::population_size, std::vector<interface_model::interface_type>(simulation_params::n_tiles*4, 0));
-  std::vector<double> ds;
-  std::unordered_map<double,uint32_t> interface_counter;
-  for(std::vector< std::vector<interface_model::interface_type> >::iterator evolving_genotype_iter=population_genotypes.begin(); evolving_genotype_iter!=population_genotypes.end();++evolving_genotype_iter) {
-    for(std::vector<interface_model::interface_type>::iterator f=evolving_genotype_iter->begin();f!=evolving_genotype_iter->end();++f) {
-      *f=distr(RNG);
-      out_file_p<<__builtin_popcount(*f)<<" ";
-    }
 
-    ds = InterfaceStrengths(evolving_genotype_iter);
-    for(double d: ds)
-      ++interface_counter[d];
-    //population_fitnesses[nth_genotype++]=simulation_params::fitness_selection? interface_model::ProteinAssemblyOutcome(*evolving_genotype_iter,simulation_params::phenotype_builds,&pt) : 1;
-  }
-  for(std::unordered_map<double,uint32_t>::iterator frequency_iter =interface_counter.begin();frequency_iter!=interface_counter.end();++frequency_iter) 
-      out_file_f<<frequency_iter->first<<" "<<frequency_iter->second<<" ";
-  out_file_f<<"\n";
-  out_file_f.close();
-  out_file_p.close();
-
-}
-
-*/
   
  
 void EvolutionRunner() {
@@ -167,6 +110,9 @@ int main(int argc, char* argv[]) {
   if(argc<2) {
     std::cout<<"no Params"<<std::endl;
     run_option='H';
+    std::vector<uint8_t> s{1,1,1, 0,1,0, 1,1,1};
+    uint8_t dx=3,dy=3;
+    std::cout<<+PhenotypeSymmetryFactor(s,dx,dy)<<std::endl;
   }
   else {
     run_option=argv[1][1];

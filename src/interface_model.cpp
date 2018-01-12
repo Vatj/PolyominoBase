@@ -1,12 +1,12 @@
 #include "interface_model.hpp"
 
-
+#include <climits>
 
 
 namespace model_params
 {
   //HARD CODED TO MATCH typedef//
-  const uint8_t interface_size=16;
+  const uint8_t interface_size=CHAR_BIT*sizeof(interface_model::interface_type);
   
   double temperature=1,mu_prob=0.2,unbound_factor=2,misbinding_rate=0,fitness_factor=2;
  
@@ -17,7 +17,8 @@ namespace model_params
 
 namespace interface_model
 {
-  xorshift RNG_Engine;  
+  std::random_device rd;
+  std::mt19937_64 RNG_Engine(rd());  
   
   inline interface_type reverse_bits(interface_type v) {
     interface_type s = sizeof(v) * 8; // bit size; must be power of 2
@@ -36,18 +37,15 @@ namespace interface_model
   }
   
 
-  double SammingDistance(interface_type face1,interface_type face2) {
-    //uint8_t x =model_params::interface_size-__builtin_popcount(face1 ^ reverse_bits(face2));
-    //uint8_t y =__builtin_popcount(~face1 ^ reverse_bits(face2));
-    //std::cout<<+x<<" vs "<<std::endl;
+  inline double SammingDistance(interface_type face1,interface_type face2) {
     return static_cast<double>(ArbitraryPopcount(face1 ^ reverse_bits(~face2)));
-    
-    //return 16-__builtin_popcount(face1 ^ reverse_bits(face2));
   }
 
+  /*
   double SymmetryFactor(interface_type face1) {
     return static_cast<double>(ArbitraryPopcount((face1) ^ reverse_bits(face1)))/model_params::interface_size;
   }
+  */
 
   void MutateInterfaces(std::vector<interface_type>& binary_genome) {
     std::vector<uint8_t> interface_indices{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
@@ -136,74 +134,94 @@ namespace interface_model
     }
   }
   
-  std::vector<uint8_t> SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,uint8_t& dy) {
-    if(placed_tiles.empty())
-      return {};
-    std::vector<int8_t> x_locs, y_locs;
-    x_locs.reserve(placed_tiles.size()/2);
-    y_locs.reserve(placed_tiles.size()/2);
-    for(std::vector<int8_t>::iterator check_iter = placed_tiles.begin();check_iter!=placed_tiles.end();check_iter+=2) {
-      x_locs.emplace_back(*check_iter);
-      y_locs.emplace_back(*(check_iter+1));
-    }
-    std::vector<int8_t>::iterator x_left,x_right,y_top,y_bottom;
-    std::tie(x_left,x_right)=std::minmax_element(x_locs.begin(),x_locs.end());
-    std::tie(y_bottom,y_top)=std::minmax_element(y_locs.begin(),y_locs.end());
-    dx=*x_right-*x_left+1;
-    dy=*y_top-*y_bottom+1;
-    std::vector<uint8_t> spatial_grid(dx*dy); 
-    for(uint16_t tileIndex=0;tileIndex<x_locs.size();++tileIndex)
-      spatial_grid[(*y_top-y_locs[tileIndex])*dx + (x_locs[tileIndex]-*x_left)]=1;
-    return spatial_grid;
-  }
-
-  bool ComparePolyominoes(std::vector<uint8_t>& phenotype,uint8_t& dx,uint8_t& dy, std::vector<uint8_t>& phenotype_prime,uint8_t dx_prime,uint8_t dy_prime) {
-    if(std::accumulate(phenotype.begin(),phenotype.end(),0)!=std::accumulate(phenotype_prime.begin(),phenotype_prime.end(),0))
-      return false;
-    if(dx==dx_prime && dy==dy_prime && dx==dy) { //bounding boxes match, symmetric
-      if(phenotype==phenotype_prime) 
-        return true;
-      else {
-        for(int rotation=0;rotation<3;++rotation) {
-          ClockwiseRotation(phenotype,dx,dy);
-          if(phenotype==phenotype_prime)
-            return true;
-        }
-        return false;
-      }
-    }
-    if(dx==dx_prime && dy==dy_prime)  //bounding boxes match, asymmetric
-      return phenotype==phenotype_prime ? true : phenotype==ClockwisePiRotation(phenotype_prime);
-    if(dx==dy_prime && dy==dx_prime) { //bounding boxes pi/2 off, asymmetric
-      ClockwiseRotation(phenotype,dx,dy);
-      return phenotype==phenotype_prime ? true : phenotype==ClockwisePiRotation(phenotype_prime);
-    }
-    return false;
-  }
-  void ClockwiseRotation(std::vector<uint8_t>& phenotype,uint8_t& dx,uint8_t& dy) {
-    std::vector<uint8_t> swapper;
-    swapper.reserve(phenotype.size());
-    for(uint8_t column=0;column<dx;++column) 
-      for(uint8_t row=dy;row!=0;--row) 
-        swapper.emplace_back(phenotype[(row-1)*dx+column]);
-    std::swap(dx,dy);
-    phenotype=swapper;
- }
-  std::vector<uint8_t> ClockwisePiRotation(std::vector<uint8_t>& phenotype) {
-    std::reverse(phenotype.begin(),phenotype.end());
-    return phenotype;
-  }
-  void PrintShape(std::vector<uint8_t>& spatial_information,uint8_t dx,uint8_t dy) {
-    for(uint8_t y=0;y<dy;++y) {
-      for(uint8_t x=0;x<dx;++x)
-        std::cout<<+spatial_information[y*dx+x]<<" ";
-      std::cout<<std::endl;
-    }
-    std::cout<<std::endl;
-  }
+  
   
 }//end interface_model namespace
 
+std::vector<uint8_t> SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,uint8_t& dy) {
+  if(placed_tiles.empty())
+    return {};
+  std::vector<int8_t> x_locs, y_locs;
+  x_locs.reserve(placed_tiles.size()/2);
+  y_locs.reserve(placed_tiles.size()/2);
+  for(std::vector<int8_t>::iterator check_iter = placed_tiles.begin();check_iter!=placed_tiles.end();check_iter+=2) {
+    x_locs.emplace_back(*check_iter);
+    y_locs.emplace_back(*(check_iter+1));
+  }
+  std::vector<int8_t>::iterator x_left,x_right,y_top,y_bottom;
+  std::tie(x_left,x_right)=std::minmax_element(x_locs.begin(),x_locs.end());
+  std::tie(y_bottom,y_top)=std::minmax_element(y_locs.begin(),y_locs.end());
+  dx=*x_right-*x_left+1;
+  dy=*y_top-*y_bottom+1;
+  std::vector<uint8_t> spatial_grid(dx*dy); 
+  for(uint16_t tileIndex=0;tileIndex<x_locs.size();++tileIndex)
+    spatial_grid[(*y_top-y_locs[tileIndex])*dx + (x_locs[tileIndex]-*x_left)]=1;
+  return spatial_grid;
+}
+
+bool ComparePolyominoes(std::vector<uint8_t>& phenotype,uint8_t& dx,uint8_t& dy, std::vector<uint8_t>& phenotype_prime,uint8_t dx_prime,uint8_t dy_prime) {
+  if(std::accumulate(phenotype.begin(),phenotype.end(),0)!=std::accumulate(phenotype_prime.begin(),phenotype_prime.end(),0))
+    return false;
+  if(dx==dx_prime && dy==dy_prime && dx==dy) { //bounding boxes match, symmetric
+    if(phenotype==phenotype_prime) 
+      return true;
+    else {
+      for(int rotation=0;rotation<3;++rotation) {
+	ClockwiseRotation(phenotype,dx,dy);
+	if(phenotype==phenotype_prime)
+	  return true;
+      }
+      return false;
+    }
+  }
+  if(dx==dx_prime && dy==dy_prime)  //bounding boxes match, asymmetric
+    return phenotype==phenotype_prime ? true : phenotype==ClockwisePiRotation(phenotype_prime);
+  if(dx==dy_prime && dy==dx_prime) { //bounding boxes pi/2 off, asymmetric
+    ClockwiseRotation(phenotype,dx,dy);
+    return phenotype==phenotype_prime ? true : phenotype==ClockwisePiRotation(phenotype_prime);
+  }
+  return false;
+}
+void ClockwiseRotation(std::vector<uint8_t>& phenotype,uint8_t& dx,uint8_t& dy) {
+  std::vector<uint8_t> swapper;
+  swapper.reserve(phenotype.size());
+  for(uint8_t column=0;column<dx;++column) 
+    for(uint8_t row=dy;row!=0;--row) 
+      swapper.emplace_back(phenotype[(row-1)*dx+column]);
+  std::swap(dx,dy);
+  phenotype=swapper;
+}
+std::vector<uint8_t> ClockwisePiRotation(std::vector<uint8_t>& phenotype) {
+  std::reverse(phenotype.begin(),phenotype.end());
+  return phenotype;
+}
+void PrintShape(std::vector<uint8_t>& spatial_information,uint8_t dx,uint8_t dy) {
+  for(uint8_t y=0;y<dy;++y) {
+    for(uint8_t x=0;x<dx;++x)
+      std::cout<<+spatial_information[y*dx+x]<<" ";
+    std::cout<<std::endl;
+  }
+  std::cout<<std::endl;
+}
+
+uint8_t PhenotypeSymmetryFactor(std::vector<uint8_t>& original_shape, uint8_t dx, uint8_t dy) {
+  std::vector<uint8_t> rotated_shape(original_shape);
+  std::reverse(original_shape.begin(),original_shape.end());
+  for(uint8_t a: original_shape)
+    std::cout<<+a<<" ";
+  std::cout<<std::endl;
+  for(uint8_t a: rotated_shape)
+    std::cout<<+a<<" ";
+  std::cout<<std::endl;
+  if(original_shape!=rotated_shape)
+    return 1;
+  if(dx==dy) {
+    ClockwiseRotation(rotated_shape,dx,dy);
+    if(original_shape==rotated_shape)
+      return 4;
+  }
+  return 2;
+}
 
 void DistributionStatistics(std::vector<double>& intf, double& mean, double& variance) {
   uint16_t N = 0;
@@ -218,14 +236,11 @@ void DistributionStatistics(std::vector<double>& intf, double& mean, double& var
 }
 
 std::vector<uint16_t> InterfaceStrengths(std::vector<interface_model::interface_type>& interfaces) {
-  std::vector<uint16_t> strengths(model_params::interface_size+1);
-  //strengths.reserve(interfaces.size()*(interfaces.size()+1)/2);
+  std::vector<uint16_t> strengths(static_cast<uint8_t>(model_params::interface_size*1.5)+2);
   for(std::vector<interface_model::interface_type>::const_iterator outer_face=interfaces.begin(); outer_face!=interfaces.end(); ++outer_face) {
-    for(std::vector<interface_model::interface_type>::const_iterator inner_face=outer_face; inner_face!=interfaces.end(); ++inner_face) {
+    ++strengths[static_cast<uint8_t>(1.5*model_params::interface_size)+1-interface_model::SammingDistance(*outer_face,*outer_face)/2];
+    for(std::vector<interface_model::interface_type>::const_iterator inner_face=outer_face+1; inner_face!=interfaces.end(); ++inner_face)
       ++strengths[model_params::interface_size-interface_model::SammingDistance(*outer_face,*inner_face)];
-      //std::cout<<"incremementing strenght on "<<model_params::interface_size-interface_model::SammingDistance(*outer_face,*inner_face)<<std::endl;
-      //std::cout<<+*outer_face<<" "<<+*inner_face<<" = "<< 1-static_cast<double>(interface_model::SammingDistance(*outer_face,*inner_face))/model_params::interface_size<<std::endl;
-    }
   }
   return strengths;
 }

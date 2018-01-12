@@ -1,6 +1,3 @@
-#include "xorshift.hpp"
-
-
 #include <algorithm>
 #include <vector>
 #include <iostream>
@@ -9,6 +6,7 @@
 #include <array>
 #include <numeric>
 #include <unordered_map>
+#include <random>
 
 
 		
@@ -23,35 +21,36 @@ namespace model_params
   extern std::uniform_real_distribution<double> real_dist;
 
 }
+/* SPATIAL */
+std::vector<uint8_t> SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,uint8_t& dy);
+bool ComparePolyominoes(std::vector<uint8_t>& phenotype,uint8_t& dx,uint8_t& dy, std::vector<uint8_t>& phenotype_prime,uint8_t dx_prime,uint8_t dy_prime);
+
+/* ROTATIONS */
+void ClockwiseRotation(std::vector<uint8_t>& phenotype,uint8_t& dx,uint8_t& dy);
+std::vector<uint8_t> ClockwisePiRotation(std::vector<uint8_t>& phenotype);
+
+/* PRINTING */
+void PrintShape(std::vector<uint8_t>& spatial_information,uint8_t dx,uint8_t dy);
 
 namespace interface_model
 {
-  typedef uint16_t interface_type;
+  typedef uint32_t interface_type;
   struct PhenotypeTable;
 
-  
-  extern xorshift RNG_Engine;
+  extern std::random_device rd;
+  extern std::mt19937_64 RNG_Engine;
   inline interface_type reverse_bits(interface_type v);
   inline uint8_t ArbitraryPopcount(interface_type face1);
-  double SammingDistance(interface_type face1,interface_type face2);
+  inline double SammingDistance(interface_type face1,interface_type face2);
   void MutateInterfaces(std::vector<interface_type>& binary_genome);
-  double SymmetryFactor(interface_type face1);
+  //double SymmetryFactor(interface_type face1);
 
   /* ASSEMBLY */
   double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome,uint8_t N_repeats,PhenotypeTable* pt);
   std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome);
   void PerimeterGrowth(int8_t x,int8_t y,int8_t theta,int8_t direction, int8_t tile_type,std::vector<int8_t>& growing_perimeter,std::vector<int8_t>& placed_tiles);
 
-  /* SPATIAL */
-  std::vector<uint8_t> SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,uint8_t& dy);
-  bool ComparePolyominoes(std::vector<uint8_t>& phenotype,uint8_t& dx,uint8_t& dy, std::vector<uint8_t>& phenotype_prime,uint8_t dx_prime,uint8_t dy_prime);
-
-  /* ROTATIONS */
-  void ClockwiseRotation(std::vector<uint8_t>& phenotype,uint8_t& dx,uint8_t& dy);
-  std::vector<uint8_t> ClockwisePiRotation(std::vector<uint8_t>& phenotype);
-
-  /* PRINTING */
-  void PrintShape(std::vector<uint8_t>& spatial_information,uint8_t dx,uint8_t dy);
+  
 
   struct PhenotypeTable {
     uint32_t n_phenotypes;
@@ -96,7 +95,9 @@ namespace interface_model
 
   };
 }
-
+uint8_t PhenotypeSymmetryFactor(std::vector<uint8_t>& original_shape, uint8_t dx, uint8_t dy);
 void DistributionStatistics(std::vector<double>& intf, double& mean, double& variance);
 
 std::vector<uint16_t> InterfaceStrengths(std::vector<interface_model::interface_type>& interfaces);
+
+
