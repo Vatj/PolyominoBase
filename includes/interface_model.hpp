@@ -87,8 +87,10 @@ namespace interface_model
         ++ID_counter[ID_iter->first][ID_iter->second];
       double fitness=0;
       for(std::unordered_map<uint8_t, std::unordered_map<uint32_t,uint8_t> >::iterator size_iter =ID_counter.begin();size_iter!=ID_counter.end();++size_iter) 
-        for(std::unordered_map<uint32_t,uint8_t>::iterator frequency_iter =size_iter->second.begin();frequency_iter!=size_iter->second.end();++frequency_iter) 
+        for(std::unordered_map<uint32_t,uint8_t>::iterator frequency_iter =size_iter->second.begin();frequency_iter!=size_iter->second.end();++frequency_iter) {
+	  //if frequency below threshold -> UND, fitness 0, and remove from phenotypetable and fitness table
           fitness+=phenotype_fitnesses[size_iter->first][frequency_iter->first] * std::pow(static_cast<double>(frequency_iter->second)/phenotype_IDs.size(),model_params::fitness_factor);
+	}
       return fitness;
     }
       

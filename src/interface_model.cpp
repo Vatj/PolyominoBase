@@ -207,12 +207,6 @@ void PrintShape(std::vector<uint8_t>& spatial_information,uint8_t dx,uint8_t dy)
 uint8_t PhenotypeSymmetryFactor(std::vector<uint8_t>& original_shape, uint8_t dx, uint8_t dy) {
   std::vector<uint8_t> rotated_shape(original_shape);
   std::reverse(original_shape.begin(),original_shape.end());
-  for(uint8_t a: original_shape)
-    std::cout<<+a<<" ";
-  std::cout<<std::endl;
-  for(uint8_t a: rotated_shape)
-    std::cout<<+a<<" ";
-  std::cout<<std::endl;
   if(original_shape!=rotated_shape)
     return 1;
   if(dx==dy) {
