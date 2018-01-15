@@ -11,6 +11,14 @@
 
 		
 
+namespace simulation_params
+{
+  typedef uint32_t population_size_type;
+  extern population_size_type population_size;
+  extern uint32_t generation_limit,independent_trials,run_offset;
+  extern uint8_t n_tiles,phenotype_builds;
+  extern bool fitness_selection;
+}
 
 namespace model_params
 {
@@ -55,9 +63,10 @@ namespace interface_model
   struct PhenotypeTable {
     uint32_t n_phenotypes;
     std::unordered_map<uint8_t,std::vector<uint8_t> > known_phenotypes;
-    std::unordered_map<uint8_t,std::vector<uint8_t> > temporary_phenotypes;
+    std::unordered_map<uint8_t,std::vector<uint8_t> > undiscovered_phenotypes;
     std::unordered_map<uint8_t,std::vector<double> > phenotype_fitnesses{{0,{0}}};
-    std::vector<uint32_t> temporary_phenotype_indices{0};
+    std::unordered_map<uint8_t,std::vector<uint32_t> > undiscovered_phenotype_xfer;
+    std::vector<uint32_t> undiscovered_phenotype_counts;
     
     //std::vector<uint32_t> phenotype_size_count_accepted(model_params::unbound_factor*simulation_params::n_tiles*simulation_params::n_tiles);
     
@@ -75,42 +84,68 @@ namespace interface_model
           return phenotype_ID;
         phen_iter+=*phen_iter* *(phen_iter+1)+2;
         ++phenotype_ID;
-      }      
-      temporary_phenotypes[phenotype_size].emplace_back(dx);
-      temporary_phenotypes[phenotype_size].emplace_back(dy);
-      temporary_phenotypes[phenotype_size].insert(temporary_phenotypes[phenotype_size].end(),phenotype.begin(),phenotype.end());
-      temporary_phenotype_indices.emplace_back(temporary_phenotypes[phenotype_size].size());
+      }
+      uint8_t new_phenotype_index=0;
+      for(std::vector<uint8_t>::iterator phen_iter = undiscovered_phenotypes[phenotype_size].begin();phen_iter!=undiscovered_phenotypes[phenotype_size].end();) {
+        temp_phenotype.assign(phen_iter+2,phen_iter+2+*phen_iter* *(phen_iter+1));
+        if(ComparePolyominoes(phenotype,dx,dy,temp_phenotype,*phen_iter,*(phen_iter+1))) {
+          if(++undiscovered_phenotype_counts[new_phenotype_index]>=model_params::UND_threshold*simulation_params::phenotype_builds) {
+	    known_phenotypes[phenotype_size].insert(known_phenotypes[phenotype_size].end(),phen_iter,phen_iter+2+*phen_iter* *(phen_iter+1));
+	    phenotype_fitnesses[phenotype_size].emplace_back(model_params::real_dist(RNG_Engine));
+	    undiscovered_phenotype_xfer[phenotype_size].emplace_back(new_phenotype_index);
+	    undiscovered_phenotype_xfer[phenotype_size].emplace_back(known_phenotypes[phenotype_size].size()-1);
+	    return known_phenotypes[phenotype_size].size()-1+simulation_params::phenotype_builds;
+	  }
+	  else {
+	    return known_phenotypes[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds;
+	  }
+	  
+	}
+        phen_iter+=*phen_iter* *(phen_iter+1)+2;
+        ++new_phenotype_index;
+      }
       
+      undiscovered_phenotypes[phenotype_size].emplace_back(dx);
+      undiscovered_phenotypes[phenotype_size].emplace_back(dy);
+      undiscovered_phenotypes[phenotype_size].insert(undiscovered_phenotypes[phenotype_size].end(),phenotype.begin(),phenotype.end());
+      undiscovered_phenotype_counts.emplace_back(1);
+
+      /*
+      known_phenotypes[phenotype_size].emplace_back(dx);
+      known_phenotypes[phenotype_size].emplace_back(dy);
+      known_phenotypes[phenotype_size].insert(known_phenotypes[phenotype_size].end(),phenotype.begin(),phenotype.end());
       phenotype_fitnesses[phenotype_size].emplace_back(model_params::real_dist(RNG_Engine));
-      //++phenotype_size_count_active[phenotype_size];
       ++n_phenotypes;
       return phenotype_ID;
+      */
+      //++phenotype_size_count_active[phenotype_size];
+      ++n_phenotypes;
+      return known_phenotypes[phenotype_size].size()+new_phenotype_index-1+simulation_params::phenotype_builds;
     }
     
     double GenotypeFitness(std::vector<std::pair<uint8_t, uint32_t> >& phenotype_IDs) {
+      for(std::unordered_map<uint8_t,std::vector<uint32_t> >::iterator xfer_iter=undiscovered_phenotype_xfer.begin();xfer_iter!=undiscovered_phenotype_xfer.end();++xfer_iter) {
+	for(std::vector<uint32_t>::iterator replacing_iter=xfer_iter->second.begin();replacing_iter!=xfer_iter->second.end();replacing_iter+=2) {
+	std::replace(phenotype_IDs.begin(),phenotype_IDs.end(),std::make_pair(xfer_iter->first,*(replacing_iter)),std::make_pair(xfer_iter->first,*(replacing_iter+1)));
+	  }
+      }
+      
+
       std::unordered_map<uint8_t, std::unordered_map<uint32_t,uint8_t> > ID_counter;
       for(std::vector<std::pair<uint8_t,uint32_t> >::const_iterator ID_iter = phenotype_IDs.begin(); ID_iter!=phenotype_IDs.end(); ++ID_iter)
         ++ID_counter[ID_iter->first][ID_iter->second];
       double fitness=0;
+      
       for(std::unordered_map<uint8_t, std::unordered_map<uint32_t,uint8_t> >::iterator size_iter =ID_counter.begin();size_iter!=ID_counter.end();++size_iter) 
-        for(std::unordered_map<uint32_t,uint8_t>::iterator frequency_iter =size_iter->second.begin();frequency_iter!=size_iter->second.end();++frequency_iter) {
-	  //if frequency below threshold -> UND, fitness 0, and remove from phenotypetable and fitness table
-	  if(static_cast<double>(frequency_iter->second)/phenotype_IDs.size()<model_params::UND_threshold) {
-	    phenotype_fitnesses[size_iter->first].erase(phenotype_fitnesses[size_iter->first].begin()+frequency_iter->first);
-	    temporary_phenotypes[size_iter->first].erase(temporary_phenotypes[size_iter->first].begin()+temporary_phenotype_indices[frequency_iter->first-1],temporary_phenotypes[size_iter->first].begin()+temporary_phenotype_indices[frequency_iter->first]);
-
-	  }
-	  else
+        for(std::unordered_map<uint32_t,uint8_t>::iterator frequency_iter =size_iter->second.begin();frequency_iter!=size_iter->second.end();++frequency_iter)
+	  if(frequency_iter->first < known_phenotypes[size_iter->first].size()) 
 	    fitness+=phenotype_fitnesses[size_iter->first][frequency_iter->first] * std::pow(static_cast<double>(frequency_iter->second)/phenotype_IDs.size(),model_params::fitness_factor);
-	}
 
 
-
-      for(std::unordered_map<uint8_t, std::vector<uint8_t> >::iterator phen_iter =temporary_phenotypes.begin();phen_iter!=temporary_phenotypes.end();++phen_iter) {
-	known_phenotypes[phen_iter->first].insert(known_phenotypes[phen_iter->first].end(),temporary_phenotypes[phen_iter->first].begin(),temporary_phenotypes[phen_iter->first].end());
-      }
-      temporary_phenotypes.clear();
-      temporary_phenotype_indices.clear();
+      //temporary_phenotype_indices.clear();
+      undiscovered_phenotypes.clear();
+      undiscovered_phenotype_counts.clear();
+      undiscovered_phenotype_xfer.clear();
       
       return fitness;
     }

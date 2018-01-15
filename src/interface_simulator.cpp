@@ -1,12 +1,6 @@
 #include "interface_simulator.hpp"
 
-namespace simulation_params
-{
-  population_size_type population_size=10;
-  uint8_t phenotype_builds=10,n_tiles=2;
-  uint32_t generation_limit=5,independent_trials=1,run_offset=0;
-  bool fitness_selection=false;
-}
+//./bin/ProteinEvolution -E -N 3 -P 50 -K 5 -B 50 -S 1 -D 1 -V 0 -F 1 -M 0.05 -T 0.09 -X 0.2
 
 std::vector<simulation_params::population_size_type> RouletteWheelSelection(std::vector<double>& fitnesses) {
   std::partial_sum(fitnesses.begin(), fitnesses.end(), fitnesses.begin());

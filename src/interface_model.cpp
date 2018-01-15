@@ -2,6 +2,13 @@
 
 #include <climits>
 
+namespace simulation_params
+{
+  population_size_type population_size=10;
+  uint8_t phenotype_builds=10,n_tiles=2;
+  uint32_t generation_limit=5,independent_trials=1,run_offset=0;
+  bool fitness_selection=false;
+}
 
 namespace model_params
 {
@@ -17,8 +24,9 @@ namespace model_params
 
 namespace interface_model
 {
-  std::random_device rd;
-  std::mt19937_64 RNG_Engine(rd());  
+  //std::random_device rd;
+  //std::mt19937_64 RNG_Engine(rd());  
+  std::mt19937_64 RNG_Engine(276358710);
   
   inline interface_type reverse_bits(interface_type v) {
     interface_type s = sizeof(v) * 8; // bit size; must be power of 2
