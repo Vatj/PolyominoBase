@@ -8,7 +8,7 @@ namespace model_params
   //HARD CODED TO MATCH typedef//
   const uint8_t interface_size=CHAR_BIT*sizeof(interface_model::interface_type);
   
-  double temperature=1,mu_prob=0.2,unbound_factor=2,misbinding_rate=0,fitness_factor=2;
+  double temperature=1,mu_prob=0.2,unbound_factor=2,misbinding_rate=0,fitness_factor=2,UND_threshold=0.2;
  
   std::binomial_distribution<uint8_t> b_dist(interface_size,mu_prob);
   std::uniform_real_distribution<double> real_dist(0, 1);

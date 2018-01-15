@@ -155,6 +155,7 @@ void SetRuntimeConfigurations(int argc, char* argv[]) {
       case 'M': model_params::mu_prob=std::stod(argv[arg+1]);break;
       case 'T': model_params::temperature=std::stod(argv[arg+1]);break;
       case 'U': model_params::unbound_factor=std::stod(argv[arg+1]);break;
+      case 'X': model_params::UND_threshold=std::stod(argv[arg+1]);break;
         
       default: std::cout<<"Unknown Parameter Flag: "<<argv[arg][1]<<std::endl;
       }
