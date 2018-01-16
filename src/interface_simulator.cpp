@@ -33,8 +33,9 @@ void EvolvePopulation(std::string run_details) {
     for(std::vector< std::vector<interface_model::interface_type> >::iterator evolving_genotype_iter=population_genotypes.begin(); evolving_genotype_iter!=population_genotypes.end();++evolving_genotype_iter) {
 
       std::transform(interface_counter.begin(), interface_counter.end(),InterfaceStrengths(*evolving_genotype_iter).begin() , interface_counter.begin(),std::plus<uint32_t>());
-      population_fitnesses[nth_genotype++]=interface_model::ProteinAssemblyOutcome(*evolving_genotype_iter,simulation_params::phenotype_builds,&pt);
+      population_fitnesses[nth_genotype++]=interface_model::ProteinAssemblyOutcome(*evolving_genotype_iter,&pt);
       interface_model::MutateInterfaces(*evolving_genotype_iter);
+
 
     }
 

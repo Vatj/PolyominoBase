@@ -65,16 +65,16 @@ namespace interface_model
   }
 
 
-  double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome,uint8_t N_repeats,PhenotypeTable* pt) {
+  double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome,PhenotypeTable* pt) {
     uint8_t dx,dy;
     std::vector<int8_t> assembly_information;//=AssembleProtein(binary_genome);//,assembly_information_prime;
     std::vector<uint8_t> spatial_information;//spatial_information_prime;
-    std::vector<std::pair<uint8_t,uint32_t> > phenotype_IDs;phenotype_IDs.reserve(N_repeats);
+    std::vector<std::pair<uint8_t,uint32_t> > phenotype_IDs;phenotype_IDs.reserve(simulation_params::phenotype_builds);
 
     //spatial_information=SpatialGrid(assembly_information,dx,dy);
     //phenotype_IDs.emplace_back(std::accumulate(spatial_information.begin(),spatial_information.end(),0),pt->PhenotypeCheck(spatial_information,dx,dy));
     
-    for(uint8_t nth=0;nth<N_repeats;++nth) {
+    for(uint8_t nth=0;nth<simulation_params::phenotype_builds;++nth) {
       assembly_information=AssembleProtein(binary_genome);
       spatial_information=SpatialGrid(assembly_information,dx,dy);
       phenotype_IDs.emplace_back(std::accumulate(spatial_information.begin(),spatial_information.end(),0),pt->PhenotypeCheck(spatial_information,dx,dy));

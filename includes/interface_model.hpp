@@ -54,7 +54,7 @@ namespace interface_model
   //double SymmetryFactor(interface_type face1);
 
   /* ASSEMBLY */
-  double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome,uint8_t N_repeats,PhenotypeTable* pt);
+  double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome, PhenotypeTable* pt);
   std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome);
   void PerimeterGrowth(int8_t x,int8_t y,int8_t theta,int8_t direction, int8_t tile_type,std::vector<int8_t>& growing_perimeter,std::vector<int8_t>& placed_tiles);
 
@@ -65,7 +65,7 @@ namespace interface_model
     std::unordered_map<uint8_t,std::vector<uint8_t> > known_phenotypes;
     std::unordered_map<uint8_t,std::vector<uint8_t> > undiscovered_phenotypes;
     std::unordered_map<uint8_t,std::vector<double> > phenotype_fitnesses{{0,{0}}};
-    std::unordered_map<uint8_t,std::vector<uint32_t> > undiscovered_phenotype_xfer;
+    std::unordered_map<uint8_t,std::vector<uint32_t> > new_phenotype_xfer;
     std::vector<uint32_t> undiscovered_phenotype_counts;
     
     //std::vector<uint32_t> phenotype_size_count_accepted(model_params::unbound_factor*simulation_params::n_tiles*simulation_params::n_tiles);
@@ -80,8 +80,9 @@ namespace interface_model
       std::vector<uint8_t> temp_phenotype;
       for(std::vector<uint8_t>::iterator phen_iter = known_phenotypes[phenotype_size].begin();phen_iter!=known_phenotypes[phenotype_size].end();) {
         temp_phenotype.assign(phen_iter+2,phen_iter+2+*phen_iter* *(phen_iter+1));
-        if(ComparePolyominoes(phenotype,dx,dy,temp_phenotype,*phen_iter,*(phen_iter+1)))
-          return phenotype_ID;
+        if(ComparePolyominoes(phenotype,dx,dy,temp_phenotype,*phen_iter,*(phen_iter+1))) {
+	  return phenotype_ID;
+	}
         phen_iter+=*phen_iter* *(phen_iter+1)+2;
         ++phenotype_ID;
       }
@@ -90,14 +91,14 @@ namespace interface_model
         temp_phenotype.assign(phen_iter+2,phen_iter+2+*phen_iter* *(phen_iter+1));
         if(ComparePolyominoes(phenotype,dx,dy,temp_phenotype,*phen_iter,*(phen_iter+1))) {
           if(++undiscovered_phenotype_counts[new_phenotype_index]>=model_params::UND_threshold*simulation_params::phenotype_builds) {
+	    new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
 	    known_phenotypes[phenotype_size].insert(known_phenotypes[phenotype_size].end(),phen_iter,phen_iter+2+*phen_iter* *(phen_iter+1));
 	    phenotype_fitnesses[phenotype_size].emplace_back(model_params::real_dist(RNG_Engine));
-	    undiscovered_phenotype_xfer[phenotype_size].emplace_back(new_phenotype_index);
-	    undiscovered_phenotype_xfer[phenotype_size].emplace_back(known_phenotypes[phenotype_size].size()-1);
-	    return known_phenotypes[phenotype_size].size()-1+simulation_params::phenotype_builds;
+	    new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()-1);
+	    return phenotype_fitnesses[phenotype_size].size()-1;
 	  }
 	  else {
-	    return known_phenotypes[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds;
+	    return phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds;
 	  }
 	  
 	}
@@ -110,42 +111,30 @@ namespace interface_model
       undiscovered_phenotypes[phenotype_size].insert(undiscovered_phenotypes[phenotype_size].end(),phenotype.begin(),phenotype.end());
       undiscovered_phenotype_counts.emplace_back(1);
 
-      /*
-      known_phenotypes[phenotype_size].emplace_back(dx);
-      known_phenotypes[phenotype_size].emplace_back(dy);
-      known_phenotypes[phenotype_size].insert(known_phenotypes[phenotype_size].end(),phenotype.begin(),phenotype.end());
-      phenotype_fitnesses[phenotype_size].emplace_back(model_params::real_dist(RNG_Engine));
       ++n_phenotypes;
-      return phenotype_ID;
-      */
-      //++phenotype_size_count_active[phenotype_size];
-      ++n_phenotypes;
-      return known_phenotypes[phenotype_size].size()+new_phenotype_index-1+simulation_params::phenotype_builds;
+
+      return phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds;
     }
     
     double GenotypeFitness(std::vector<std::pair<uint8_t, uint32_t> >& phenotype_IDs) {
-      for(std::unordered_map<uint8_t,std::vector<uint32_t> >::iterator xfer_iter=undiscovered_phenotype_xfer.begin();xfer_iter!=undiscovered_phenotype_xfer.end();++xfer_iter) {
-	for(std::vector<uint32_t>::iterator replacing_iter=xfer_iter->second.begin();replacing_iter!=xfer_iter->second.end();replacing_iter+=2) {
-	std::replace(phenotype_IDs.begin(),phenotype_IDs.end(),std::make_pair(xfer_iter->first,*(replacing_iter)),std::make_pair(xfer_iter->first,*(replacing_iter+1)));
-	  }
-      }
-      
-
+      for(std::unordered_map<uint8_t,std::vector<uint32_t> >::iterator xfer_iter=new_phenotype_xfer.begin();xfer_iter!=new_phenotype_xfer.end();++xfer_iter) 
+	for(std::vector<uint32_t>::iterator rep_iter=xfer_iter->second.begin();rep_iter!=xfer_iter->second.end();rep_iter+=2) 
+	std::replace(phenotype_IDs.begin(),phenotype_IDs.end(),std::make_pair(xfer_iter->first,*(rep_iter)),std::make_pair(xfer_iter->first,*(rep_iter+1)));
+	  
       std::unordered_map<uint8_t, std::unordered_map<uint32_t,uint8_t> > ID_counter;
       for(std::vector<std::pair<uint8_t,uint32_t> >::const_iterator ID_iter = phenotype_IDs.begin(); ID_iter!=phenotype_IDs.end(); ++ID_iter)
         ++ID_counter[ID_iter->first][ID_iter->second];
       double fitness=0;
       
       for(std::unordered_map<uint8_t, std::unordered_map<uint32_t,uint8_t> >::iterator size_iter =ID_counter.begin();size_iter!=ID_counter.end();++size_iter) 
-        for(std::unordered_map<uint32_t,uint8_t>::iterator frequency_iter =size_iter->second.begin();frequency_iter!=size_iter->second.end();++frequency_iter)
-	  if(frequency_iter->first < known_phenotypes[size_iter->first].size()) 
-	    fitness+=phenotype_fitnesses[size_iter->first][frequency_iter->first] * std::pow(static_cast<double>(frequency_iter->second)/phenotype_IDs.size(),model_params::fitness_factor);
+        for(std::unordered_map<uint32_t,uint8_t>::iterator f_iter =size_iter->second.begin();f_iter!=size_iter->second.end();++f_iter)
+	  if(f_iter->first < known_phenotypes[size_iter->first].size()) 
+	    fitness+=phenotype_fitnesses[size_iter->first][f_iter->first] * std::pow(static_cast<double>(f_iter->second)/phenotype_IDs.size(),model_params::fitness_factor);
 
 
-      //temporary_phenotype_indices.clear();
       undiscovered_phenotypes.clear();
       undiscovered_phenotype_counts.clear();
-      undiscovered_phenotype_xfer.clear();
+      new_phenotype_xfer.clear();
       
       return fitness;
     }
@@ -153,9 +142,9 @@ namespace interface_model
 
   };
 }
+
 uint8_t PhenotypeSymmetryFactor(std::vector<uint8_t>& original_shape, uint8_t dx, uint8_t dy);
 void DistributionStatistics(std::vector<double>& intf, double& mean, double& variance);
-
 std::vector<uint16_t> InterfaceStrengths(std::vector<interface_model::interface_type>& interfaces);
 
 
