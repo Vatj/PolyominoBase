@@ -15,12 +15,13 @@ SRCDIR      := src
 INCDIR      := includes
 BUILDDIR    := build
 TARGETDIR   := bin
+PROFDIR	    := profiling
 SRCEXT      := cpp
 DEPEXT      := d
 OBJEXT      := o
 
 #Flags, Libraries and Includes
-CXXFLAGS    := -std=c++11 -Wall -Wextra -pedantic -pipe -O3 -fopenmp 
+CXXFLAGS    := -std=c++11 -Wall -Wextra -pedantic -pipe -O3 -fopenmp -march=ivybridge -flto -flto-partition=none -fprofile-use -fprofile-correction -fprofile-dir=$(PROFDIR)/
 INC         := -I$(INCDIR)
 INCDEP      := -I$(INCDIR)
 
@@ -81,6 +82,7 @@ Pe: $(PE_OBJECTS)
 Test: $(TEST_OBJECTS)
 	@mkdir -p $(TARGETDIR)
 	$(CXX) $(CXXFLAGS)  -o $(TARGETDIR)/$(TEST_TARGET) $^
+
 #Compile
 $(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 	@mkdir -p $(dir $@)
