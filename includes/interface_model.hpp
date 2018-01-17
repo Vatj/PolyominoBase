@@ -46,7 +46,7 @@ namespace interface_model
   struct PhenotypeTable;
 
   extern std::random_device rd;
-  extern std::mt19937_64 RNG_Engine;
+  extern std::mt19937 RNG_Engine;
   inline interface_type reverse_bits(interface_type v);
   inline uint8_t ArbitraryPopcount(interface_type face1);
   inline double SammingDistance(interface_type face1,interface_type face2);
@@ -126,10 +126,12 @@ namespace interface_model
         ++ID_counter[ID_iter->first][ID_iter->second];
       double fitness=0;
       
-      for(std::unordered_map<uint8_t, std::unordered_map<uint32_t,uint8_t> >::iterator size_iter =ID_counter.begin();size_iter!=ID_counter.end();++size_iter) 
-        for(std::unordered_map<uint32_t,uint8_t>::iterator f_iter =size_iter->second.begin();f_iter!=size_iter->second.end();++f_iter)
-	  if(f_iter->first < known_phenotypes[size_iter->first].size()) 
+      for(std::unordered_map<uint8_t, std::unordered_map<uint32_t,uint8_t> >::const_iterator size_iter =ID_counter.begin();size_iter!=ID_counter.end();++size_iter) 
+        for(std::unordered_map<uint32_t,uint8_t>::const_iterator f_iter =size_iter->second.begin();f_iter!=size_iter->second.end();++f_iter)
+	  if(f_iter->first < phenotype_fitnesses[size_iter->first].size()) {
 	    fitness+=phenotype_fitnesses[size_iter->first][f_iter->first] * std::pow(static_cast<double>(f_iter->second)/phenotype_IDs.size(),model_params::fitness_factor);
+            
+          }
 
 
       undiscovered_phenotypes.clear();

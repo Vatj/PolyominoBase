@@ -5,17 +5,19 @@
 std::vector<simulation_params::population_size_type> RouletteWheelSelection(std::vector<double>& fitnesses) {
   std::partial_sum(fitnesses.begin(), fitnesses.end(), fitnesses.begin());
   std::vector<simulation_params::population_size_type> selected_indices(simulation_params::population_size);
-  std::uniform_real_distribution<double> random_interval(0,*(fitnesses.end()-1));
+  std::uniform_real_distribution<double> random_interval(0,fitnesses.back());
   for(simulation_params::population_size_type nth_selection=0; nth_selection<simulation_params::population_size; ++nth_selection) 
-    selected_indices[nth_selection]=static_cast<uint16_t>(std::lower_bound(fitnesses.begin(),fitnesses.end(),random_interval(interface_model::RNG_Engine))-fitnesses.begin());
+    selected_indices[nth_selection]=static_cast<simulation_params::population_size_type>(std::lower_bound(fitnesses.begin(),fitnesses.end(),random_interval(interface_model::RNG_Engine))-fitnesses.begin());
   return selected_indices;
 }
 
 void EvolvePopulation(std::string run_details) {
-  std::string file_base_path="";//"//rscratch//asl47//Bulk_Run//Interfaces//";
-  std::string out_name_strength=file_base_path+"Strengths_"+std::string(simulation_params::fitness_selection? "S":"R")+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
-  std::string out_name_size=file_base_path+"//rscratch//asl47//Bulk_Run//Interfaces//Sizes_"+std::string(simulation_params::fitness_selection? "S":"R")+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
-  std::string out_name_fitness=file_base_path+"//rscratch//asl47//Bulk_Run//Interfaces//Fitness_"+std::string(simulation_params::fitness_selection? "S":"R")+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
+  std::string file_base_path="//rscratch//asl47//Bulk_Run//Interfaces//";
+  std::string file_simulation_details=std::string(simulation_params::fitness_selection? "S":"R")+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
+  
+  std::string out_name_strength=file_base_path+"Strengths_"+file_simulation_details;
+  std::string out_name_size=file_base_path+"Sizes_"+file_simulation_details;
+  std::string out_name_fitness=file_base_path+"Fitness_"+file_simulation_details;
   
   std::ofstream fout_size(out_name_size, std::ios_base::out);
   std::ofstream fout_strength(out_name_strength, std::ios_base::out);
@@ -26,24 +28,30 @@ void EvolvePopulation(std::string run_details) {
   std::vector<double> population_fitnesses(simulation_params::population_size);
   
   interface_model::PhenotypeTable pt = interface_model::PhenotypeTable();
+  bool record_strengths=false;
   for(uint32_t generation=0;generation<simulation_params::generation_limit;++generation) {
-
+    if(generation+100>=simulation_params::generation_limit)
+      record_strengths=true;
+  
     std::vector<uint32_t> interface_counter(1.5*model_params::interface_size+2);
     int nth_genotype=0;
     for(std::vector< std::vector<interface_model::interface_type> >::iterator evolving_genotype_iter=population_genotypes.begin(); evolving_genotype_iter!=population_genotypes.end();++evolving_genotype_iter) {
 
-      std::transform(interface_counter.begin(), interface_counter.end(),InterfaceStrengths(*evolving_genotype_iter).begin() , interface_counter.begin(),std::plus<uint32_t>());
+      if(record_strengths)
+        std::transform(interface_counter.begin(), interface_counter.end(),InterfaceStrengths(*evolving_genotype_iter).begin() , interface_counter.begin(),std::plus<uint32_t>());
+      
       population_fitnesses[nth_genotype++]=interface_model::ProteinAssemblyOutcome(*evolving_genotype_iter,&pt);
       interface_model::MutateInterfaces(*evolving_genotype_iter);
 
 
     }
+    if(record_strengths) {
+      for(uint32_t count : interface_counter)
+        fout_strength<<count<<" ";
+      fout_strength<<"\n";
+    }
 
-    for(uint32_t count : interface_counter)
-      fout_strength<<count<<" ";
-    fout_strength<<"\n";
-
-    
+   
     double mu=0,sigma=0;
     DistributionStatistics(population_fitnesses,mu,sigma);
     fout_fitness<<mu<<" "<<sigma<<"\n";
@@ -58,6 +66,9 @@ void EvolvePopulation(std::string run_details) {
   
   std::cout<<"printing table"<<std::endl;
   std::cout<<"N_P "<<pt.n_phenotypes<<std::endl;
+  for(std::unordered_map<uint8_t,std::vector<double> >::const_iterator pf_iter=pt.phenotype_fitnesses.begin();pf_iter!=pt.phenotype_fitnesses.end();++pf_iter)
+    fout_size <<+pf_iter->first<<" "<<pf_iter->second.size()<<"\n";
+  
   for(std::unordered_map<uint8_t,std::vector<uint8_t> >::iterator phen_iter=pt.known_phenotypes.begin();phen_iter!=pt.known_phenotypes.end();++phen_iter) {
     uint32_t n_sized_phenotypes=0;
     for(std::vector<uint8_t>::iterator shape_iter=phen_iter->second.begin();shape_iter!=phen_iter->second.end();) {
@@ -66,6 +77,7 @@ void EvolvePopulation(std::string run_details) {
     }
     fout_size <<+phen_iter->first<<" "<<n_sized_phenotypes<<"\n";
   }
+  
 
   /*
   for(std::vector<uint8_t>::iterator phen_iter = pt.known_phenotypes.begin();phen_iter!=pt.known_phenotypes.end();) {
@@ -85,6 +97,15 @@ void EvolvePopulation(std::string run_details) {
   fout_fitness.close();
   fout_size.close();
   fout_strength.close();
+  /*
+  for(auto x:pt.known_phenotypes) {
+    std::cout<<"Size "<<+x.first<<std::endl;
+    for(auto y: x.second)
+      std::cout<<+y<<" ";
+    std::cout<<std::endl;
+  }
+  */
+  
 }
 
   
@@ -155,6 +176,6 @@ void SetRuntimeConfigurations(int argc, char* argv[]) {
       default: std::cout<<"Unknown Parameter Flag: "<<argv[arg][1]<<std::endl;
       }
     }
-    model_params::b_dist.param(std::binomial_distribution<uint8_t>::param_type(model_params::interface_size,model_params::mu_prob));
+    model_params::b_dist.param(std::binomial_distribution<uint8_t>::param_type(model_params::interface_size,model_params::mu_prob/(model_params::interface_size*4*simulation_params::n_tiles)));
   }
 }

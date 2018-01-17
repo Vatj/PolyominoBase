@@ -15,7 +15,7 @@ namespace model_params
   //HARD CODED TO MATCH typedef//
   const uint8_t interface_size=CHAR_BIT*sizeof(interface_model::interface_type);
   
-  double temperature=1,mu_prob=0.2,unbound_factor=2,misbinding_rate=0,fitness_factor=2,UND_threshold=0.2;
+  double temperature=1,mu_prob=0.2,unbound_factor=1,misbinding_rate=0,fitness_factor=1,UND_threshold=0.2;
  
   std::binomial_distribution<uint8_t> b_dist(interface_size,mu_prob);
   std::uniform_real_distribution<double> real_dist(0, 1);
@@ -26,10 +26,10 @@ namespace interface_model
 {
   //std::random_device rd;
   //std::mt19937_64 RNG_Engine(rd());  
-  std::mt19937_64 RNG_Engine(276358710);
+  std::mt19937 RNG_Engine(276358710);
   
   inline interface_type reverse_bits(interface_type v) {
-    interface_type s = sizeof(v) * 8; // bit size; must be power of 2
+    interface_type s = sizeof(v) * CHAR_BIT; // bit size; must be power of 2
     interface_type mask = ~0;         
     while ((s >>= 1) > 0) {
       mask ^= (mask << s);
@@ -66,13 +66,10 @@ namespace interface_model
 
 
   double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome,PhenotypeTable* pt) {
-    uint8_t dx,dy;
-    std::vector<int8_t> assembly_information;//=AssembleProtein(binary_genome);//,assembly_information_prime;
-    std::vector<uint8_t> spatial_information;//spatial_information_prime;
+    uint8_t dx=0,dy=0;
+    std::vector<int8_t> assembly_information;
+    std::vector<uint8_t> spatial_information;
     std::vector<std::pair<uint8_t,uint32_t> > phenotype_IDs;phenotype_IDs.reserve(simulation_params::phenotype_builds);
-
-    //spatial_information=SpatialGrid(assembly_information,dx,dy);
-    //phenotype_IDs.emplace_back(std::accumulate(spatial_information.begin(),spatial_information.end(),0),pt->PhenotypeCheck(spatial_information,dx,dy));
     
     for(uint8_t nth=0;nth<simulation_params::phenotype_builds;++nth) {
       assembly_information=AssembleProtein(binary_genome);
