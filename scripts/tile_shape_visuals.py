@@ -156,7 +156,7 @@ def Visualise_Shape_From_Binary(Shape_String_X,count,currentAxis,X_Y_LIMS,tightB
                         
 
                     
-    currentAxis.text(0, 1,"{})".format(num),horizontalalignment='left',verticalalignment='top',transform = currentAxis.transAxes)
+    currentAxis.text(0, 1,"{}".format(num),horizontalalignment='left',verticalalignment='top',transform = currentAxis.transAxes)
     if type(count)==int:
         currentAxis.text(.5, 0,"{}".format(count),horizontalalignment='center',verticalalignment='top',transform = currentAxis.transAxes)
     else:
