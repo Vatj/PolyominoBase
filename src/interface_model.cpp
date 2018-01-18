@@ -1,7 +1,5 @@
 #include "interface_model.hpp"
 
-#include <climits>
-
 namespace simulation_params
 {
   population_size_type population_size=10;
