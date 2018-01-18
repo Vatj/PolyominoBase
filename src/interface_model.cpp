@@ -24,9 +24,9 @@ namespace model_params
 
 namespace interface_model
 {
-  //std::random_device rd;
-  //std::mt19937_64 RNG_Engine(rd());  
-  std::mt19937 RNG_Engine(276358710);
+  std::random_device rd;
+  std::mt19937 RNG_Engine(rd());  
+  //std::mt19937 RNG_Engine(276358710);
   
   inline interface_type reverse_bits(interface_type v) {
     interface_type s = sizeof(v) * CHAR_BIT; // bit size; must be power of 2
@@ -82,13 +82,13 @@ namespace interface_model
   
 
   std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome) {
-    std::vector<uint8_t> tile_types(binary_genome.size()/(4.));
-    std::iota(tile_types.begin(), tile_types.end(), 0);
-    std::vector<int8_t> placed_tiles{0,0}; //(x,y,tile type, orientation)
-    std::vector<int8_t> growing_perimeter; //(x,y,direction,tile type, orientation)
+    
+    std::vector<int8_t> placed_tiles{0,0};
+    std::vector<int8_t> growing_perimeter; 
     PerimeterGrowth(0,0,0,-1,0,growing_perimeter,placed_tiles);
     int8_t current_orientation, current_tile, current_direction, current_x, current_y;
-    std::vector<uint8_t> faces{0,1,2,3};
+    std::vector<uint8_t> genome_bases(binary_genome.size());
+    std::iota(genome_bases.begin(), genome_bases.end(), 0);
     
     while(!growing_perimeter.empty()) {
       current_orientation=growing_perimeter.back();growing_perimeter.pop_back();
@@ -96,21 +96,16 @@ namespace interface_model
       current_direction=growing_perimeter.back();growing_perimeter.pop_back();
       current_y=growing_perimeter.back();growing_perimeter.pop_back();
       current_x=growing_perimeter.back();growing_perimeter.pop_back();
-      std::shuffle(faces.begin(), faces.end(), RNG_Engine);
-      for(uint8_t tile : tile_types) {
-        for(uint8_t face : faces) {
-          if(model_params::real_dist(RNG_Engine)<std::exp(-1*SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[tile*4+face])/(model_params::interface_size*model_params::temperature))) {
+      std::shuffle(genome_bases.begin(), genome_bases.end(), RNG_Engine);
+      for(uint8_t base : genome_bases) {
+          if(model_params::real_dist(RNG_Engine)<std::exp(-1*SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[base])/(model_params::interface_size*model_params::temperature))) {
             placed_tiles.insert(placed_tiles.end(),{current_x,current_y});
-            PerimeterGrowth(current_x,current_y,(4+current_direction-face)%4,current_direction,tile,growing_perimeter,placed_tiles);
-            goto endplacing;
+            PerimeterGrowth(current_x,current_y,(4+current_direction-(base%4))%4,current_direction,base/4,growing_perimeter,placed_tiles);
+            break;
           }
-        }
-      }
-      endplacing:      
-      if(placed_tiles.size()>(model_params::unbound_factor*binary_genome.size()*binary_genome.size()/2.)) {
-        placed_tiles.clear();
-        break;
-      }
+      }    
+      if(placed_tiles.size()>(model_params::unbound_factor*binary_genome.size()*binary_genome.size()/2.))
+        return {};
     }
     return placed_tiles;   
   }

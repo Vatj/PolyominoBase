@@ -14,21 +14,18 @@ std::vector<simulation_params::population_size_type> RouletteWheelSelection(std:
 void EvolvePopulation(std::string run_details) {
   std::string file_base_path="//rscratch//asl47//Bulk_Run//Interfaces//";
   std::string file_simulation_details=std::string(simulation_params::fitness_selection? "S":"R")+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
-  
-  std::string out_name_strength=file_base_path+"Strengths_"+file_simulation_details;
-  std::string out_name_size=file_base_path+"Sizes_"+file_simulation_details;
-  std::string out_name_fitness=file_base_path+"Fitness_"+file_simulation_details;
-  
-  std::ofstream fout_size(out_name_size, std::ios_base::out);
-  std::ofstream fout_strength(out_name_strength, std::ios_base::out);
-  std::ofstream fout_fitness(out_name_fitness, std::ios_base::out);
+    
+  std::ofstream fout_size(file_base_path+"Sizes_"+file_simulation_details, std::ios_base::out);
+  std::ofstream fout_strength(file_base_path+"Strengths_"+file_simulation_details, std::ios_base::out);
+  std::ofstream fout_fitness(file_base_path+"Fitness_"+file_simulation_details, std::ios_base::out);
+  std::ofstream fout_phenotype(file_base_path+"Phenotypes_"+file_simulation_details, std::ios_base::out);
   
   std::vector< std::vector<interface_model::interface_type> > population_genotypes(simulation_params::population_size, std::vector<interface_model::interface_type>(simulation_params::n_tiles*4, 0));
   std::vector< std::vector<interface_model::interface_type> > reproducing_genotypes(simulation_params::population_size, std::vector<interface_model::interface_type>(simulation_params::n_tiles*4, 0));
   std::vector<double> population_fitnesses(simulation_params::population_size);
-  
   interface_model::PhenotypeTable pt = interface_model::PhenotypeTable();
   bool record_strengths=false;
+  
   for(uint32_t generation=0;generation<simulation_params::generation_limit;++generation) {
     if(generation+100>=simulation_params::generation_limit)
       record_strengths=true;
@@ -36,25 +33,21 @@ void EvolvePopulation(std::string run_details) {
     std::vector<uint32_t> interface_counter(1.5*model_params::interface_size+2);
     int nth_genotype=0;
     for(std::vector< std::vector<interface_model::interface_type> >::iterator evolving_genotype_iter=population_genotypes.begin(); evolving_genotype_iter!=population_genotypes.end();++evolving_genotype_iter) {
-
+      population_fitnesses[nth_genotype++]=interface_model::ProteinAssemblyOutcome(*evolving_genotype_iter,&pt);
       if(record_strengths)
         std::transform(interface_counter.begin(), interface_counter.end(),InterfaceStrengths(*evolving_genotype_iter).begin() , interface_counter.begin(),std::plus<uint32_t>());
-      
-      population_fitnesses[nth_genotype++]=interface_model::ProteinAssemblyOutcome(*evolving_genotype_iter,&pt);
       interface_model::MutateInterfaces(*evolving_genotype_iter);
-
-
-    }
+    } //end genotype loop
     if(record_strengths) {
       for(uint32_t count : interface_counter)
         fout_strength<<count<<" ";
       fout_strength<<"\n";
     }
-
-   
-    double mu=0,sigma=0;
-    DistributionStatistics(population_fitnesses,mu,sigma);
-    fout_fitness<<mu<<" "<<sigma<<"\n";
+    if(true && generation%(simulation_params::generation_limit)/100==0) {
+      double mu=0,sigma=0;
+      DistributionStatistics(population_fitnesses,mu,sigma);
+      fout_fitness<<mu<<" "<<sigma<<"\n";
+    }
 
     if(simulation_params::fitness_selection) {
       std::vector<simulation_params::population_size_type> selection_indices=RouletteWheelSelection(population_fitnesses);
@@ -64,39 +57,28 @@ void EvolvePopulation(std::string run_details) {
     }
   }
   
-  std::cout<<"printing table"<<std::endl;
-  std::cout<<"N_P "<<pt.n_phenotypes<<std::endl;
-  for(std::unordered_map<uint8_t,std::vector<double> >::const_iterator pf_iter=pt.phenotype_fitnesses.begin();pf_iter!=pt.phenotype_fitnesses.end();++pf_iter)
-    fout_size <<+pf_iter->first<<" "<<pf_iter->second.size()<<"\n";
+  //std::cout<<"printing table"<<std::endl;
+  //std::cout<<"N_P "<<pt.n_phenotypes<<std::endl;
   
   for(std::unordered_map<uint8_t,std::vector<uint8_t> >::iterator phen_iter=pt.known_phenotypes.begin();phen_iter!=pt.known_phenotypes.end();++phen_iter) {
     uint32_t n_sized_phenotypes=0;
     for(std::vector<uint8_t>::iterator shape_iter=phen_iter->second.begin();shape_iter!=phen_iter->second.end();) {
       ++n_sized_phenotypes;
+      fout_phenotype<<+*(shape_iter)<<" "<<+*(shape_iter+1)<<" ";
+      for(std::vector<uint8_t>::iterator p_iter=shape_iter+2;p_iter!=shape_iter+*(shape_iter) * *(shape_iter+1)+2;++p_iter)
+        fout_phenotype<<+*p_iter<<" ";
+      fout_phenotype<<"\n";
       shape_iter+=*(shape_iter) * *(shape_iter+1)+2;
     }
     fout_size <<+phen_iter->first<<" "<<n_sized_phenotypes<<"\n";
   }
   
-
-  /*
-  for(std::vector<uint8_t>::iterator phen_iter = pt.known_phenotypes.begin();phen_iter!=pt.known_phenotypes.end();) {
-  std::vector<uint8_t> temp_phenotype;
-  for(std::vector<uint8_t>::iterator phen_iter = pt.known_phenotypes.begin();phen_iter!=pt.known_phenotypes.end();) {
-    out_file_r<<static_cast<int>(*phen_iter)<<" "<<static_cast<int>(*(phen_iter+1))<<" ";
-    temp_phenotype.assign(phen_iter+2,phen_iter+2+*phen_iter* *(phen_iter+1));
-    for(uint8_t m :temp_phenotype)
-      out_file_r<<static_cast<int>(m)<<" ";
-    out_file_r<<"\n";
-    phen_iter+=*phen_iter* *(phen_iter+1)+2;
-
-  }
-  */    
   
   
   fout_fitness.close();
   fout_size.close();
   fout_strength.close();
+  fout_phenotype.close();
   /*
   for(auto x:pt.known_phenotypes) {
     std::cout<<"Size "<<+x.first<<std::endl;

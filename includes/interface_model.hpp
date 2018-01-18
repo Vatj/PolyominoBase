@@ -7,9 +7,12 @@
 #include <numeric>
 #include <unordered_map>
 #include <random>
+#include <climits>
+#include <cstdint>
 
 
-		
+
+
 
 namespace simulation_params
 {
@@ -61,7 +64,7 @@ namespace interface_model
   
 
   struct PhenotypeTable {
-    uint32_t n_phenotypes;
+    //uint32_t n_phenotypes;
     std::unordered_map<uint8_t,std::vector<uint8_t> > known_phenotypes;
     std::unordered_map<uint8_t,std::vector<uint8_t> > undiscovered_phenotypes;
     std::unordered_map<uint8_t,std::vector<double> > phenotype_fitnesses{{0,{0}}};
@@ -70,7 +73,7 @@ namespace interface_model
     
     //std::vector<uint32_t> phenotype_size_count_accepted(model_params::unbound_factor*simulation_params::n_tiles*simulation_params::n_tiles);
     
-    PhenotypeTable(void) : n_phenotypes(0) {};
+    //PhenotypeTable(void) : n_phenotypes(0) {};
 
     uint32_t PhenotypeCheck(std::vector<uint8_t>& phenotype, uint8_t dx, uint8_t dy) {
       if(phenotype.empty())
@@ -110,8 +113,6 @@ namespace interface_model
       undiscovered_phenotypes[phenotype_size].emplace_back(dy);
       undiscovered_phenotypes[phenotype_size].insert(undiscovered_phenotypes[phenotype_size].end(),phenotype.begin(),phenotype.end());
       undiscovered_phenotype_counts.emplace_back(1);
-
-      ++n_phenotypes;
 
       return phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds;
     }
