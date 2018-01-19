@@ -43,7 +43,7 @@ void EvolvePopulation(std::string run_details) {
         fout_strength<<count<<" ";
       fout_strength<<"\n";
     }
-    if(true && generation%(simulation_params::generation_limit)/100==0) {
+    if(generation%(simulation_params::generation_limit/1000)==0) {
       double mu=0,sigma=0;
       DistributionStatistics(population_fitnesses,mu,sigma);
       fout_fitness<<mu<<" "<<sigma<<"\n";
