@@ -10,13 +10,13 @@ namespace simulation_params
 
 namespace model_params
 {
-  //HARD CODED TO MATCH typedef//
   const uint8_t interface_size=CHAR_BIT*sizeof(interface_model::interface_type);
   
   double temperature=1,mu_prob=0.2,unbound_factor=1,misbinding_rate=0,fitness_factor=1,UND_threshold=0.2;
  
   std::binomial_distribution<uint8_t> b_dist(interface_size,mu_prob);
   std::uniform_real_distribution<double> real_dist(0, 1);
+  
 
 }
 
@@ -54,11 +54,12 @@ namespace interface_model
   */
 
   void MutateInterfaces(std::vector<interface_type>& binary_genome) {
-    std::vector<uint8_t> interface_indices{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+    std::vector<uint8_t> interface_indices(model_params::interface_size);
+    std::iota(interface_indices.begin(),interface_indices.end(),0);
     for(interface_type& base : binary_genome) {
       std::shuffle(interface_indices.begin(), interface_indices.end(), RNG_Engine);
-      for(uint8_t nth=0;nth<model_params::b_dist(RNG_Engine);++nth)
-        base ^= (1U << interface_indices[nth]);
+      for(uint8_t nth=0;nth<model_params::b_dist(RNG_Engine);++nth) 
+        base ^= (static_cast<interface_type>(1) << interface_indices[nth]);
     }
   }
 
@@ -163,7 +164,7 @@ bool ComparePolyominoes(std::vector<uint8_t>& phenotype,uint8_t& dx,uint8_t& dy,
   if(dx==dx_prime && dy==dy_prime && dx==dy) { //bounding boxes match, symmetric
     if(phenotype==phenotype_prime) 
       return true;
-    else {
+    else { //SYMMETRY ARGUMENT TO OPTIMIZE
       for(int rotation=0;rotation<3;++rotation) {
 	ClockwiseRotation(phenotype,dx,dy);
 	if(phenotype==phenotype_prime)

@@ -9,10 +9,7 @@
 #include <random>
 #include <climits>
 #include <cstdint>
-
-
-
-
+#include <cmath>
 
 namespace simulation_params
 {
@@ -96,7 +93,8 @@ namespace interface_model
           if(++undiscovered_phenotype_counts[new_phenotype_index]>=model_params::UND_threshold*simulation_params::phenotype_builds) {
 	    new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
 	    known_phenotypes[phenotype_size].insert(known_phenotypes[phenotype_size].end(),phen_iter,phen_iter+2+*phen_iter* *(phen_iter+1));
-	    phenotype_fitnesses[phenotype_size].emplace_back(model_params::real_dist(RNG_Engine));
+	    std::gamma_distribution<double> fitness_dist(sqrt(static_cast<double>(phenotype_size)),1);
+	    phenotype_fitnesses[phenotype_size].emplace_back(fitness_dist(RNG_Engine));
 	    new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()-1);
 	    return phenotype_fitnesses[phenotype_size].size()-1;
 	  }
@@ -129,12 +127,9 @@ namespace interface_model
       
       for(std::unordered_map<uint8_t, std::unordered_map<uint32_t,uint8_t> >::const_iterator size_iter =ID_counter.begin();size_iter!=ID_counter.end();++size_iter) 
         for(std::unordered_map<uint32_t,uint8_t>::const_iterator f_iter =size_iter->second.begin();f_iter!=size_iter->second.end();++f_iter)
-	  if(f_iter->first < phenotype_fitnesses[size_iter->first].size()) {
+	  if(f_iter->first < phenotype_fitnesses[size_iter->first].size() && f_iter->second > model_params::UND_threshold*simulation_params::phenotype_builds)
 	    fitness+=phenotype_fitnesses[size_iter->first][f_iter->first] * std::pow(static_cast<double>(f_iter->second)/phenotype_IDs.size(),model_params::fitness_factor);
-            
-          }
-
-
+           
       undiscovered_phenotypes.clear();
       undiscovered_phenotype_counts.clear();
       new_phenotype_xfer.clear();

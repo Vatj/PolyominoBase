@@ -115,13 +115,13 @@ int main(int argc, char* argv[]) {
   else {
     run_option=argv[1][1];
     SetRuntimeConfigurations(argc,argv);
-  }  
+  }
+
   switch(run_option) {
   case 'E':
     EvolutionRunner();
     break;
   case 'X':
-    //RandomStrings();
     std::cout<<"Unused at this time"<<std::endl;
     break;
   case 'H':
