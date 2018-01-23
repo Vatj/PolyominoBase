@@ -7,10 +7,14 @@ from operator import itemgetter
 from collections import defaultdict
 from matplotlib.backends.backend_pdf import PdfPages
 from tile_shape_visuals import Visualise_Shape_From_Binary
+import glob
 
 BASE_FILE_PATH='/scratch/asl47/Data_Runs/Interface/T{2:.6f}/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
 #BASE_FILE_PATH='/rscratch/asl47/Bulk_Run/Interfaces/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
 
+def GetMaxRun(r_type,temperature,mu,gamma):
+     return max([int(s[s.rindex('Run')+3:-4]) for s in glob.glob(BASE_FILE_PATH.format('Sizes',r_type,temperature,mu,gamma,'*'))])
+     
 def VisualisePhenotypes(r_type,temperature,mu,gamma,run):
      line_count=0
      page_max=24
@@ -28,7 +32,7 @@ def VisualisePhenotypes(r_type,temperature,mu,gamma,run):
      
      plt.show(block=False)
      
-def LoadSizes(r_type,temperature,mu,gamma,runs=1):
+def LoadSizes(r_type,temperature,mu,gamma,runs=0):
      sizes=defaultdict(int)
      for r in xrange(runs):
           for line in open(BASE_FILE_PATH.format('Sizes',r_type,temperature,mu,gamma,r)):
@@ -37,8 +41,11 @@ def LoadSizes(r_type,temperature,mu,gamma,runs=1):
                     sizes[size]+=count
      return sizes
 
-def LoadPairSizes(temperature,mu,gamma,runs=1):
-     return (LoadSizes('S',temperature,mu,gamma,runs),'Selection',runs),(LoadSizes('R',temperature,mu,gamma,runs),'Random',runs)
+def LoadPairSizes(temperature,mu,gamma,runs=0):
+     if runs==0:
+          runs=min(GetMaxRun('S',temperature,mu,gamma),GetMaxRun('R',temperature,mu,0))
+          print "Runs evaluated at ",runs
+     return (LoadSizes('S',temperature,mu,gamma,runs),'Selection',runs),(LoadSizes('R',temperature,mu,0,runs),'Random',runs)
 
 def LoadData(d_type,r_type,temperature,mu,gamma,runs=1):
      data=[]
@@ -46,14 +53,20 @@ def LoadData(d_type,r_type,temperature,mu,gamma,runs=1):
           data.append(np.loadtxt(BASE_FILE_PATH.format(d_type,r_type,temperature,mu,gamma,r)))
      return np.stack(data,axis=2)
 
-def LoadPairFitness(temperature,mu,gamma,runs=1):
-     return LoadData('Fitness','S',temperature,mu,gamma,runs),LoadData('Fitness','R',temperature,mu,gamma,runs)
+def LoadPairFitness(temperature,mu,gamma,runs=0):
+     if runs==0:
+          runs=min(GetMaxRun('S',temperature,mu,gamma),GetMaxRun('R',temperature,mu,0))
+          print "Runs evaluated at ",runs
+     return LoadData('Fitness','S',temperature,mu,gamma,runs),LoadData('Fitness','R',temperature,mu,0,runs)
 
-def LoadPairStrengths(temperature,mu,gamma,runs=1):
-     return LoadData('Strengths','R',0.05,mu,gamma,runs),LoadData('Strengths','R',0.025,mu,gamma,runs)
+def LoadPairStrengths(temperature,mu,gamma,runs=0):
+     if runs==0:
+          runs=min(GetMaxRun('S',temperature,mu,gamma),GetMaxRun('R',temperature,mu,0))
+          print "Runs evaluated at ",runs
+     return LoadData('Strengths','S',temperature,mu,gamma,runs),LoadData('Strengths','R',temperature,mu,0,runs)
 
 def PlotStrengthRatios(data_frame,N_tiles,title_string=''):
-     fig, axarr = plt.subplots(2, 2, sharey=True,sharex=True)
+     fig, axarr = plt.subplots(2, 2, sharey='row',sharex=True)
      interface_size=int((data_frame[0].shape[1]-2)/1.5)
      generations=data_frame[0].shape[0]
      NEGATIVE_INF_LIMIT=-0.5
@@ -65,7 +78,7 @@ def PlotStrengthRatios(data_frame,N_tiles,title_string=''):
      n=0
      slices=np.zeros((1),dtype=np.int32)
      slices=np.concatenate([slices,np.logspace(0,np.log10(generations-1),10,dtype=np.int32)])
-     population_size=np.sum(d[0][0,:,0])/((N_tiles*4)*(N_tiles*4+1)/2.)
+     population_size=np.sum(data_frame[0][0,:,0])/((N_tiles*4)*(N_tiles*4+1)/2.)
 
 
 
@@ -97,7 +110,13 @@ def PlotStrengthRatios(data_frame,N_tiles,title_string=''):
           self_err_upper=np.log10(self_ratio+self_err)
           self_err_lower=np.log10(self_ratio-self_err)
    
-          
+          pairwise_G_stat=2* np.nansum(means[:interface_size+1]*np.log(pairwise_ratio))
+          print "G: {}, p-value: {}".format(pairwise_G_stat,stats.chi2.sf(pairwise_G_stat,interface_size))
+
+          self_G_stat=2* np.nansum(means[interface_size+1:]*np.log(self_ratio))
+          print "G: {}, p-value: {}".format(self_G_stat,stats.chi2.sf(self_G_stat,interface_size/2))
+
+ 
           
           #pair_s=means[-1][:interface_size+1]/population_size/((N_tiles*4-1.)*(N_tiles*4)/2.)
           #pair_b=binom_pair.pmf(pair_strengths*interface_size)
@@ -172,21 +191,30 @@ def PlotPhenotypeSizes(ss,title_string=''):
      fig.suptitle('{}'.format(title_string))
      plt.show(block=False)
 
-def PlotFitness(fss,title_string=''):
+def PlotFitness(data_frame,title_string='',g_factor=1):
 
      fig, axarr = plt.subplots(1, 2, sharey=True,sharex=True)
-     log_slices=np.logspace(np.log10(1),np.log10(fss[0].shape[0]-1),50,dtype=np.int32)
-     #[0,1,2,3,4,5,7,9,12,15,20,50,100,500,1000,2500,4999]
-     main_slices=np.logspace(np.log10(1),np.log10(fss[0].shape[0]-1),30,dtype=np.int32)
+
      #range(50)+range(50,5000,50)
-     for fs,ax in zip(fss,axarr.reshape(-1)):
-          for f in fs.T:
-               ax.errorbar(log_slices,f[0][log_slices],yerr=np.sqrt(f[1][log_slices]),alpha=0.25,ls='--')
-          ax.errorbar(main_slices,np.mean(fs,axis=2)[main_slices,0],yerr=np.sqrt(np.mean(fs,axis=2)[main_slices,1]),lw=2,c='k')
+     generations=data_frame[0].shape[0]
+
+     for data,ax in zip(data_frame,axarr.reshape(-1)):
+          for fitness in data.T:
+               #(gen_vals,fit_vals)=ValueJumps(fitness[0],0.025)
+               #gen_vals=np.append(gen_vals,generations)
+               #gen_vals=np.insert(gen_vals,0,1)
+               #fit_vals=np.append(fit_vals,fit_vals[-1])
+               if abs(fitness[0,0]-fitness[0,-1])/float(fitness[0,0])<0.05:
+                    ax.plot([1,generations*g_factor],[np.mean(fitness[0])]*2,alpha=0.25,ls='--')
+               else:
+                    ax.plot(np.linspace(0,generations-1,generations/10)*g_factor+1,np.mean(fitness[0].reshape(-1, 10), axis=1),alpha=0.4,ls='-')
+          ax.plot(np.linspace(0,generations-1,generations)*g_factor+1,np.mean(data,axis=2)[:,0],lw=2,c='k')
+               #ax.errorbar(range(fitness.shape[1]),fitness[0],yerr=np.sqrt(fitness[1]),alpha=0.25,ls='--')
+          #ax.errorbar(range(fitness.shape[1]),np.mean(data,axis=2)[:,0],yerr=np.sqrt(np.mean(data,axis=2)[:,1]),lw=2,c='k')
      #axarr[0].set_xlabel('Generations')
      plt.figtext(0.5,0.01,'Generations',ha='center',va='bottom')
      axarr[0].set_ylabel(r'$\langle \mathcal{F} \rangle$')
-     axarr[0].set_ylim((0,1))
+     axarr[0].set_ylim((0,5))
      axarr[0].set_xscale('log')
      axarr[0].set_title(r'Selection')
      axarr[1].set_title(r'Random')
@@ -217,14 +245,14 @@ def PlotInterfaceStrengths(data_frame,N_tiles,title_string=''):
           data=means[slices]
 
           for i,time_slice in enumerate(data):
-               ax.plot(np.linspace(0,1,interface_size+1),time_slice[:interface_size+1]/population_size,c=pl(float(i)/data.shape[0]),marker='o')
+               #ax.plot(np.linspace(0,1,interface_size+1),time_slice[:interface_size+1]/population_size,c=pl(float(i)/data.shape[0]),marker='o')
                
-               #ax.plot(np.linspace(0,1,interface_size/2+1),time_slice[interface_size+1:]/population_size,c=pl(float(i)/data.shape[0]),marker='s')
+               ax.plot(np.linspace(0,1,interface_size/2+1),time_slice[interface_size+1:]/population_size,c=pl(float(i)/data.shape[0]),marker='s')
      
           #ax.plot(np.linspace(0,1,interface_size+1),[(N_tiles-1.)/(N_tiles+1)*binom_pair.pmf(i)+2./(N_tiles+1)*binom_self.pmf(i/2)*(1-i%2) for i in xrange(interface_size+1)],'kx',markeredgewidth=1)
 
-          ax.plot(np.linspace(0,1,interface_size+1),[(N_tiles-1.)/(N_tiles+1)*binom_pair.pmf(i) for i in xrange(interface_size+1)],'kx',markeredgewidth=1)
-          #ax.plot(np.linspace(0,1,interface_size/2+1),[2./(N_tiles+1)*binom_self.pmf(i) for i in xrange(interface_size/2+1)],'k+',markeredgewidth=1)
+          #ax.plot(np.linspace(0,1,interface_size+1),[(N_tiles-1.)/(N_tiles+1)*binom_pair.pmf(i) for i in xrange(interface_size+1)],'kx',markeredgewidth=1)
+          ax.plot(np.linspace(0,1,interface_size/2+1),[2./(N_tiles+1)*binom_self.pmf(i) for i in xrange(interface_size/2+1)],'k+',markeredgewidth=1)
           
      
      axarr[0].set_ylim([10**-5,1.5])
@@ -322,3 +350,7 @@ def LoadStrengthsOld(r_type,temperature,mu,gamma,runs=1,interface_size=16):
                per_runs.append(temp)
           total_ret.append(np.stack(per_runs,axis=1))
      return np.stack(total_ret,axis=2)
+
+
+def ValueJumps(data, stepsize=1):
+     return (np.where(np.diff(data) >= stepsize)[0],np.array([np.mean(cluster) for cluster in np.split(data, np.where(np.diff(data) >= stepsize)[0]+1)]))
