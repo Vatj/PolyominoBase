@@ -945,4 +945,48 @@ def Tikz(m,n):
         plt.text(m,n,"{}".format(Z2(m,n)))
 
     plt.show(block=False)
+
+from scipy import stats
+from random import shuffle
+def MutateBlocks(I_length=16,mus=1):
+    faces=range(I_length)
+    I=[0]*I_length
+    g=0
+    b=stats.binom(I_length,mus/float(I_length))
+    while True:
+        g+=1
+        shuffle(faces)
     
+    
+        
+        for i in xrange(b.rvs()):
+            I[faces[i]]+=1
+        if 0 not in I:
+            break
+        
+    return g
+    
+
+def Theor(I_length=16,mus=1):
+    return np.log(1-2**(-1./I_length))/np.log(1-mus/float(I_length))
+    
+def tot():
+    plt.figure()
+    i= range(128,131,2)
+    #plt.plot(i,[Theor(j,1) for j in i],'r--')
+    plt.plot(i,[sum([MutateBlocks(j,.5) for _ in xrange(1000)])/(1000.*Theor(j,.5)) for j in i])
+    plt.plot(i,[sum([MutateBlocks(j,.5) for _ in xrange(1000)])/(1000.*j*H(j)*2.) for j in i])
+    plt.show(block=False)
+       
+def ppx(x,I,mu):
+    return (1-(1-mu/float(I))**x)**I
+
+
+def H(n):
+    return sum(1./d for d in xrange(1, n+1))
+
+def equaldistr(N,m):
+    TOTAL=np.zeros(N)
+    for _ in xrange(m):
+        TOTAL+=np.array([int(i) for i in list(bin(randint(0,2**N-1))[2:].zfill(N))])
+    print TOTAL/float(m)
