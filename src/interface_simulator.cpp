@@ -1,7 +1,7 @@
 #include "interface_simulator.hpp"
 
 //./bin/ProteinEvolution -E -N 3 -P 50 -K 5 -B 50 -S 1 -D 1 -V 0 -F 1 -M 0.05 -T 0.09 -X 0.2
-
+const uint16_t printing_resolution=1000;
 std::vector<simulation_params::population_size_type> RouletteWheelSelection(std::vector<double>& fitnesses) {
   std::partial_sum(fitnesses.begin(), fitnesses.end(), fitnesses.begin());
   std::vector<simulation_params::population_size_type> selected_indices(simulation_params::population_size);
@@ -25,8 +25,16 @@ void EvolvePopulation(std::string run_details) {
   std::vector<double> population_fitnesses(simulation_params::population_size);
   interface_model::PhenotypeTable pt = interface_model::PhenotypeTable();
   bool record_strengths=false;
+
+  std::poisson_distribution<uint16_t> landscape_changer(log(1-pow(2,-1./model_params::interface_size))/log(1-model_params::mu_prob/(4*simulation_params::n_tiles*model_params::interface_size)));
+  uint16_t fitness_jiggle=landscape_changer(interface_model::RNG_Engine);
+
   
   for(uint32_t generation=0;generation<simulation_params::generation_limit;++generation) {
+    if(fitness_jiggle--==0) {
+      pt.ReassignFitness();
+      fitness_jiggle=landscape_changer(interface_model::RNG_Engine);
+    }
     if(generation+100>=simulation_params::generation_limit)
       record_strengths=true;
   
@@ -43,7 +51,7 @@ void EvolvePopulation(std::string run_details) {
         fout_strength<<count<<" ";
       fout_strength<<"\n";
     }
-    if(generation%(simulation_params::generation_limit/1000)==0) {
+    if(generation%(simulation_params::generation_limit/printing_resolution)==0) {
       double mu=0,sigma=0;
       DistributionStatistics(population_fitnesses,mu,sigma);
       fout_fitness<<mu<<" "<<sigma<<"\n";
