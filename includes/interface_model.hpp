@@ -13,7 +13,7 @@
 
 namespace simulation_params
 {
-  typedef uint32_t population_size_type;
+  typedef uint8_t population_size_type;
   extern population_size_type population_size;
   extern uint32_t generation_limit,independent_trials,run_offset;
   extern uint8_t n_tiles,phenotype_builds;
@@ -136,7 +136,16 @@ namespace interface_model
       
       return fitness;
     }
-      
+
+    void ReassignFitness() {
+      for(std::unordered_map<uint8_t,std::vector<double> >::iterator fit_iter=phenotype_fitnesses.begin();fit_iter!=phenotype_fitnesses.end();++fit_iter) {
+	if(fit_iter->first) {
+	  std::gamma_distribution<double> fitness_dist(sqrt(static_cast<double>(fit_iter->first)),1);
+	  for(double& fitness :fit_iter->second)
+	    fitness=fitness_dist(RNG_Engine);
+	}
+      }
+    }
 
   };
 }
