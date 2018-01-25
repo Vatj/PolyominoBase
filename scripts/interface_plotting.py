@@ -9,8 +9,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 from tile_shape_visuals import Visualise_Shape_From_Binary
 import glob
 
-BASE_FILE_PATH='/scratch/asl47/Data_Runs/Interface/T{2:.6f}/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
-#BASE_FILE_PATH='/rscratch/asl47/Bulk_Run/Interfaces/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+#BASE_FILE_PATH='/scratch/asl47/Data_Runs/Interface/T{2:.6f}/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+BASE_FILE_PATH='/rscratch/asl47/Bulk_Run/Interfaces/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
 
 def GetMaxRun(r_type,temperature,mu,gamma):
      return max([int(s[s.rindex('Run')+3:-4]) for s in glob.glob(BASE_FILE_PATH.format('Sizes',r_type,temperature,mu,gamma,'*'))])
@@ -34,12 +34,21 @@ def VisualisePhenotypes(r_type,temperature,mu,gamma,run):
      
 def LoadSizes(r_type,temperature,mu,gamma,runs=0):
      sizes=defaultdict(int)
+     phen_count=[]
      for r in xrange(runs):
+          phens=0
           for line in open(BASE_FILE_PATH.format('Sizes',r_type,temperature,mu,gamma,r)):
                (size,count)=[int(i) for i in line.rstrip().split()]
                if size:
+                    if size==2:
+                         print r
                     sizes[size]+=count
-     return sizes
+                    phens+=count
+          phen_count.append(phens)
+     #return sizes
+     return phen_count
+
+
 
 def LoadPairSizes(temperature,mu,gamma,runs=0):
      if runs==0:
@@ -57,7 +66,7 @@ def LoadPairFitness(temperature,mu,gamma,runs=0):
      if runs==0:
           runs=min(GetMaxRun('S',temperature,mu,gamma),GetMaxRun('R',temperature,mu,0))
           print "Runs evaluated at ",runs
-     return LoadData('Fitness','S',temperature,mu,gamma,runs),LoadData('Fitness','R',temperature,mu,0,runs)
+     return LoadData('Fitness','S',temperature,mu,gamma,runs),LoadData('Fitness','S',temperature,mu,0,runs)
 
 def LoadPairStrengths(temperature,mu,gamma,runs=0):
      if runs==0:
@@ -207,7 +216,7 @@ def PlotFitness(data_frame,title_string='',g_factor=1):
                if abs(fitness[0,0]-fitness[0,-1])/float(fitness[0,0])<0.05:
                     ax.plot([1,generations*g_factor],[np.mean(fitness[0])]*2,alpha=0.25,ls='--')
                else:
-                    ax.plot(np.linspace(0,generations-1,generations/10)*g_factor+1,np.mean(fitness[0].reshape(-1, 10), axis=1),alpha=0.4,ls='-')
+                    ax.plot(np.linspace(0,generations-1,generations/2)*g_factor+1,np.mean(fitness[0].reshape(-1, 2), axis=1),alpha=0.4,ls='-')
           ax.plot(np.linspace(0,generations-1,generations)*g_factor+1,np.mean(data,axis=2)[:,0],lw=2,c='k')
                #ax.errorbar(range(fitness.shape[1]),fitness[0],yerr=np.sqrt(fitness[1]),alpha=0.25,ls='--')
           #ax.errorbar(range(fitness.shape[1]),np.mean(data,axis=2)[:,0],yerr=np.sqrt(np.mean(data,axis=2)[:,1]),lw=2,c='k')
