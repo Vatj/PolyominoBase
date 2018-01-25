@@ -982,6 +982,7 @@ def ppx(x,I,mu):
     return (1-(1-mu/float(I))**x)**I
 
 
+
 def H(n):
     return sum(1./d for d in xrange(1, n+1))
 
@@ -989,4 +990,7 @@ def equaldistr(N,m):
     TOTAL=np.zeros(N)
     for _ in xrange(m):
         TOTAL+=np.array([int(i) for i in list(bin(randint(0,2**N-1))[2:].zfill(N))])
-    print TOTAL/float(m)
+        print TOTAL/float(m)
+
+
+

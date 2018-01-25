@@ -42,7 +42,7 @@ void PrintShape(std::vector<uint8_t>& spatial_information,uint8_t dx,uint8_t dy)
 
 namespace interface_model
 {
-  typedef uint8_t interface_type;
+  typedef uint32_t interface_type;
   struct PhenotypeTable;
 
   extern std::random_device rd;

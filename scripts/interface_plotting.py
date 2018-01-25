@@ -10,7 +10,8 @@ from tile_shape_visuals import Visualise_Shape_From_Binary
 import glob
 
 #BASE_FILE_PATH='/scratch/asl47/Data_Runs/Interface/T{2:.6f}/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
-BASE_FILE_PATH='/rscratch/asl47/Bulk_Run/Interfaces/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+#BASE_FILE_PATH='/rscratch/asl47/Bulk_Run/Interfaces/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+BASE_FILE_PATH='../{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
 
 def GetMaxRun(r_type,temperature,mu,gamma):
      return max([int(s[s.rindex('Run')+3:-4]) for s in glob.glob(BASE_FILE_PATH.format('Sizes',r_type,temperature,mu,gamma,'*'))])
@@ -301,7 +302,7 @@ def PlotAll(temp,mu,gamma,runs,N_t):
 
 def PlotBindingStrengths(Ts,I_size):
      plt.figure()
-     cs=['firebrick','royalblue','darkgreen','coral','orchid','goldenrod']
+     cs=['firebrick','royalblue','darkgreen','coral','orchid','goldenrod','c','k','y','r','b','g']
      for T,c in zip(Ts,cs):
           plt.plot(np.linspace(0,1,101),np.exp(-1*np.linspace(1,0,101)/T),lw=2,ls='--',label='T={}'.format(T),c=c)
           plt.plot(np.linspace(0,1,I_size+1),np.exp(-1*np.linspace(1,0,I_size+1)/T),lw=2,ls='',marker='o',c=c,markersize=6,markeredgewidth=1)

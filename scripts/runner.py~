@@ -1,0 +1,8 @@
+import subprocess
+
+executable='ProteinEvolution'
+ex_flags='-H' #'-E -N 3 -P 250 -K 3 -B 10 -S 1 -F 1 -M 1 -T 0.00001 -X 0.8 -D 1000'
+command_sequence='./../bin/{0} {1}'.format(executable,ex_flags)
+print command_sequence
+
+subprocess.call(command_sequence,shell=True)
