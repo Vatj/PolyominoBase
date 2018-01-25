@@ -42,7 +42,7 @@ void PrintShape(std::vector<uint8_t>& spatial_information,uint8_t dx,uint8_t dy)
 
 namespace interface_model
 {
-  typedef uint32_t interface_type;
+  typedef uint8_t interface_type;
   struct PhenotypeTable;
 
   extern std::random_device rd;
@@ -127,7 +127,7 @@ namespace interface_model
       
       for(std::unordered_map<uint8_t, std::unordered_map<uint32_t,uint8_t> >::const_iterator size_iter =ID_counter.begin();size_iter!=ID_counter.end();++size_iter) 
         for(std::unordered_map<uint32_t,uint8_t>::const_iterator f_iter =size_iter->second.begin();f_iter!=size_iter->second.end();++f_iter)
-	  if(f_iter->first < phenotype_fitnesses[size_iter->first].size() && f_iter->second > model_params::UND_threshold*simulation_params::phenotype_builds)
+	  if(f_iter->first < phenotype_fitnesses[size_iter->first].size() && f_iter->second >= model_params::UND_threshold*simulation_params::phenotype_builds)
 	    fitness+=phenotype_fitnesses[size_iter->first][f_iter->first] * std::pow(static_cast<double>(f_iter->second)/phenotype_IDs.size(),model_params::fitness_factor);
            
       undiscovered_phenotypes.clear();
