@@ -21,7 +21,7 @@ DEPEXT      := d
 OBJEXT      := o
 
 #Flags, Libraries and Includes
-CXXFLAGS    := -std=c++11 -Wall -Wextra -pedantic -pipe -O3 -fopenmp -march=ivybridge -flto -flto-partition=none -fprofile-use -fprofile-correction -fprofile-dir=$(PROFDIR)/
+CXXFLAGS    := -std=c++11 -Wall -Wextra -pedantic -pipe -O3 -fopenmp -march=ivybridge -flto -flto-partition=none #-fprofile-use -fprofile-correction -fprofile-dir=$(PROFDIR)/
 INC         := -I$(INCDIR)
 INCDEP      := -I$(INCDIR)
 
