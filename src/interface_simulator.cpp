@@ -3,14 +3,7 @@
 //./bin/ProteinEvolution -E -N 3 -P 50 -K 5 -B 50 -S 1 -D 1 -V 0 -F 1 -M 0.05 -T 0.09 -X 0.2
 const uint16_t printing_resolution=100;
 
-std::vector<uint16_t> RouletteWheelSelection(std::vector<double>& fitnesses) {
-  std::partial_sum(fitnesses.begin(), fitnesses.end(), fitnesses.begin());
-  std::vector<uint16_t> selected_indices(simulation_params::population_size);
-  std::uniform_real_distribution<double> random_interval(0,fitnesses.back());
-  for(uint16_t nth_selection=0; nth_selection<simulation_params::population_size; ++nth_selection) 
-    selected_indices[nth_selection]=static_cast<uint16_t>(std::lower_bound(fitnesses.begin(),fitnesses.end(),random_interval(interface_model::RNG_Engine))-fitnesses.begin());
-  return selected_indices;
-}
+
 
 void EvolvePopulation(std::string run_details) {
   /* Output files */
@@ -26,6 +19,8 @@ void EvolvePopulation(std::string run_details) {
   interface_model::PhenotypeTable pt = interface_model::PhenotypeTable();
   std::vector<double> population_fitnesses(simulation_params::population_size);
   std::vector<uint32_t> interface_counter(1.5*model_params::interface_size+2);
+  std::vector<interface_model::phenotype_ID> population_phenotypes(simulation_params::population_size),reproduced_phenotypes(simulation_params::population_size);
+
   bool record_strengths=false;
 
   /* Genotype initilisation, either zero or random, + duplicate */
@@ -36,15 +31,14 @@ void EvolvePopulation(std::string run_details) {
     for(std::vector<interface_model::interface_type>& genotype : population_genotypes)
       std::generate(genotype.begin(),genotype.end(),interface_filler);   
   }
-  std::vector< std::vector<interface_model::interface_type> > reproducing_genotypes(population_genotypes);
-
+  std::vector< std::vector<interface_model::interface_type> > reproduced_genotypes(population_genotypes);
+  
   /* Write initial population to file */
   for(std::vector<interface_model::interface_type>& genotype : population_genotypes)
     for(interface_model::interface_type base_value : genotype)
       fout_genotype_history << +base_value << " "; 
   fout_genotype_history<<"\n";
-  
-  
+   
   
 
   /* Median time to complete interface mutation, characteristic time for fitness re-assignment */
@@ -64,12 +58,24 @@ void EvolvePopulation(std::string run_details) {
     /* Start genotype loop */
     int nth_genotype=0;
     for(std::vector<interface_model::interface_type>& evolving_genotype : population_genotypes) {
-      population_fitnesses[nth_genotype++]=interface_model::ProteinAssemblyOutcome(evolving_genotype,&pt);
+      interface_model::phenotype_ID pid;
+
+      interface_model::MutateInterfaces(evolving_genotype);
+      population_fitnesses[nth_genotype++]=interface_model::ProteinAssemblyOutcome(evolving_genotype,&pt,pid);
+      population_phenotypes[nth_genotype-1]=pid;
       if(record_strengths)
         InterfaceStrengths(evolving_genotype,interface_counter);
-      interface_model::MutateInterfaces(evolving_genotype);
+      
       for(interface_model::interface_type base_value : evolving_genotype)
-        fout_genotype_history << +base_value << " "; 
+        fout_genotype_history << +base_value << " ";
+      if(generation>0) {
+        if(pid!=reproduced_phenotypes[nth_genotype-1]) {
+          std::cout<<"something changed at g "<<generation<<std::endl;
+          std::cout<<+pid.first<<" "<<+pid.second<<" c.f. "<<+reproduced_phenotypes[nth_genotype-1].first<<" "<<+reproduced_phenotypes[nth_genotype-1].second<<std::endl;
+
+        }
+
+      }
     } 
     fout_genotype_history<<"\n";
     /* End genotype loop */
@@ -90,9 +96,12 @@ void EvolvePopulation(std::string run_details) {
     /* Start selection */
     if(simulation_params::fitness_selection) {
       std::vector<uint16_t> selection_indices=RouletteWheelSelection(population_fitnesses);
-      for(uint16_t nth_reproduction = 0; nth_reproduction<simulation_params::population_size;++nth_reproduction)
-        reproducing_genotypes[nth_reproduction]=population_genotypes[selection_indices[nth_reproduction]];
-      population_genotypes.assign(reproducing_genotypes.begin(),reproducing_genotypes.end());
+      for(uint16_t nth_reproduction = 0; nth_reproduction<simulation_params::population_size;++nth_reproduction) {
+        reproduced_genotypes[nth_reproduction]=population_genotypes[selection_indices[nth_reproduction]];
+        reproduced_phenotypes[nth_reproduction]=population_phenotypes[selection_indices[nth_reproduction]];
+      }
+      population_genotypes.assign(reproduced_genotypes.begin(),reproduced_genotypes.end());
+      population_phenotypes.assign(reproduced_phenotypes.begin(),reproduced_phenotypes.end());
       for(uint16_t selection_index : selection_indices)
         fout_genotype_history << +selection_index << " ";
       fout_genotype_history<<"\n";
@@ -136,9 +145,6 @@ void EvolutionRunner() {
     EvolvePopulation(run_details);
   }
 }
-
-
-
 
 int main(int argc, char* argv[]) {
   char run_option;
@@ -205,10 +211,17 @@ void SetRuntimeConfigurations(int argc, char* argv[]) {
 
 std::vector<uint8_t> SequenceDifference(std::vector<interface_model::interface_type> parent, std::vector<interface_model::interface_type> child) {
   std::vector<uint8_t> divergence_indices;
-  for(uint8_t base=0; base < parent.size(); ++base) {
+  for(uint8_t base=0; base < parent.size(); ++base)
     if(parent[base]!=child[base])
       divergence_indices.emplace_back(base);
-  }
   return divergence_indices;
 }
  
+std::vector<uint16_t> RouletteWheelSelection(std::vector<double>& fitnesses) {
+  std::partial_sum(fitnesses.begin(), fitnesses.end(), fitnesses.begin());
+  std::vector<uint16_t> selected_indices(simulation_params::population_size);
+  std::uniform_real_distribution<double> random_interval(0,fitnesses.back());
+  for(uint16_t nth_selection=0; nth_selection<simulation_params::population_size; ++nth_selection) 
+    selected_indices[nth_selection]=static_cast<uint16_t>(std::lower_bound(fitnesses.begin(),fitnesses.end(),random_interval(interface_model::RNG_Engine))-fitnesses.begin());
+  return selected_indices;
+}

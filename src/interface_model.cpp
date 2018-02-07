@@ -55,18 +55,28 @@ namespace interface_model
     }
   }
 
-  double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome,PhenotypeTable* pt) {
+  double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome,PhenotypeTable* pt,phenotype_ID& pid) {
     uint8_t dx=0,dy=0;
     std::vector<int8_t> assembly_information;
     std::vector<uint8_t> spatial_information;
-    std::vector<std::pair<uint8_t,uint32_t> > phenotype_IDs;phenotype_IDs.reserve(simulation_params::phenotype_builds);
+    std::vector<phenotype_ID> phenotype_IDs;phenotype_IDs.reserve(simulation_params::phenotype_builds);
     for(uint8_t nth=0;nth<simulation_params::phenotype_builds;++nth) {
       assembly_information=AssembleProtein(binary_genome);
       spatial_information=SpatialGrid(assembly_information,dx,dy);
       phenotype_IDs.emplace_back(std::accumulate(spatial_information.begin(),spatial_information.end(),0),pt->PhenotypeCheck(spatial_information,dx,dy));
     }
-    return pt->GenotypeFitness(phenotype_IDs);
-  }  
+    
+    auto cid=pt->PhenotypeFrequencies(phenotype_IDs);
+    pid=MostCommonPhenotype(cid);
+    //pid=*std::max_element(phenotype_IDs.begin(),phenotype_IDs.end());
+    
+    /* WANT MOST COMMON ELEMENT */
+    //[](const auto& left, const auto& right){return left.second.second < right.second.second;});
+    //pid=
+    return pt->GenotypeFitness(cid);
+                              
+}
+
 
   std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome) {
     std::vector<int8_t> placed_tiles{0,0};
@@ -120,8 +130,17 @@ namespace interface_model
     }
   }
   
-  
-  
+  phenotype_ID MostCommonPhenotype(std::map<phenotype_ID,uint8_t>& ID_counter) {
+    uint8_t highest=0;
+    phenotype_ID most_common;
+    for(auto kv : ID_counter) {
+      if(kv.second>highest) {
+        most_common=kv.first;
+        highest=kv.second;
+      }
+    }
+    return most_common;
+  }
 }//end interface_model namespace
 
 std::vector<uint8_t> SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,uint8_t& dy) {
@@ -222,4 +241,7 @@ void InterfaceStrengths(std::vector<interface_model::interface_type>& interfaces
       ++strengths[model_params::interface_size-interface_model::SammingDistance(*outer_face,*inner_face)];
   }
 }
+
+
+
 

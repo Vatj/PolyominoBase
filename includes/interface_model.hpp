@@ -6,6 +6,7 @@
 #include <array>
 #include <numeric>
 #include <unordered_map>
+#include <map>
 #include <random>
 #include <climits>
 #include <cstdint>
@@ -43,7 +44,7 @@ void PrintShape(std::vector<uint8_t>& spatial_information,uint8_t dx,uint8_t dy)
 namespace interface_model
 {
   typedef uint8_t interface_type;
-  
+  typedef std::pair<uint8_t,uint16_t> phenotype_ID;
   struct PhenotypeTable;
 
   extern std::random_device rd;
@@ -54,9 +55,12 @@ namespace interface_model
   void MutateInterfaces(std::vector<interface_type>& binary_genome);
 
   /* ASSEMBLY */
-  double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome, PhenotypeTable* pt);
+  double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome, PhenotypeTable* pt,phenotype_ID& pid);
   std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome);
   void PerimeterGrowth(int8_t x,int8_t y,int8_t theta,int8_t direction, int8_t tile_type,std::vector<int8_t>& growing_perimeter,std::vector<int8_t>& placed_tiles);
+
+  /* MISC */
+  phenotype_ID MostCommonPhenotype(std::map<phenotype_ID,uint8_t>& ID_counter);
 
   
 
@@ -65,17 +69,17 @@ namespace interface_model
     std::unordered_map<uint8_t,std::vector<uint8_t> > known_phenotypes;
     std::unordered_map<uint8_t,std::vector<uint8_t> > undiscovered_phenotypes;
     std::unordered_map<uint8_t,std::vector<double> > phenotype_fitnesses{{0,{0}}};
-    std::unordered_map<uint8_t,std::vector<uint32_t> > new_phenotype_xfer;
-    std::vector<uint32_t> undiscovered_phenotype_counts;
+    std::unordered_map<uint8_t,std::vector<uint16_t> > new_phenotype_xfer;
+    std::vector<uint16_t> undiscovered_phenotype_counts;
     
 
     
     //PhenotypeTable(void) : n_phenotypes(0) {};
 
-    uint32_t PhenotypeCheck(std::vector<uint8_t>& phenotype, uint8_t dx, uint8_t dy) {
+    uint16_t PhenotypeCheck(std::vector<uint8_t>& phenotype, uint8_t dx, uint8_t dy) {
       if(phenotype.empty())
         return 0;
-      uint32_t phenotype_index=0;
+      uint16_t phenotype_index=0;
       uint8_t phenotype_size=std::accumulate(phenotype.begin(),phenotype.end(),0);
       std::vector<uint8_t> temp_phenotype;
       for(std::vector<uint8_t>::iterator phen_iter = known_phenotypes[phenotype_size].begin();phen_iter!=known_phenotypes[phenotype_size].end();) {
@@ -112,31 +116,34 @@ namespace interface_model
       undiscovered_phenotypes[phenotype_size].emplace_back(dy);
       undiscovered_phenotypes[phenotype_size].insert(undiscovered_phenotypes[phenotype_size].end(),phenotype.begin(),phenotype.end());
       undiscovered_phenotype_counts.emplace_back(1);
-
       return phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds;
     }
     
-    double GenotypeFitness(std::vector<std::pair<uint8_t, uint32_t> >& phenotype_IDs) {
-      double fitness=0;
+    std::map<phenotype_ID,uint8_t> PhenotypeFrequencies(std::vector<phenotype_ID >& phenotype_IDs) {
       /* Replace previously undiscovered phenotype IDs with new one */
-      for(std::unordered_map<uint8_t,std::vector<uint32_t> >::iterator xfer_iter=new_phenotype_xfer.begin();xfer_iter!=new_phenotype_xfer.end();++xfer_iter) 
-	for(std::vector<uint32_t>::iterator rep_iter=xfer_iter->second.begin();rep_iter!=xfer_iter->second.end();rep_iter+=2) 
+      for(std::unordered_map<uint8_t,std::vector<uint16_t> >::iterator xfer_iter=new_phenotype_xfer.begin();xfer_iter!=new_phenotype_xfer.end();++xfer_iter) 
+	for(std::vector<uint16_t>::iterator rep_iter=xfer_iter->second.begin();rep_iter!=xfer_iter->second.end();rep_iter+=2) 
 	std::replace(phenotype_IDs.begin(),phenotype_IDs.end(),std::make_pair(xfer_iter->first,*(rep_iter)),std::make_pair(xfer_iter->first,*(rep_iter+1)));
-
       /* Count each ID frequency */
-      std::unordered_map<uint8_t, std::unordered_map<uint32_t,uint8_t> > ID_counter;
-      for(std::vector<std::pair<uint8_t, uint32_t> >::const_iterator ID_iter = phenotype_IDs.begin(); ID_iter!=phenotype_IDs.end(); ++ID_iter)
-        ++ID_counter[ID_iter->first][ID_iter->second];
+      std::map<phenotype_ID, uint8_t> ID_counter;
+      for(std::vector<phenotype_ID >::const_iterator ID_iter = phenotype_IDs.begin(); ID_iter!=phenotype_IDs.end(); ++ID_iter)
+        if(ID_iter->second < phenotype_fitnesses[ID_iter->first].size())
+          ++ID_counter[std::make_pair(ID_iter->first,ID_iter->second)];
       
-      /* Add fitness contribution from each phenotype */
-      for(std::unordered_map<uint8_t, std::unordered_map<uint32_t,uint8_t> >::const_iterator size_iter =ID_counter.begin();size_iter!=ID_counter.end();++size_iter) 
-        for(std::unordered_map<uint32_t,uint8_t>::const_iterator f_iter =size_iter->second.begin();f_iter!=size_iter->second.end();++f_iter)
-	  if(f_iter->first < phenotype_fitnesses[size_iter->first].size() && f_iter->second >= model_params::UND_threshold*simulation_params::phenotype_builds)
-	    fitness+=phenotype_fitnesses[size_iter->first][f_iter->first] * std::pow(static_cast<double>(f_iter->second)/phenotype_IDs.size(),model_params::fitness_factor);
-
       undiscovered_phenotypes.clear();
       undiscovered_phenotype_counts.clear();
       new_phenotype_xfer.clear();
+      return ID_counter;
+
+    }
+    double GenotypeFitness(std::map<phenotype_ID,uint8_t> ID_counter) {
+      double fitness=0;
+      /* Add fitness contribution from each phenotype */
+      for(std::map<phenotype_ID,uint8_t >::const_iterator phen_iter =ID_counter.begin();phen_iter!=ID_counter.end();++phen_iter)
+	  if(phen_iter->second >= model_params::UND_threshold*simulation_params::phenotype_builds)
+	    fitness+=phenotype_fitnesses[phen_iter->first.first][phen_iter->first.second] * std::pow(static_cast<double>(phen_iter->second)/simulation_params::phenotype_builds,model_params::fitness_factor);
+
+      
       
       return fitness;
     }
@@ -157,5 +164,6 @@ namespace interface_model
 uint8_t PhenotypeSymmetryFactor(std::vector<uint8_t>& original_shape, uint8_t dx, uint8_t dy);
 void DistributionStatistics(std::vector<double>& intf, double& mean, double& variance);
 void InterfaceStrengths(std::vector<interface_model::interface_type>& interfaces, std::vector<uint32_t>& strengths);
+
 
 
