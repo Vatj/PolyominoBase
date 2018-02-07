@@ -73,7 +73,8 @@ void EvolvePopulation(std::string run_details) {
     } 
     fout_genotype_history<<"\n";
     /* End genotype loop */
-    
+
+    /* Write data to file */
     if(record_strengths) {
       for(uint32_t count : interface_counter)
         fout_strength<<count<<" ";
