@@ -13,11 +13,11 @@
 
 namespace simulation_params
 {
-  typedef uint8_t population_size_type;
-  extern population_size_type population_size;
+
+  extern uint16_t population_size;
   extern uint32_t generation_limit,independent_trials,run_offset;
   extern uint8_t n_tiles,phenotype_builds;
-  extern bool fitness_selection;
+  extern bool fitness_selection,random_initilisation;
 }
 
 namespace model_params
@@ -49,7 +49,7 @@ namespace interface_model
   extern std::mt19937 RNG_Engine;
   inline interface_type reverse_bits(interface_type v);
   inline uint8_t ArbitraryPopcount(interface_type face1);
-  inline double SammingDistance(interface_type face1,interface_type face2);
+  inline uint8_t SammingDistance(interface_type face1,interface_type face2);
   void MutateInterfaces(std::vector<interface_type>& binary_genome);
   //double SymmetryFactor(interface_type face1);
 
@@ -141,7 +141,7 @@ namespace interface_model
       for(std::unordered_map<uint8_t,std::vector<double> >::iterator fit_iter=phenotype_fitnesses.begin();fit_iter!=phenotype_fitnesses.end();++fit_iter) {
 	if(fit_iter->first) {
 	  std::gamma_distribution<double> fitness_dist(sqrt(static_cast<double>(fit_iter->first)),1);
-	  for(double& fitness :fit_iter->second)
+	  for(double& fitness : fit_iter->second)
 	    fitness=fitness_dist(RNG_Engine);
 	}
       }

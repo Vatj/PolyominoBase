@@ -2,10 +2,10 @@
 
 namespace simulation_params
 {
-  population_size_type population_size=10;
+  uint16_t population_size=10;
   uint8_t phenotype_builds=10,n_tiles=2;
   uint32_t generation_limit=5,independent_trials=1,run_offset=0;
-  bool fitness_selection=false;
+  bool fitness_selection=false,random_initilisation=false;
 }
 
 namespace model_params
@@ -41,17 +41,9 @@ namespace interface_model
       face &= face - 1;
     return c;
   }
-  
-
-  inline double SammingDistance(interface_type face1,interface_type face2) {
-    return static_cast<double>(ArbitraryPopcount(face1 ^ reverse_bits(~face2)));
+  inline uint8_t SammingDistance(interface_type face1,interface_type face2) {
+    return static_cast<uint8_t>(ArbitraryPopcount(face1 ^ reverse_bits(~face2)));
   }
-
-  /*
-  double SymmetryFactor(interface_type face1) {
-    return static_cast<double>(ArbitraryPopcount((face1) ^ reverse_bits(face1)))/model_params::interface_size;
-  }
-  */
 
   void MutateInterfaces(std::vector<interface_type>& binary_genome) {
     std::vector<uint8_t> interface_indices(model_params::interface_size);
@@ -63,25 +55,20 @@ namespace interface_model
     }
   }
 
-
   double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome,PhenotypeTable* pt) {
     uint8_t dx=0,dy=0;
     std::vector<int8_t> assembly_information;
     std::vector<uint8_t> spatial_information;
     std::vector<std::pair<uint8_t,uint32_t> > phenotype_IDs;phenotype_IDs.reserve(simulation_params::phenotype_builds);
-    
     for(uint8_t nth=0;nth<simulation_params::phenotype_builds;++nth) {
       assembly_information=AssembleProtein(binary_genome);
       spatial_information=SpatialGrid(assembly_information,dx,dy);
       phenotype_IDs.emplace_back(std::accumulate(spatial_information.begin(),spatial_information.end(),0),pt->PhenotypeCheck(spatial_information,dx,dy));
     }
     return pt->GenotypeFitness(phenotype_IDs);
-    
-  }
-  
+  }  
 
   std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome) {
-    
     std::vector<int8_t> placed_tiles{0,0};
     std::vector<int8_t> growing_perimeter; 
     PerimeterGrowth(0,0,0,-1,0,growing_perimeter,placed_tiles);
@@ -97,7 +84,7 @@ namespace interface_model
       current_x=growing_perimeter.back();growing_perimeter.pop_back();
       std::shuffle(genome_bases.begin(), genome_bases.end(), RNG_Engine);
       for(uint8_t base : genome_bases) {
-          if(model_params::real_dist(RNG_Engine)<std::exp(-1*SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[base])/(model_params::interface_size*model_params::temperature))) {
+        if(model_params::real_dist(RNG_Engine)<std::exp(-1*static_cast<double>(SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[base]))/(model_params::interface_size*model_params::temperature))) {
             placed_tiles.insert(placed_tiles.end(),{current_x,current_y});
             PerimeterGrowth(current_x,current_y,(4+current_direction-(base%4))%4,current_direction,base/4,growing_perimeter,placed_tiles);
             break;

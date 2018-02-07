@@ -1,10 +1,10 @@
 #include "interface_model.hpp"
 #include <fstream>
+#include <functional>
 
 
 
-
-std::vector<simulation_params::population_size_type> RouletteWheelSelection(std::vector<double>& fitnesses);
+std::vector<uint16_t> RouletteWheelSelection(std::vector<double>& fitnesses);
 
 void EvolvePopulation(std::string run_details); 
 void RandomStrings();
