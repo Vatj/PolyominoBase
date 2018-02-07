@@ -1,7 +1,7 @@
 #include "interface_simulator.hpp"
 
 //./bin/ProteinEvolution -E -N 3 -P 50 -K 5 -B 50 -S 1 -D 1 -V 0 -F 1 -M 0.05 -T 0.09 -X 0.2
-const uint16_t printing_resolution=1000;
+const uint16_t printing_resolution=100;
 
 std::vector<uint16_t> RouletteWheelSelection(std::vector<double>& fitnesses) {
   std::partial_sum(fitnesses.begin(), fitnesses.end(), fitnesses.begin());
@@ -57,15 +57,16 @@ void EvolvePopulation(std::string run_details) {
       pt.ReassignFitness();
       fitness_jiggle=landscape_changer(interface_model::RNG_Engine);
     }
-    if(generation>=simulation_params::generation_limit-100)
+    if(generation+100>=simulation_params::generation_limit)
       record_strengths=true;
+
 
     /* Start genotype loop */
     int nth_genotype=0;
-    for(std::vector<interface_model::interface_type> evolving_genotype : population_genotypes) {
+    for(std::vector<interface_model::interface_type>& evolving_genotype : population_genotypes) {
       population_fitnesses[nth_genotype++]=interface_model::ProteinAssemblyOutcome(evolving_genotype,&pt);
       if(record_strengths)
-        std::transform(interface_counter.begin(), interface_counter.end(),InterfaceStrengths(evolving_genotype).begin() , interface_counter.begin(),std::plus<uint32_t>());
+        InterfaceStrengths(evolving_genotype,interface_counter);
       interface_model::MutateInterfaces(evolving_genotype);
       for(interface_model::interface_type base_value : evolving_genotype)
         fout_genotype_history << +base_value << " "; 
@@ -77,6 +78,7 @@ void EvolvePopulation(std::string run_details) {
       for(uint32_t count : interface_counter)
         fout_strength<<count<<" ";
       fout_strength<<"\n";
+      std::fill(interface_counter.begin(),interface_counter.end(),0);
     }
     if(simulation_params::generation_limit>printing_resolution && generation%(simulation_params::generation_limit/printing_resolution)==0) {
       double mu=0,sigma=0;
@@ -84,6 +86,7 @@ void EvolvePopulation(std::string run_details) {
       fout_fitness<<mu<<" "<<sigma<<"\n";
     }
 
+    /* Start selection */
     if(simulation_params::fitness_selection) {
       std::vector<uint16_t> selection_indices=RouletteWheelSelection(population_fitnesses);
       for(uint16_t nth_reproduction = 0; nth_reproduction<simulation_params::population_size;++nth_reproduction)
@@ -93,7 +96,8 @@ void EvolvePopulation(std::string run_details) {
         fout_genotype_history << +selection_index << " ";
       fout_genotype_history<<"\n";
     }
-    std::fill(interface_counter.begin(),interface_counter.end(),0);
+    /* End selection */
+    
   } /* End main evolution loop */
   
 
@@ -140,9 +144,12 @@ int main(int argc, char* argv[]) {
   if(argc<2) {
     std::cout<<"no Params"<<std::endl;
     run_option='H';
-    std::vector<uint8_t> s{1,1,1, 0,1,0, 1,1,1};
-    uint8_t dx=3,dy=3;
-    std::cout<<+PhenotypeSymmetryFactor(s,dx,dy)<<std::endl;
+    //std::vector<uint8_t> s{1,1,1, 0,1,0, 1,1,1};
+    //uint8_t dx=3,dy=3;
+    //std::cout<<+PhenotypeSymmetryFactor(s,dx,dy)<<std::endl;
+    for(auto g : SequenceDifference({0,1,2,3,4,9,6,7},{19,1,2,3,4,5,6,7}))
+      std::cout<<+g<<" ";
+    std::cout<<std::endl;
   }
   else {
     run_option=argv[1][1];
@@ -194,3 +201,13 @@ void SetRuntimeConfigurations(int argc, char* argv[]) {
     model_params::b_dist.param(std::binomial_distribution<uint8_t>::param_type(model_params::interface_size,model_params::mu_prob/(model_params::interface_size*4*simulation_params::n_tiles)));
   }
 }
+
+std::vector<uint8_t> SequenceDifference(std::vector<interface_model::interface_type> parent, std::vector<interface_model::interface_type> child) {
+  std::vector<uint8_t> divergence_indices;
+  for(uint8_t base=0; base < parent.size(); ++base) {
+    if(parent[base]!=child[base])
+      divergence_indices.emplace_back(base);
+  }
+  return divergence_indices;
+}
+ 

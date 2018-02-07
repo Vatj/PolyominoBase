@@ -215,13 +215,11 @@ void DistributionStatistics(std::vector<double>& intf, double& mean, double& var
   variance /=(N-1);
 }
 
-std::vector<uint16_t> InterfaceStrengths(std::vector<interface_model::interface_type>& interfaces) {
-  std::vector<uint16_t> strengths(static_cast<uint8_t>(model_params::interface_size*1.5)+2);
+void InterfaceStrengths(std::vector<interface_model::interface_type>& interfaces, std::vector<uint32_t>& strengths) {
   for(std::vector<interface_model::interface_type>::const_iterator outer_face=interfaces.begin(); outer_face!=interfaces.end(); ++outer_face) {
     ++strengths[static_cast<uint8_t>(1.5*model_params::interface_size)+1-interface_model::SammingDistance(*outer_face,*outer_face)/2];
-    for(std::vector<interface_model::interface_type>::const_iterator inner_face=outer_face+1; inner_face!=interfaces.end(); ++inner_face)
+    for(std::vector<interface_model::interface_type>::const_iterator inner_face=outer_face+1; inner_face!=interfaces.end(); ++inner_face) 
       ++strengths[model_params::interface_size-interface_model::SammingDistance(*outer_face,*inner_face)];
   }
-  return strengths;
 }
 

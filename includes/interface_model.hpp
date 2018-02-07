@@ -42,7 +42,7 @@ void PrintShape(std::vector<uint8_t>& spatial_information,uint8_t dx,uint8_t dy)
 
 namespace interface_model
 {
-  typedef uint32_t interface_type;
+  typedef uint8_t interface_type;
   struct PhenotypeTable;
 
   extern std::random_device rd;
@@ -152,6 +152,6 @@ namespace interface_model
 
 uint8_t PhenotypeSymmetryFactor(std::vector<uint8_t>& original_shape, uint8_t dx, uint8_t dy);
 void DistributionStatistics(std::vector<double>& intf, double& mean, double& variance);
-std::vector<uint16_t> InterfaceStrengths(std::vector<interface_model::interface_type>& interfaces);
+void InterfaceStrengths(std::vector<interface_model::interface_type>& interfaces, std::vector<uint32_t>& strengths);
 
 
