@@ -41,17 +41,18 @@ std::vector<uint8_t> ClockwisePiRotation(std::vector<uint8_t>& phenotype);
 /* PRINTING */
 void PrintShape(std::vector<uint8_t>& spatial_information,uint8_t dx,uint8_t dy);
 
+typedef uint8_t interface_type;
+typedef std::pair<uint8_t,uint16_t> phenotype_ID;
 namespace interface_model
 {
-  typedef uint8_t interface_type;
-  typedef std::pair<uint8_t,uint16_t> phenotype_ID;
+  
   struct PhenotypeTable;
 
   extern std::random_device rd;
   extern std::mt19937 RNG_Engine;
-  inline interface_type reverse_bits(interface_type v);
-  inline uint8_t ArbitraryPopcount(interface_type face1);
-  inline uint8_t SammingDistance(interface_type face1,interface_type face2);
+  interface_type reverse_bits(interface_type v);
+  uint8_t ArbitraryPopcount(interface_type face1);
+  uint8_t SammingDistance(interface_type face1,interface_type face2);
   void MutateInterfaces(std::vector<interface_type>& binary_genome);
 
   /* ASSEMBLY */
@@ -60,7 +61,7 @@ namespace interface_model
   void PerimeterGrowth(int8_t x,int8_t y,int8_t theta,int8_t direction, int8_t tile_type,std::vector<int8_t>& growing_perimeter,std::vector<int8_t>& placed_tiles);
 
   /* MISC */
-  phenotype_ID MostCommonPhenotype(std::map<phenotype_ID,uint8_t>& ID_counter);
+  //phenotype_ID MostCommonPhenotype(std::map<phenotype_ID,uint8_t>& ID_counter);
 
   
 
@@ -94,7 +95,7 @@ namespace interface_model
       for(std::vector<uint8_t>::iterator phen_iter = undiscovered_phenotypes[phenotype_size].begin();phen_iter!=undiscovered_phenotypes[phenotype_size].end();) {
         temp_phenotype.assign(phen_iter+2,phen_iter+2+*phen_iter* *(phen_iter+1));
         if(ComparePolyominoes(phenotype,dx,dy,temp_phenotype,*phen_iter,*(phen_iter+1))) {
-          if(++undiscovered_phenotype_counts[new_phenotype_index]>=model_params::UND_threshold*simulation_params::phenotype_builds) {
+          if(++undiscovered_phenotype_counts[new_phenotype_index]>=ceil(model_params::UND_threshold*simulation_params::phenotype_builds)) {
 	    new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
 	    known_phenotypes[phenotype_size].insert(known_phenotypes[phenotype_size].end(),phen_iter,phen_iter+2+*phen_iter* *(phen_iter+1));
 	    std::gamma_distribution<double> fitness_dist(sqrt(static_cast<double>(phenotype_size)),1);
@@ -140,7 +141,7 @@ namespace interface_model
       double fitness=0;
       /* Add fitness contribution from each phenotype */
       for(std::map<phenotype_ID,uint8_t >::const_iterator phen_iter =ID_counter.begin();phen_iter!=ID_counter.end();++phen_iter)
-	  if(phen_iter->second >= model_params::UND_threshold*simulation_params::phenotype_builds)
+        if(phen_iter->second >= ceil(model_params::UND_threshold*simulation_params::phenotype_builds))
 	    fitness+=phenotype_fitnesses[phen_iter->first.first][phen_iter->first.second] * std::pow(static_cast<double>(phen_iter->second)/simulation_params::phenotype_builds,model_params::fitness_factor);
 
       
@@ -163,7 +164,7 @@ namespace interface_model
 
 uint8_t PhenotypeSymmetryFactor(std::vector<uint8_t>& original_shape, uint8_t dx, uint8_t dy);
 void DistributionStatistics(std::vector<double>& intf, double& mean, double& variance);
-void InterfaceStrengths(std::vector<interface_model::interface_type>& interfaces, std::vector<uint32_t>& strengths);
+void InterfaceStrengths(std::vector<interface_type>& interfaces, std::vector<uint32_t>& strengths);
 
 
 

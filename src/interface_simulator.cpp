@@ -19,26 +19,27 @@ void EvolvePopulation(std::string run_details) {
   interface_model::PhenotypeTable pt = interface_model::PhenotypeTable();
   std::vector<double> population_fitnesses(simulation_params::population_size);
   std::vector<uint32_t> interface_counter(1.5*model_params::interface_size+2);
-  std::vector<interface_model::phenotype_ID> population_phenotypes(simulation_params::population_size),reproduced_phenotypes(simulation_params::population_size);
+  std::vector<phenotype_ID> population_phenotypes(simulation_params::population_size),reproduced_phenotypes(simulation_params::population_size);
 
   bool record_strengths=false;
 
   /* Genotype initilisation, either zero or random, + duplicate */
-  std::vector< std::vector<interface_model::interface_type> > population_genotypes(simulation_params::population_size, std::vector<interface_model::interface_type>(simulation_params::n_tiles*4, 0));
+  std::vector< std::vector<interface_type> > population_genotypes(simulation_params::population_size, std::vector<interface_type>(simulation_params::n_tiles*4, 0));
   if(simulation_params::random_initilisation) {
-    std::uniform_int_distribution<interface_model::interface_type> dist;
+    std::uniform_int_distribution<interface_type> dist;
     auto interface_filler = std::bind(dist, interface_model::RNG_Engine);
-    for(std::vector<interface_model::interface_type>& genotype : population_genotypes)
+    for(std::vector<interface_type>& genotype : population_genotypes)
       std::generate(genotype.begin(),genotype.end(),interface_filler);   
   }
-  std::vector< std::vector<interface_model::interface_type> > reproduced_genotypes(population_genotypes);
+  std::vector< std::vector<interface_type> > reproduced_genotypes(population_genotypes);
   
   /* Write initial population to file */
-  for(std::vector<interface_model::interface_type>& genotype : population_genotypes)
-    for(interface_model::interface_type base_value : genotype)
+  /*
+  for(std::vector<interface_type>& genotype : population_genotypes)
+    for(interface_type base_value : genotype)
       fout_genotype_history << +base_value << " "; 
   fout_genotype_history<<"\n";
-   
+  */
   
 
   /* Median time to complete interface mutation, characteristic time for fitness re-assignment */
@@ -57,25 +58,30 @@ void EvolvePopulation(std::string run_details) {
 
     /* Start genotype loop */
     int nth_genotype=0;
-    for(std::vector<interface_model::interface_type>& evolving_genotype : population_genotypes) {
-      interface_model::phenotype_ID pid;
+    for(std::vector<interface_type>& evolving_genotype : population_genotypes) {
+      phenotype_ID pid;
 
       interface_model::MutateInterfaces(evolving_genotype);
-      population_fitnesses[nth_genotype++]=interface_model::ProteinAssemblyOutcome(evolving_genotype,&pt,pid);
-      population_phenotypes[nth_genotype-1]=pid;
+      population_fitnesses[nth_genotype]=interface_model::ProteinAssemblyOutcome(evolving_genotype,&pt,pid);
+      population_phenotypes[nth_genotype]=pid;
       if(record_strengths)
         InterfaceStrengths(evolving_genotype,interface_counter);
       
-      for(interface_model::interface_type base_value : evolving_genotype)
+      for(interface_type base_value : evolving_genotype)
         fout_genotype_history << +base_value << " ";
+      fout_genotype_history<<"x ";
+      //fout_genotype_history << +pid.first <<" "<<+pid.second<<" ";
       if(generation>0) {
-        if(pid!=reproduced_phenotypes[nth_genotype-1]) {
-          std::cout<<"something changed at g "<<generation<<std::endl;
-          std::cout<<+pid.first<<" "<<+pid.second<<" c.f. "<<+reproduced_phenotypes[nth_genotype-1].first<<" "<<+reproduced_phenotypes[nth_genotype-1].second<<std::endl;
+        if(pid!=reproduced_phenotypes[nth_genotype-1] && pid.first) {
+          std::vector<uint8_t> diff= SequenceDifference(evolving_genotype,reproduced_genotypes[nth_genotype]);
+          
+          
+
 
         }
 
       }
+      ++nth_genotype;
     } 
     fout_genotype_history<<"\n";
     /* End genotype loop */
@@ -209,13 +215,22 @@ void SetRuntimeConfigurations(int argc, char* argv[]) {
   }
 }
 
-std::vector<uint8_t> SequenceDifference(std::vector<interface_model::interface_type> parent, std::vector<interface_model::interface_type> child) {
+std::vector<uint8_t> SequenceDifference(const std::vector<interface_type>& parent, const std::vector<interface_type>& child) {
   std::vector<uint8_t> divergence_indices;
   for(uint8_t base=0; base < parent.size(); ++base)
     if(parent[base]!=child[base])
       divergence_indices.emplace_back(base);
   return divergence_indices;
 }
+
+int8_t ConjugateInterface(std::vector<interface_type>& genotype,uint8_t mutation_site) {
+  for(uint8_t base =0; base < genotype.size(); ++base) {
+    if(interface_model::SammingDistance(genotype[base],genotype[mutation_site])==0)
+      return static_cast<int8_t>(mutation_site)-base;
+  }
+  return 0;
+}
+
  
 std::vector<uint16_t> RouletteWheelSelection(std::vector<double>& fitnesses) {
   std::partial_sum(fitnesses.begin(), fitnesses.end(), fitnesses.begin());
@@ -223,5 +238,13 @@ std::vector<uint16_t> RouletteWheelSelection(std::vector<double>& fitnesses) {
   std::uniform_real_distribution<double> random_interval(0,fitnesses.back());
   for(uint16_t nth_selection=0; nth_selection<simulation_params::population_size; ++nth_selection) 
     selected_indices[nth_selection]=static_cast<uint16_t>(std::lower_bound(fitnesses.begin(),fitnesses.end(),random_interval(interface_model::RNG_Engine))-fitnesses.begin());
+  std::sort(selected_indices.begin(),selected_indices.end());
   return selected_indices;
 }
+
+struct PopulationGenotype {
+  std::vector<interface_type> genotype;
+  phenotype_ID pid;
+  double fitness;
+  std::vector<uint8_t> interacting_interfaces;
+};

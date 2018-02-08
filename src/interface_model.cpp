@@ -10,7 +10,7 @@ namespace simulation_params
 
 namespace model_params
 {
-  const uint8_t interface_size=CHAR_BIT*sizeof(interface_model::interface_type);
+  const uint8_t interface_size=CHAR_BIT*sizeof(interface_type);
   
   double temperature=1,mu_prob=0.2,unbound_factor=1,misbinding_rate=0,fitness_factor=1,UND_threshold=0.2;
  
@@ -65,17 +65,11 @@ namespace interface_model
       spatial_information=SpatialGrid(assembly_information,dx,dy);
       phenotype_IDs.emplace_back(std::accumulate(spatial_information.begin(),spatial_information.end(),0),pt->PhenotypeCheck(spatial_information,dx,dy));
     }
-    
-    auto cid=pt->PhenotypeFrequencies(phenotype_IDs);
-    pid=MostCommonPhenotype(cid);
-    //pid=*std::max_element(phenotype_IDs.begin(),phenotype_IDs.end());
-    
-    /* WANT MOST COMMON ELEMENT */
-    //[](const auto& left, const auto& right){return left.second.second < right.second.second;});
-    //pid=
-    return pt->GenotypeFitness(cid);
-                              
-}
+    auto ID_counter=pt->PhenotypeFrequencies(phenotype_IDs);
+    pid=std::max_element(ID_counter.begin(),ID_counter.end(),[] (const auto & p1, const auto & p2) {return p1.second < p2.second;})->first;
+    //pid=MostCommonPhenotype();
+    return pt->GenotypeFitness(ID_counter);
+  }
 
 
   std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome) {
@@ -129,8 +123,11 @@ namespace interface_model
         growing_perimeter.insert(growing_perimeter.begin()+5*index_randomizer(RNG_Engine),{static_cast<int8_t>(x+dx),static_cast<int8_t>(y+dy),static_cast<int8_t>((f+2)%4),tile_type,static_cast<int8_t>((4+f-theta)%4)});      
     }
   }
-  
+  /*
   phenotype_ID MostCommonPhenotype(std::map<phenotype_ID,uint8_t>& ID_counter) {
+    auto pr = std::max_element(ID_counter.begin(),ID_counter.end(),[] (const auto & p1, const auto & p2) {return p1.second < p2.second;});
+    return pr->first;
+    
     uint8_t highest=0;
     phenotype_ID most_common;
     for(auto kv : ID_counter) {
@@ -140,7 +137,9 @@ namespace interface_model
       }
     }
     return most_common;
+    
   }
+  */
 }//end interface_model namespace
 
 std::vector<uint8_t> SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,uint8_t& dy) {
@@ -234,10 +233,10 @@ void DistributionStatistics(std::vector<double>& intf, double& mean, double& var
   variance /=(N-1);
 }
 
-void InterfaceStrengths(std::vector<interface_model::interface_type>& interfaces, std::vector<uint32_t>& strengths) {
-  for(std::vector<interface_model::interface_type>::const_iterator outer_face=interfaces.begin(); outer_face!=interfaces.end(); ++outer_face) {
+void InterfaceStrengths(std::vector<interface_type>& interfaces, std::vector<uint32_t>& strengths) {
+  for(std::vector<interface_type>::const_iterator outer_face=interfaces.begin(); outer_face!=interfaces.end(); ++outer_face) {
     ++strengths[static_cast<uint8_t>(1.5*model_params::interface_size)+1-interface_model::SammingDistance(*outer_face,*outer_face)/2];
-    for(std::vector<interface_model::interface_type>::const_iterator inner_face=outer_face+1; inner_face!=interfaces.end(); ++inner_face) 
+    for(std::vector<interface_type>::const_iterator inner_face=outer_face+1; inner_face!=interfaces.end(); ++inner_face) 
       ++strengths[model_params::interface_size-interface_model::SammingDistance(*outer_face,*inner_face)];
   }
 }
