@@ -26,3 +26,10 @@ def RandomHamming(L=16):
      plt.plot(np.linspace(0,1,L+1),[N*b.pmf(i) for i in xrange(L+1)],'ro',markeredgewidth=1)
      plt.yscale('log')
      plt.show(block=False)
+
+from numpy import uint8
+def ConjugateInteraction(genotype_str):
+    genotype=[int(i) for i in genotype_str.split()]
+    for base in genotype:
+        print base, int(bin(~uint8(base))[2:].zfill(8)[::-1],2)
+        
