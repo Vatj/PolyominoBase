@@ -19,12 +19,12 @@ def GetMaxRun(r_type,temperature,mu,gamma):
 def VisualisePhenotypes(r_type,temperature,mu,gamma,run):
      line_count=0
      page_max=24
-     shapes_data=sorted([[int(i) for i in line.split()] for line in open(BASE_FILE_PATH.format('Phenotypes',r_type,temperature,mu,gamma,run))],key=lambda z: sum(z[2:]))
+     shapes_data=sorted([[int(i) for i in line.split()] for line in open(BASE_FILE_PATH.format('Phenotypes',r_type,temperature,mu,gamma,run))],key=lambda z: sum(z[4:]))
      for shape in shapes_data:
           if line_count%page_max==0:
                fig, axarr = plt.subplots(6,4,figsize=(8.27,11.69))
      
-          VSFB(shape,'',axarr.reshape(-1)[line_count],1,True,'')
+          VSFB(shape[2:],'',axarr.reshape(-1)[line_count],1,True,'')
           line_count+=1
           line_count%=page_max
      else:
@@ -406,7 +406,7 @@ def HistoryLoad(temperature=0.000001,mu=1,gamma=1,run=0):
      phen_line=True
      phenotype_IDs=[]
      selections=[]
-     for line in open(BASE_FILE_PATH.format('GenotypeHistory','S',temperature,mu,gamma,run)):
+     for line in open(BASE_FILE_PATH.format('PhenotypeHistory','S',temperature,mu,gamma,run)):
           converted=[int(i) for i in line.split()]
           if phen_line:
                phens=[]
@@ -430,7 +430,7 @@ def HistoryDiagram(IDs,selections,low=-1,high=-1):
      seen_phens=set()
      seen_phens.add((0,0))
      phen_col={(0,0):[0,0,0]}
-     unique_phens= set([item for sublist in x for item in sublist])
+     unique_phens= set([item for sublist in IDs[low:high] for item in sublist])
      for phen in unique_phens:
           if sum(phen):
                phen_col[phen]=icy.generate_new_color(phen_col.values(),0)
@@ -446,5 +446,13 @@ def HistoryDiagram(IDs,selections,low=-1,high=-1):
           for i,s in enumerate(sel):
                     #print i,s
                plt.plot([s,i],[g,g+1],'k--',lw=0.5,zorder=10)
+
+     for idpx,c in phen_col.iteritems():
+          plt.scatter(-10,0,c=c,label=idpx)
+          
+     plt.legend()
+     plt.axis('off')
+     plt.tight_layout()
+     plt.xlim([-1,len(selections[0])+1])
      plt.show(block=False)
                

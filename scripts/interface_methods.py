@@ -31,5 +31,5 @@ from numpy import uint8
 def ConjugateInteraction(genotype_str):
     genotype=[int(i) for i in genotype_str.split()]
     for base in genotype:
-        print base, int(bin(~uint8(base))[2:].zfill(8)[::-1],2)
+        print base, int(bin(~uint8(base))[2:].zfill(8)[::-1],2), "({},{})".format(bin(base)[2:].zfill(8),bin(~uint8(base))[2:].zfill(8))
         

@@ -15,6 +15,7 @@ void EvolvePopulation(std::string run_details) {
   std::ofstream fout_fitness(file_base_path+"Fitness_"+file_simulation_details, std::ios_base::out);
   std::ofstream fout_phenotype(file_base_path+"Phenotypes_"+file_simulation_details, std::ios_base::out);
   std::ofstream fout_genotype_history(file_base_path+"GenotypeHistory_"+file_simulation_details, std::ios_base::out);
+  std::ofstream fout_phenotype_history(file_base_path+"PhenotypeHistory_"+file_simulation_details, std::ios_base::out);
 
   interface_model::PhenotypeTable pt = interface_model::PhenotypeTable();
   std::vector<double> population_fitnesses(simulation_params::population_size);
@@ -68,14 +69,14 @@ void EvolvePopulation(std::string run_details) {
 
       interface_model::MutateInterfaces(evolving_genotype.genotype);
       population_fitnesses[nth_genotype]=interface_model::ProteinAssemblyOutcome(evolving_genotype.genotype,&pt,evolving_genotype.pid);
-      //population_phenotypes[nth_genotype]=pid;
+
       if(record_strengths)
         InterfaceStrengths(evolving_genotype.genotype,interface_counter);
       
       for(interface_type base_value : evolving_genotype.genotype)
         fout_genotype_history << +base_value << " ";
       fout_genotype_history<<"x ";
-      //fout_genotype_history << +pid.first <<" "<<+pid.second<<" ";
+      fout_phenotype_history << +evolving_genotype.pid.first <<" "<<+evolving_genotype.pid.second<<" ";
       if(generation>0) {
         if(evolving_genotype.pid!=reproduced_population[nth_genotype].pid && evolving_genotype.pid.first) {
           std::vector<uint8_t> diff= SequenceDifference(evolving_genotype.genotype,reproduced_population[nth_genotype].genotype);
@@ -93,6 +94,7 @@ void EvolvePopulation(std::string run_details) {
       ++nth_genotype;
     } 
     fout_genotype_history<<"\n";
+    fout_phenotype_history<<"\n";
     /* End genotype loop */
 
     /* Write data to file */
@@ -116,8 +118,8 @@ void EvolvePopulation(std::string run_details) {
       }
       evolving_population.assign(reproduced_population.begin(),reproduced_population.end());
       for(uint16_t selection_index : selection_indices)
-        fout_genotype_history << +selection_index << " ";
-      fout_genotype_history<<"\n";
+        fout_phenotype_history << +selection_index << " ";
+      fout_phenotype_history<<"\n";
     }
     /* End selection */
     
@@ -126,14 +128,15 @@ void EvolvePopulation(std::string run_details) {
 
   
   for(std::unordered_map<uint8_t,std::vector<uint8_t> >::iterator phen_iter=pt.known_phenotypes.begin();phen_iter!=pt.known_phenotypes.end();++phen_iter) {
-    uint32_t n_sized_phenotypes=0;
+    uint16_t n_sized_phenotypes=0;
     for(std::vector<uint8_t>::iterator shape_iter=phen_iter->second.begin();shape_iter!=phen_iter->second.end();) {
-      ++n_sized_phenotypes;
+      fout_phenotype<<+phen_iter->first << " " << +n_sized_phenotypes++<<" ";
       fout_phenotype<<+*(shape_iter)<<" "<<+*(shape_iter+1)<<" ";
       for(std::vector<uint8_t>::iterator p_iter=shape_iter+2;p_iter!=shape_iter+*(shape_iter) * *(shape_iter+1)+2;++p_iter)
         fout_phenotype<<+*p_iter<<" ";
       fout_phenotype<<"\n";
       shape_iter+=*(shape_iter) * *(shape_iter+1)+2;
+      //++n_sized_phenotypes;
     }
     fout_size <<+phen_iter->first<<" "<<n_sized_phenotypes<<"\n";
   }
