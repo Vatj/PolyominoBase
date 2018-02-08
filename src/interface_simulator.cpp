@@ -19,11 +19,15 @@ void EvolvePopulation(std::string run_details) {
   interface_model::PhenotypeTable pt = interface_model::PhenotypeTable();
   std::vector<double> population_fitnesses(simulation_params::population_size);
   std::vector<uint32_t> interface_counter(1.5*model_params::interface_size+2);
-  std::vector<phenotype_ID> population_phenotypes(simulation_params::population_size),reproduced_phenotypes(simulation_params::population_size);
+  //std::vector<phenotype_ID> population_phenotypes(simulation_params::population_size),reproduced_phenotypes(simulation_params::population_size);
 
   bool record_strengths=false;
 
+  std::vector<PopulationGenotype> evolving_population(simulation_params::population_size),reproduced_population(simulation_params::population_size);
+
+  
   /* Genotype initilisation, either zero or random, + duplicate */
+  /*
   std::vector< std::vector<interface_type> > population_genotypes(simulation_params::population_size, std::vector<interface_type>(simulation_params::n_tiles*4, 0));
   if(simulation_params::random_initilisation) {
     std::uniform_int_distribution<interface_type> dist;
@@ -32,6 +36,7 @@ void EvolvePopulation(std::string run_details) {
       std::generate(genotype.begin(),genotype.end(),interface_filler);   
   }
   std::vector< std::vector<interface_type> > reproduced_genotypes(population_genotypes);
+  */
   
   /* Write initial population to file */
   /*
@@ -58,28 +63,32 @@ void EvolvePopulation(std::string run_details) {
 
     /* Start genotype loop */
     int nth_genotype=0;
-    for(std::vector<interface_type>& evolving_genotype : population_genotypes) {
-      phenotype_ID pid;
+    for(PopulationGenotype& evolving_genotype : evolving_population) {
+      //phenotype_ID pid;
 
-      interface_model::MutateInterfaces(evolving_genotype);
-      population_fitnesses[nth_genotype]=interface_model::ProteinAssemblyOutcome(evolving_genotype,&pt,pid);
-      population_phenotypes[nth_genotype]=pid;
+      interface_model::MutateInterfaces(evolving_genotype.genotype);
+      population_fitnesses[nth_genotype]=interface_model::ProteinAssemblyOutcome(evolving_genotype.genotype,&pt,evolving_genotype.pid);
+      //population_phenotypes[nth_genotype]=pid;
       if(record_strengths)
-        InterfaceStrengths(evolving_genotype,interface_counter);
+        InterfaceStrengths(evolving_genotype.genotype,interface_counter);
       
-      for(interface_type base_value : evolving_genotype)
+      for(interface_type base_value : evolving_genotype.genotype)
         fout_genotype_history << +base_value << " ";
       fout_genotype_history<<"x ";
       //fout_genotype_history << +pid.first <<" "<<+pid.second<<" ";
       if(generation>0) {
-        if(pid!=reproduced_phenotypes[nth_genotype-1] && pid.first) {
-          std::vector<uint8_t> diff= SequenceDifference(evolving_genotype,reproduced_genotypes[nth_genotype]);
+        if(evolving_genotype.pid!=reproduced_population[nth_genotype].pid && evolving_genotype.pid.first) {
+          std::vector<uint8_t> diff= SequenceDifference(evolving_genotype.genotype,reproduced_population[nth_genotype].genotype);
+          for(uint8_t d : diff) {
+            evolving_genotype.interacting_interfaces.insert(evolving_genotype.interacting_interfaces.end(),{d,ConjugateInterface(evolving_genotype.genotype,d)});
+            std::cout<<generation<< "New connection"<<+*(evolving_genotype.interacting_interfaces.end()-1)<<" "<<+*(evolving_genotype.interacting_interfaces.end()-2)<<std::endl;
+
+          }
           
           
 
 
         }
-
       }
       ++nth_genotype;
     } 
@@ -103,11 +112,9 @@ void EvolvePopulation(std::string run_details) {
     if(simulation_params::fitness_selection) {
       std::vector<uint16_t> selection_indices=RouletteWheelSelection(population_fitnesses);
       for(uint16_t nth_reproduction = 0; nth_reproduction<simulation_params::population_size;++nth_reproduction) {
-        reproduced_genotypes[nth_reproduction]=population_genotypes[selection_indices[nth_reproduction]];
-        reproduced_phenotypes[nth_reproduction]=population_phenotypes[selection_indices[nth_reproduction]];
+        reproduced_population[nth_reproduction]=evolving_population[selection_indices[nth_reproduction]];
       }
-      population_genotypes.assign(reproduced_genotypes.begin(),reproduced_genotypes.end());
-      population_phenotypes.assign(reproduced_phenotypes.begin(),reproduced_phenotypes.end());
+      evolving_population.assign(reproduced_population.begin(),reproduced_population.end());
       for(uint16_t selection_index : selection_indices)
         fout_genotype_history << +selection_index << " ";
       fout_genotype_history<<"\n";
@@ -143,7 +150,44 @@ void EvolvePopulation(std::string run_details) {
 }
 
   
- 
+std::vector<uint8_t> SequenceDifference(const std::vector<interface_type>& parent, const std::vector<interface_type>& child) {
+  std::vector<uint8_t> divergence_indices;
+  for(uint8_t base=0; base < parent.size(); ++base)
+    if(parent[base]!=child[base])
+      divergence_indices.emplace_back(base);
+  return divergence_indices;
+}
+
+uint8_t ConjugateInterface(std::vector<interface_type>& genotype,uint8_t mutation_site) {
+  std::cout<<"conjugate for "<<+genotype[mutation_site]<<" is ";
+  for(uint8_t base =0; base < genotype.size(); ++base)
+    if(interface_model::SammingDistance(genotype[base],genotype[mutation_site])==0) {
+      std::cout<<+genotype[base]<<std::endl;
+      return base;
+    }
+  std::cout<<std::endl;
+  return 255;
+}
+
+std::vector<uint16_t> RouletteWheelSelection(std::vector<double>& fitnesses) {
+  std::partial_sum(fitnesses.begin(), fitnesses.end(), fitnesses.begin());
+  std::vector<uint16_t> selected_indices(simulation_params::population_size);
+  std::uniform_real_distribution<double> random_interval(0,fitnesses.back());
+  for(uint16_t nth_selection=0; nth_selection<simulation_params::population_size; ++nth_selection) 
+    selected_indices[nth_selection]=static_cast<uint16_t>(std::lower_bound(fitnesses.begin(),fitnesses.end(),random_interval(interface_model::RNG_Engine))-fitnesses.begin());
+  std::sort(selected_indices.begin(),selected_indices.end());
+  return selected_indices;
+}
+
+
+
+
+
+
+
+/********************/
+/*******!MAIN!*******/
+/********************/
 void EvolutionRunner() {
 #pragma omp parallel for schedule(dynamic)
   for(uint16_t r=0;r<simulation_params::independent_trials;++r) {
@@ -215,36 +259,7 @@ void SetRuntimeConfigurations(int argc, char* argv[]) {
   }
 }
 
-std::vector<uint8_t> SequenceDifference(const std::vector<interface_type>& parent, const std::vector<interface_type>& child) {
-  std::vector<uint8_t> divergence_indices;
-  for(uint8_t base=0; base < parent.size(); ++base)
-    if(parent[base]!=child[base])
-      divergence_indices.emplace_back(base);
-  return divergence_indices;
-}
 
-int8_t ConjugateInterface(std::vector<interface_type>& genotype,uint8_t mutation_site) {
-  for(uint8_t base =0; base < genotype.size(); ++base) {
-    if(interface_model::SammingDistance(genotype[base],genotype[mutation_site])==0)
-      return static_cast<int8_t>(mutation_site)-base;
-  }
-  return 0;
-}
 
- 
-std::vector<uint16_t> RouletteWheelSelection(std::vector<double>& fitnesses) {
-  std::partial_sum(fitnesses.begin(), fitnesses.end(), fitnesses.begin());
-  std::vector<uint16_t> selected_indices(simulation_params::population_size);
-  std::uniform_real_distribution<double> random_interval(0,fitnesses.back());
-  for(uint16_t nth_selection=0; nth_selection<simulation_params::population_size; ++nth_selection) 
-    selected_indices[nth_selection]=static_cast<uint16_t>(std::lower_bound(fitnesses.begin(),fitnesses.end(),random_interval(interface_model::RNG_Engine))-fitnesses.begin());
-  std::sort(selected_indices.begin(),selected_indices.end());
-  return selected_indices;
-}
 
-struct PopulationGenotype {
-  std::vector<interface_type> genotype;
-  phenotype_ID pid;
-  double fitness;
-  std::vector<uint8_t> interacting_interfaces;
-};
+

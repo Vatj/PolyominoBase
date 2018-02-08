@@ -41,7 +41,7 @@ namespace interface_model
       face &= face - 1;
     return c;
   }
-  inline uint8_t SammingDistance(interface_type face1,interface_type face2) {
+  uint8_t SammingDistance(interface_type face1,interface_type face2) {
     return static_cast<uint8_t>(ArbitraryPopcount(face1 ^ reverse_bits(~face2)));
   }
 
