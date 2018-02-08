@@ -53,7 +53,7 @@ def LoadPairSizes(temperature,mu,gamma,runs=0):
      if runs==0:
           runs=min(GetMaxRun('S',temperature,mu,gamma),GetMaxRun('R',temperature,mu,0))
           print "Runs evaluated at ",runs
-     return (LoadSizes('S',temperature,mu,gamma,runs),'Selection',runs),(LoadSizes('R',temperature,mu,gamma,runs),'Random',runs)
+     return (LoadSizes('S',temperature,mu,gamma,runs),'Selection',runs),(LoadSizes('S',temperature,mu,gamma,runs),'Random',runs)
 
 def LoadData(d_type,r_type,temperature,mu,gamma,runs=1):
      data=[]
@@ -430,11 +430,14 @@ def HistoryDiagram(IDs,selections,low=-1,high=-1):
      seen_phens=set()
      seen_phens.add((0,0))
      phen_col={(0,0):[0,0,0]}
+     unique_phens= set([item for sublist in x for item in sublist])
+     for phen in unique_phens:
+          if sum(phen):
+               phen_col[phen]=icy.generate_new_color(phen_col.values(),0)
+          
      for g,(ID,sel) in enumerate(zip(IDs[low:high],selections[low:high])):
           for gen,idp in enumerate(ID):
-               if idp not in seen_phens:
-                    phen_col[idp]=icy.generate_new_color(phen_col.values(),0)
-                    seen_phens.add(idp)
+
                plt.scatter(gen,g,marker='o',c=phen_col[idp],lw=0.5,edgecolor='k',zorder=10)
           if g==0:
                for i,s in enumerate(sel):
