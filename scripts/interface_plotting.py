@@ -2,16 +2,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import icy;icy.Use_Seaborn()
 
-from scipy.stats import binom,sem
+from scipy.stats import binom,sem,chi2
 from operator import itemgetter
 from collections import defaultdict
 from matplotlib.backends.backend_pdf import PdfPages
-from tile_shape_visuals import Visualise_Shape_From_Binary
+from tile_shape_visuals import Visualise_Shape_From_Binary as VSFB
 import glob
 
-#BASE_FILE_PATH='/scratch/asl47/Data_Runs/Interface/T{2:.6f}/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
-#BASE_FILE_PATH='/rscratch/asl47/Bulk_Run/Interfaces/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
-BASE_FILE_PATH='../{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+#BASE_FILE_PATH='/scratch/asl47/Data_Runs/Interface_Cron/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+BASE_FILE_PATH='/rscratch/asl47/Bulk_Run/Interfaces/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+#BASE_FILE_PATH='../{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
 
 def GetMaxRun(r_type,temperature,mu,gamma):
      return max([int(s[s.rindex('Run')+3:-4]) for s in glob.glob(BASE_FILE_PATH.format('Sizes',r_type,temperature,mu,gamma,'*'))])
@@ -24,7 +24,7 @@ def VisualisePhenotypes(r_type,temperature,mu,gamma,run):
           if line_count%page_max==0:
                fig, axarr = plt.subplots(6,4,figsize=(8.27,11.69))
      
-          Visualise_Shape_From_Binary(shape,'',axarr.reshape(-1)[line_count],1,True,'')
+          VSFB(shape,'',axarr.reshape(-1)[line_count],1,True,'')
           line_count+=1
           line_count%=page_max
      else:
@@ -40,14 +40,12 @@ def LoadSizes(r_type,temperature,mu,gamma,runs=0):
           phens=0
           for line in open(BASE_FILE_PATH.format('Sizes',r_type,temperature,mu,gamma,r)):
                (size,count)=[int(i) for i in line.rstrip().split()]
-               if size:
-                    if size==2:
-                         print r
+               if size and count:
                     sizes[size]+=count
                     phens+=count
           phen_count.append(phens)
-     #return sizes
-     return phen_count
+     return sizes
+     #return phen_count
 
 
 
@@ -55,7 +53,7 @@ def LoadPairSizes(temperature,mu,gamma,runs=0):
      if runs==0:
           runs=min(GetMaxRun('S',temperature,mu,gamma),GetMaxRun('R',temperature,mu,0))
           print "Runs evaluated at ",runs
-     return (LoadSizes('S',temperature,mu,gamma,runs),'Selection',runs),(LoadSizes('R',temperature,mu,0,runs),'Random',runs)
+     return (LoadSizes('S',temperature,mu,gamma,runs),'Selection',runs),(LoadSizes('R',temperature,mu,gamma,runs),'Random',runs)
 
 def LoadData(d_type,r_type,temperature,mu,gamma,runs=1):
      data=[]
@@ -67,16 +65,16 @@ def LoadPairFitness(temperature,mu,gamma,runs=0):
      if runs==0:
           runs=min(GetMaxRun('S',temperature,mu,gamma),GetMaxRun('R',temperature,mu,0))
           print "Runs evaluated at ",runs
-     return LoadData('Fitness','S',temperature,mu,gamma,runs),LoadData('Fitness','S',temperature,mu,0,runs)
+     return LoadData('Fitness','S',temperature,mu,gamma,runs),LoadData('Fitness','S',temperature,mu,gamma,runs)
 
 def LoadPairStrengths(temperature,mu,gamma,runs=0):
      if runs==0:
           runs=min(GetMaxRun('S',temperature,mu,gamma),GetMaxRun('R',temperature,mu,0))
           print "Runs evaluated at ",runs
-     return LoadData('Strengths','S',temperature,mu,gamma,runs),LoadData('Strengths','R',temperature,mu,0,runs)
+     return LoadData('Strengths','S',temperature,mu,gamma,runs),LoadData('Strengths','S',temperature,mu,gamma,runs)
 
-def PlotStrengthRatios(data_frame,N_tiles,title_string=''):
-     fig, axarr = plt.subplots(2, 2, sharey='row',sharex=True)
+def PlotStrengthRatios(data_frame,N_tiles,title_string='',temperature=-1):
+     fig, axarr = plt.subplots(2, 6, sharey='row',sharex=True)
      interface_size=int((data_frame[0].shape[1]-2)/1.5)
      generations=data_frame[0].shape[0]
      NEGATIVE_INF_LIMIT=-0.5
@@ -97,8 +95,13 @@ def PlotStrengthRatios(data_frame,N_tiles,title_string=''):
      self_strengths=np.linspace(0,1,interface_size/2+1)
      bar_width=(1./interface_size/2.)
 
+     binding_alpha=0.05
+     Tsx=list(np.logspace(np.log10(0.03),-1,6))
+
      #print pair_strengths,self_strengths,bar_width
      for data,axx in zip(data_frame,axarr.T):
+          if temperature>0:
+               axx[0].axvline(1+Tsx.pop(0)*np.log(binding_alpha),-1,1)
 
           run_averaged=np.mean(data,axis=2)
           means=np.mean(run_averaged,axis=0)
@@ -121,10 +124,10 @@ def PlotStrengthRatios(data_frame,N_tiles,title_string=''):
           self_err_lower=np.log10(self_ratio-self_err)
    
           pairwise_G_stat=2* np.nansum(means[:interface_size+1]*np.log(pairwise_ratio))
-          print "G: {}, p-value: {}".format(pairwise_G_stat,stats.chi2.sf(pairwise_G_stat,interface_size))
+          print "G: {}, p-value: {}".format(pairwise_G_stat,chi2.sf(pairwise_G_stat,interface_size))
 
           self_G_stat=2* np.nansum(means[interface_size+1:]*np.log(self_ratio))
-          print "G: {}, p-value: {}".format(self_G_stat,stats.chi2.sf(self_G_stat,interface_size/2))
+          print "G: {}, p-value: {}".format(self_G_stat,chi2.sf(self_G_stat,interface_size/2))
 
  
           
@@ -148,6 +151,7 @@ def PlotStrengthRatios(data_frame,N_tiles,title_string=''):
           
           #print pairwise_ratio
           #print self_ratio
+          
 
           for strength,(rat,err) in enumerate(zip(pairwise_err_lower,pairwise_err_upper)):
                axx[0].plot([strength/32.]*2,[rat,err],'r--')
@@ -162,8 +166,8 @@ def PlotStrengthRatios(data_frame,N_tiles,title_string=''):
           axx[1].axhline(0,0.02,0.98,c='k',lw=0.75,ls='--')
 
 
-     axarr[0,0].set_title('Selection')
-     axarr[0,1].set_title('Random')
+     #axarr[0,0].set_title('Selection')
+     #axarr[0,1].set_title('Random')
      axarr[0,1].yaxis.tick_right()
      axarr[1,1].yaxis.tick_right()
      fig.text(0.5, 0.04, 'Interface Strengths', ha='center', va='center')
@@ -203,7 +207,7 @@ def PlotPhenotypeSizes(ss,title_string=''):
 
 def PlotFitness(data_frame,title_string='',g_factor=1):
 
-     fig, axarr = plt.subplots(1, 2, sharey=True,sharex=True)
+     fig, axarr = plt.subplots(1, 6, sharey=True,sharex=True)
 
      #range(50)+range(50,5000,50)
      generations=data_frame[0].shape[0]
@@ -364,3 +368,80 @@ def LoadStrengthsOld(r_type,temperature,mu,gamma,runs=1,interface_size=16):
 
 def ValueJumps(data, stepsize=1):
      return (np.where(np.diff(data) >= stepsize)[0],np.array([np.mean(cluster) for cluster in np.split(data, np.where(np.diff(data) >= stepsize)[0]+1)]))
+
+import matplotlib.colors as colors
+def PlotParamSpace():
+     plt.figure()
+     param_yield=np.empty((15,6))
+     
+
+     j=0
+     
+     for M in np.logspace(0,np.log10(16),15):
+          i=0
+          for T in np.logspace(np.log10(0.03),-1,6):
+               #print M,T
+               param_yield[j,i]=sum(LoadSizes('S',T,M,1,250).values())/250.
+               #print param_yield[j,i]
+               i+=1
+          j+=1
+
+     #print param_yield.min(),param_yield.max()
+     plt.pcolormesh(np.logspace(np.log10(0.03),-1,7),np.logspace(0,np.log10(16),16) ,param_yield, cmap='viridis',norm=colors.LogNorm(vmin=param_yield.min(), vmax=param_yield.max()))
+     plt.title('Averaged Phenotype Discovery')
+     plt.ylabel(r'$\langle \mu \cdot L \cdot I \rangle$')
+     plt.xlabel(r'$T$')
+     plt.yscale('log')
+     plt.xscale('log')
+                    
+     # set the limits of the plot to the limits of the data
+     #plt.axis([x.min(), x.max(), y.min(), y.max()])
+     plt.colorbar()
+     plt.tight_layout()
+     plt.show(block=False)
+
+
+def HistoryLoad(temperature=0.000001,mu=1,gamma=1,run=0):
+
+     phen_line=True
+     phenotype_IDs=[]
+     selections=[]
+     for line in open(BASE_FILE_PATH.format('GenotypeHistory','S',temperature,mu,gamma,run)):
+          converted=[int(i) for i in line.split()]
+          if phen_line:
+               phens=[]
+               for i in xrange(0,len(converted),2):
+                    phens.append((converted[i],converted[i+1]))
+               phenotype_IDs.append(phens)
+               phen_line=False
+          else:
+               selections.append(converted)
+               phen_line=True
+               continue
+
+     
+     return phenotype_IDs,selections
+
+def HistoryDiagram(IDs,selections,low=-1,high=-1):
+     if low==high:
+          low=0
+          high=len(IDs)
+     plt.figure()
+     seen_phens=set()
+     seen_phens.add((0,0))
+     phen_col={(0,0):[0,0,0]}
+     for g,(ID,sel) in enumerate(zip(IDs[low:high],selections[low:high])):
+          for gen,idp in enumerate(ID):
+               if idp not in seen_phens:
+                    phen_col[idp]=icy.generate_new_color(phen_col.values(),0)
+                    seen_phens.add(idp)
+               plt.scatter(gen,g,marker='o',c=phen_col[idp],lw=0.5,edgecolor='k',zorder=10)
+          if g==0:
+               for i,s in enumerate(sel):
+                    plt.plot([i,i],[-1,0],'b-',lw=3,zorder=1)
+  
+          for i,s in enumerate(sel):
+                    #print i,s
+               plt.plot([s,i],[g,g+1],'k--',lw=0.5,zorder=10)
+     plt.show(block=False)
+               
