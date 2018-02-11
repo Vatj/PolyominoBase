@@ -1,13 +1,13 @@
 #include "interface_simulator.hpp"
 
 //./bin/ProteinEvolution -E -N 3 -P 50 -K 5 -B 50 -S 1 -D 1 -V 0 -F 1 -M 0.05 -T 0.09 -X 0.2
-const uint16_t printing_resolution=100;
+const uint16_t printing_resolution=1; /* NOTE RESOLUTION IS 1 */
 
 
 
 void EvolvePopulation(std::string run_details) {
   /* Output files */
-  std::string file_base_path="//rscratch//asl47//Bulk_Run//Interfaces//";
+  std::string file_base_path="";//"//rscratch//asl47//Bulk_Run//Interfaces//";
   std::string file_simulation_details=std::string(simulation_params::fitness_selection? "S":"R")+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
     
   std::ofstream fout_size(file_base_path+"Sizes_"+file_simulation_details, std::ios_base::out);
@@ -55,7 +55,7 @@ void EvolvePopulation(std::string run_details) {
   /* Start main evolution loop */
   for(uint32_t generation=0;generation<simulation_params::generation_limit;++generation) {
     if(fitness_jiggle--==0) {
-      pt.ReassignFitness();
+      //pt.ReassignFitness(); /* NOTE JIGGLER OFF */
       fitness_jiggle=landscape_changer(interface_model::RNG_Engine);
     }
     if(generation+100>=simulation_params::generation_limit)
@@ -78,17 +78,57 @@ void EvolvePopulation(std::string run_details) {
       fout_genotype_history<<"x ";
       fout_phenotype_history << +evolving_genotype.pid.first <<" "<<+evolving_genotype.pid.second<<" ";
       if(generation>0) {
-        if(evolving_genotype.pid!=reproduced_population[nth_genotype].pid && evolving_genotype.pid.first) {
-          std::vector<uint8_t> diff= SequenceDifference(evolving_genotype.genotype,reproduced_population[nth_genotype].genotype);
-          for(uint8_t d : diff) {
-            evolving_genotype.interacting_interfaces.insert(evolving_genotype.interacting_interfaces.end(),{d,ConjugateInterface(evolving_genotype.genotype,d)});
-            std::cout<<generation<< "New connection"<<+*(evolving_genotype.interacting_interfaces.end()-1)<<" "<<+*(evolving_genotype.interacting_interfaces.end()-2)<<std::endl;
+        if(evolving_genotype.pid.first && evolving_genotype.pid!=reproduced_population[nth_genotype].pid) {
+	  std::vector<uint8_t> mutated_sites= SequenceDifference(evolving_genotype.genotype,reproduced_population[nth_genotype].genotype);
+	  
+	  if(evolving_genotype.pid>reproduced_population[nth_genotype].pid) {
+	    std::cout<<"Mutating up"<<std::endl;
+	    std::cout<<"parent ";
+	    for(auto x : reproduced_population[nth_genotype].genotype)
+	      std::cout<<+x<<" ";
+	    std::cout<<"\nchild ";
+	    for(auto x : evolving_genotype.genotype)
+	      std::cout<<+x<<" ";
+	    std::cout<<"\n";
+	    std::cout<<"Mutating up end"<<std::endl;
+	    for(uint8_t site : mutated_sites) {
+	      uint8_t conj_site=ConjugateInterface(evolving_genotype.genotype,site);
+	      
+	     
+	      if(conj_site!=255) {
+		evolving_genotype.interacting_interfaces.insert(evolving_genotype.interacting_interfaces.end(),{site,conj_site});
+		std::cout<<"mutations at "<<+site<<" and conj "<<+conj_site<<std::endl;
+	      }
+	    }
+	  }
+	  else {
+	    std::cout<<"Mutating down"<<std::endl;
+	    std::cout<<"parent ";
+	    for(auto x : reproduced_population[nth_genotype].genotype)
+	      std::cout<<+x<<" ";
+	    std::cout<<"\nchild ";
+	    for(auto x : evolving_genotype.genotype)
+	      std::cout<<+x<<" ";
+	    std::cout<<"\n";
+	    std::cout<<"Mutating down end"<<std::endl;
+	    for(uint8_t site : mutated_sites) {
+	      std::cout<<"mutated at "<<+site<<std::endl;
+	      auto site_iter=std::find(evolving_genotype.interacting_interfaces.begin(),evolving_genotype.interacting_interfaces.end(),site);
+	      if(site_iter!=evolving_genotype.interacting_interfaces.end()) {
+		if((site_iter-evolving_genotype.interacting_interfaces.begin())%2==0) {
+		  std::cout<<"removing E "<<+*site_iter<<" and "<<+*(site_iter+1)<<std::endl;
+		  evolving_genotype.interacting_interfaces.erase(site_iter,site_iter+2);
 
-          }
-          
-          
+		}
+		else {
+		  std::cout<<"removing O "<<+*site_iter<<" and "<<+*(site_iter-1)<<std::endl;
+		  evolving_genotype.interacting_interfaces.erase(site_iter-1,site_iter+1);
+		}
+	      }
+	    }
 
-
+	  }
+                 
         }
       }
       ++nth_genotype;
@@ -162,13 +202,10 @@ std::vector<uint8_t> SequenceDifference(const std::vector<interface_type>& paren
 }
 
 uint8_t ConjugateInterface(std::vector<interface_type>& genotype,uint8_t mutation_site) {
-  std::cout<<"conjugate for "<<+genotype[mutation_site]<<" is ";
   for(uint8_t base =0; base < genotype.size(); ++base)
     if(interface_model::SammingDistance(genotype[base],genotype[mutation_site])==0) {
-      std::cout<<+genotype[base]<<std::endl;
       return base;
     }
-  std::cout<<std::endl;
   return 255;
 }
 
