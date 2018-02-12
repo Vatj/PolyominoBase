@@ -89,7 +89,7 @@ namespace interface_model
       std::shuffle(genome_bases.begin(), genome_bases.end(), RNG_Engine);
       for(uint8_t base : genome_bases) {
         if(model_params::real_dist(RNG_Engine)<std::exp(-1*static_cast<double>(SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[base]))/(model_params::interface_size*model_params::temperature))) {
-            placed_tiles.insert(placed_tiles.end(),{current_x,current_y});
+          placed_tiles.insert(placed_tiles.end(),{current_x,current_y});//base/4,base%4
             PerimeterGrowth(current_x,current_y,(4+current_direction-(base%4))%4,current_direction,base/4,growing_perimeter,placed_tiles);
             break;
           }
@@ -148,9 +148,11 @@ std::vector<uint8_t> SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,
   std::vector<int8_t> x_locs, y_locs;
   x_locs.reserve(placed_tiles.size()/2);
   y_locs.reserve(placed_tiles.size()/2);
+  //tile_vals.reserve(placed_tiles.size()/4);
   for(std::vector<int8_t>::iterator check_iter = placed_tiles.begin();check_iter!=placed_tiles.end();check_iter+=2) {
     x_locs.emplace_back(*check_iter);
     y_locs.emplace_back(*(check_iter+1));
+    //tile_vals.emplace_back(*(check_iter+2)*4+*(check_iter+3));
   }
   std::vector<int8_t>::iterator x_left,x_right,y_top,y_bottom;
   std::tie(x_left,x_right)=std::minmax_element(x_locs.begin(),x_locs.end());
@@ -159,7 +161,7 @@ std::vector<uint8_t> SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,
   dy=*y_top-*y_bottom+1;
   std::vector<uint8_t> spatial_grid(dx*dy); 
   for(uint16_t tileIndex=0;tileIndex<x_locs.size();++tileIndex)
-    spatial_grid[(*y_top-y_locs[tileIndex])*dx + (x_locs[tileIndex]-*x_left)]=1;
+    spatial_grid[(*y_top-y_locs[tileIndex])*dx + (x_locs[tileIndex]-*x_left)]=1; //tile_vals[tile_index]
   return spatial_grid;
 }
 

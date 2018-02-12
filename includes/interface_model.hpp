@@ -98,7 +98,8 @@ namespace interface_model
           if(++undiscovered_phenotype_counts[new_phenotype_index]>=ceil(model_params::UND_threshold*simulation_params::phenotype_builds)) {
 	    new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
 	    known_phenotypes[phenotype_size].insert(known_phenotypes[phenotype_size].end(),phen_iter,phen_iter+2+*phen_iter* *(phen_iter+1));
-	    std::gamma_distribution<double> fitness_dist(sqrt(static_cast<double>(phenotype_size)),1);
+	    //std::gamma_distribution<double> fitness_dist(sqrt(static_cast<double>(phenotype_size)),1);
+            std::gamma_distribution<double> fitness_dist(pow(static_cast<double>(phenotype_size),3),1);
 	    phenotype_fitnesses[phenotype_size].emplace_back(fitness_dist(RNG_Engine));
 	    new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()-1);
             

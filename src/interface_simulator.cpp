@@ -7,7 +7,7 @@ const uint16_t printing_resolution=1; /* NOTE RESOLUTION IS 1 */
 
 void EvolvePopulation(std::string run_details) {
   /* Output files */
-  std::string file_base_path="";//"//rscratch//asl47//Bulk_Run//Interfaces//";
+  std::string file_base_path="//rscratch//asl47//Bulk_Run//Interfaces//";
   std::string file_simulation_details=std::string(simulation_params::fitness_selection? "S":"R")+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
     
   std::ofstream fout_size(file_base_path+"Sizes_"+file_simulation_details, std::ios_base::out);
@@ -59,13 +59,12 @@ void EvolvePopulation(std::string run_details) {
       fitness_jiggle=landscape_changer(interface_model::RNG_Engine);
     }
     if(generation+100>=simulation_params::generation_limit)
-      record_strengths=true;
+      record_strengths=false;
 
 
     /* Start genotype loop */
     int nth_genotype=0;
     for(PopulationGenotype& evolving_genotype : evolving_population) {
-      //phenotype_ID pid;
 
       interface_model::MutateInterfaces(evolving_genotype.genotype);
       population_fitnesses[nth_genotype]=interface_model::ProteinAssemblyOutcome(evolving_genotype.genotype,&pt,evolving_genotype.pid);
@@ -78,8 +77,15 @@ void EvolvePopulation(std::string run_details) {
       fout_genotype_history<<"x ";
       fout_phenotype_history << +evolving_genotype.pid.first <<" "<<+evolving_genotype.pid.second<<" ";
       if(generation>0) {
+        if(SequenceDifference(evolving_genotype.genotype,reproduced_population[nth_genotype].genotype).size()>1) {
+            population_fitnesses[nth_genotype]=0;
+             ++nth_genotype;
+            std::cout<<"gen "<<generation<<" multiple mutations"<<std::endl;
+            continue;
+          }
         if(evolving_genotype.pid.first && evolving_genotype.pid!=reproduced_population[nth_genotype].pid) {
 	  std::vector<uint8_t> mutated_sites= SequenceDifference(evolving_genotype.genotype,reproduced_population[nth_genotype].genotype);
+          
 	  
 	  if(evolving_genotype.pid>reproduced_population[nth_genotype].pid) {
 	    std::cout<<"Mutating up"<<std::endl;
@@ -97,6 +103,7 @@ void EvolvePopulation(std::string run_details) {
 	     
 	      if(conj_site!=255) {
 		evolving_genotype.interacting_interfaces.insert(evolving_genotype.interacting_interfaces.end(),{site,conj_site});
+                
 		std::cout<<"mutations at "<<+site<<" and conj "<<+conj_site<<std::endl;
 	      }
 	    }
@@ -128,8 +135,25 @@ void EvolvePopulation(std::string run_details) {
 	    }
 
 	  }
+         
                  
         }
+        std::cout<<"gen "<<generation<<", known edge strengths ";
+          for(auto it= evolving_genotype.interacting_interfaces.begin();it!=evolving_genotype.interacting_interfaces.end();it+=2) {
+            std::cout<<+interface_model::SammingDistance(evolving_genotype.genotype[*it], evolving_genotype.genotype[*(it+1)])<<" ";
+            if(interface_model::SammingDistance(evolving_genotype.genotype[*it], evolving_genotype.genotype[*(it+1)])!=0) {
+              std::cout<<"\n";
+              std::cout<<"parent ";
+              for(auto x : reproduced_population[nth_genotype].genotype)
+                std::cout<<+x<<" ";
+              std::cout<<"\nchild ";
+              for(auto x : evolving_genotype.genotype)
+                std::cout<<+x<<" ";
+              std::cout<<"\n";
+              std::cout<<+*it<<" "<<+*(it+1)<<std::endl;
+            }
+          }
+          std::cout<<std::endl;
       }
       ++nth_genotype;
     } 
