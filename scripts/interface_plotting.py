@@ -449,6 +449,25 @@ def HistoryDiagram(IDs,selections,low=-1,high=-1):
 
      for idpx,c in phen_col.iteritems():
           plt.scatter(-10,0,c=c,label=idpx)
+
+
+     ##attempt
+     rev_sel=selections[::-1]
+     fixation=0#rev_sel[0].index(max(set(rev_sel[0]), key=rev_sel[0].count))
+     
+     printed_paths=set()
+     for init in xrange(len(rev_sel[0])):
+          fixation=init
+          tm=99
+          for nex in rev_sel[1:]:
+               next_fix=nex[fixation]
+               path=(fixation,next_fix,tm,tm-1)
+               if path not in printed_paths:
+                    printed_paths.add(path)
+                    plt.plot([fixation,next_fix],[tm,tm-1],'k-',lw=1.5)
+               fixation=next_fix
+          
+               tm-=1          
           
      plt.legend()
      plt.axis('off')
