@@ -23,6 +23,7 @@ std::vector<int> GetPhenotypeID(std::vector<int>& genome,std::vector<int>& Known
       int steric_result=Steric_Check_Table(genome,Known_Shapes,Num_Shapes);
       IDs.emplace_back(steric_result);
     }
+    IDs.emplace_back(0);
   }
   return IDs;
 
