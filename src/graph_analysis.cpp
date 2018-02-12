@@ -738,6 +738,8 @@ double Get_Phenotype_Fitness(std::vector<int> genome,int Shape_Based_Fitness, bo
     return Graph_Analysis(genome)>0 ? std::max(0.0,Steric_Check(genome,Shape_Based_Fitness)): 0.0;
 }
 
+
+
     
 
 double Shape_Matching_Fitness_Function(std::vector<int>& Spatial_Occupation,int& Delta_X,int& Delta_Y,int target_choice) {

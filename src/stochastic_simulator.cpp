@@ -1,4 +1,4 @@
-#include "brute_simulator.hpp"
+#include "stochastic_simulator.hpp"
 
 #include <time.h>
 #include <sys/time.h>

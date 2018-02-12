@@ -2,12 +2,12 @@
 CXX         := g++
 
 #The Target Binary Program
-EV_TARGET  := EvolutionSimulator
-BR_TARGET   := StochasticAssembler
+EV_TARGET   := EvolutionSimulator
+ST_TARGET   := StochasticAssembler
 PR_TARGET   := BulkProcessor
 PE_TARGET   := ProteinEvolution
+GP_TARGET   := GP_Mapping
 
-TEST_TARGET := TestSuite
 
 
 #The Directories, Source, Includes, Objects, Binary and Resources
@@ -28,24 +28,25 @@ INCDEP      := -I$(INCDIR)
 #---------------------------------------------------------------------------------
 #DO NOT EDIT BELOW THIS LINE
 #---------------------------------------------------------------------------------
-COMMON_SOURCES     := $(shell find $(SRCDIR) -type f -name graph_*.$(SRCEXT)) $(SRCDIR)/xorshift.$(SRCEXT)
+COMMON_SOURCES     := $(shell find $(SRCDIR) -type f -name graph_*.$(SRCEXT)) 
 EV_SOURCES   := $(shell find $(SRCDIR) -type f -name evolution_*.$(SRCEXT))
-BR_SOURCES := $(shell find $(SRCDIR) -type f -name brute_*.$(SRCEXT)) 
+ST_SOURCES := $(shell find $(SRCDIR) -type f -name stochastic_*.$(SRCEXT)) 
 PR_SOURCES := $(shell find $(SRCDIR) -type f -name processing_*.$(SRCEXT))
 PE_SOURCES := $(shell find $(SRCDIR) -type f -name interface_*.$(SRCEXT))
-TEST_SOURCES := $(shell find $(SRCDIR) -type f -name test_*.$(SRCEXT)) 
+GP_SOURCES := $(shell find $(SRCDIR) -type f -name genotype_*.$(SRCEXT))
+
 
 COMMON_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(COMMON_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 EV_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(EV_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
-BR_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(BR_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
+ST_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(ST_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 PR_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(PR_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 PE_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(PE_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
+GP_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(GP_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 
-TEST_OBJECTS  := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(TEST_SOURCES:.$(SRCEXT)=.$(OBJEXT))) $(BUILDDIR)/xorshift.$(OBJEXT) 
 
 
 #Default Make
-all: Ev Br Pr
+all: Ev St Pr Pe GP
 
 #Clean only Objects
 clean:
@@ -67,7 +68,7 @@ Ev: $(EV_OBJECTS) $(COMMON_OBJECTS)
 	@mkdir -p $(TARGETDIR)	
 	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(EV_TARGET) $^
 
-Br: $(BR_OBJECTS) $(COMMON_OBJECTS)
+St: $(BR_OBJECTS) $(COMMON_OBJECTS)
 	@mkdir -p $(TARGETDIR)
 	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(BR_TARGET) $^
 
@@ -79,9 +80,10 @@ Pe: $(PE_OBJECTS)
 	@mkdir -p $(TARGETDIR)
 	$(CXX) $(CXXFLAGS)  -o $(TARGETDIR)/$(PE_TARGET) $^
 
-Test: $(TEST_OBJECTS)
-	@mkdir -p $(TARGETDIR)
-	$(CXX) $(CXXFLAGS)  -o $(TARGETDIR)/$(TEST_TARGET) $^
+GP: $(GP_OBJECTS) $(COMMON_OBJECTS)
+	@mkdir -p $(TARGETDIR)	
+	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(GP_TARGET) $^
+
 
 #Compile
 $(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
@@ -94,4 +96,4 @@ $(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 	@rm -f $(BUILDDIR)/$*.$(DEPEXT).tmp
 
 #Non-File Targets
-.PHONY: all clean Ev Br Pr Pe Test
+.PHONY: all clean Ev St Pr Pe GP
