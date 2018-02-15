@@ -29,7 +29,7 @@ std::vector<int> GetPhenotypeID(std::vector<int>& genome,std::vector<int>& Known
 
 }
 
-extern "C" int WrappedGetPhenotypeID(int g_size, int* genotype,int k_size,int* K_Shapes, int Num_Shapes) {
+extern "C" void WrappedGetPhenotypeID(int g_size, int* genotype,int k_size,int* K_Shapes, int Num_Shapes, int* IDs_p) {
   std::vector<int> genome(genotype,genotype+g_size);
   std::vector<int> Known_Shapes(K_Shapes,K_Shapes+k_size-(g_size*g_size)/4-2);
   Clean_Genome(genome,-1);
@@ -53,17 +53,21 @@ extern "C" int WrappedGetPhenotypeID(int g_size, int* genotype,int k_size,int* K
       int steric_result=Steric_Check_Table(genome,Known_Shapes,Num_Shapes);
       IDs.emplace_back(steric_result);
     }
-    IDs.emplace_back(-1);
+    else
+      IDs.emplace_back(-1);
   }
 
 
 
-  while(Known_Shapes.size()<k_size) {
+  while(Known_Shapes.size()<k_size) 
     Known_Shapes.emplace_back(-1);
-  }
-
   std::copy(Known_Shapes.begin(), Known_Shapes.end(), K_Shapes);
-  return IDs[0];
+  
+  while(IDs.size()<g_size/4)
+    IDs.emplace_back(-2);
+  std::copy(IDs.begin(), IDs.end(), IDs_p);
+  
+  //return IDs[0];
 
 }
 
