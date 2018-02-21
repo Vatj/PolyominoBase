@@ -1,5 +1,5 @@
 #include "evolution_methods.hpp"
-
+//#include <stochastic_simulator.hpp>
 
 ///////////////////////////////////////
 //GENOME EVOLTUTION RELATED FUNCTIONS//
@@ -45,6 +45,6 @@ void Evolve_Fitness7(double Mu);
 
 void ManyEvolutionSimulations(std::string inFileName);
 void EvolveRegulated(int& Discovery_Generation, int& Adaptation_Generation,double Mu);
-void EvolveSimple(int& Discovery_Generation, int& Adaptation_Generation,double Mu);
+void EvolveSimple(int& Discovery_Generation, int& Adaptation_Generation,int& misclass,double Mu);
   
-void EvolutionSimulation(const double Mu,std::vector<int>& adaptation);
+void EvolutionSimulation(const double Mu,std::vector<int>& adaptation,int& misclass);

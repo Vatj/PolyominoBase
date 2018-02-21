@@ -1297,3 +1297,20 @@ def labelLines(lines,align=True,xvals=None,**kwargs):
 
     for line,x,label in zip(labLines,xvals,labels):
         labelLine(line,x,label,align,**kwargs)
+
+
+def PlotTemp():
+    rs=10
+    #from collections import OrderedDict
+    d_g={float(st.split()[1]):(sum([int(i) for i in st.split()[3:3+rs]])*1./rs,sum([int(i) for i in st.split()[-rs:]])*1./rs) for st in open('/rscratch/asl47/Bulk_Run/Regulation/Evolution_T2_C8_N100_K250_M1_R1_I0.txt') if 'c' not in st}
+    d_s={float(st.split()[1]):(sum([int(i) for i in st.split()[3:3+rs]])*1./rs,sum([int(i) for i in st.split()[-rs:]])*1./rs) for st in open('/rscratch/asl47/Bulk_Run/Regulation/Evolution_T2_C8_N100_K250_M1_R0_I0.txt') if 'c' not in st}
+
+    plt.figure()
+    plt.plot(sorted(d_g.keys()),[d_g[v][0] for v in sorted(d_g.keys())])
+    plt.plot(sorted(d_g.keys()),[d_g[v][1] for v in sorted(d_g.keys())])
+
+    plt.plot(sorted(d_s.keys()),[d_s[v][0] for v in sorted(d_s.keys())],ls='--')
+    plt.plot(sorted(d_s.keys()),[d_s[v][1] for v in sorted(d_s.keys())],ls='--')
+
+    plt.show(block=False)
+    return d_g

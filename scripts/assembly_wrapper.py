@@ -13,7 +13,8 @@ Poly_Lib.WrappedGetPhenotypeID.restype=None
 Poly_Lib.WrappedGetPhenotypeID.argtypes=[ctypes.c_int,ctypes.POINTER(ctypes.c_int),ctypes.c_int,ctypes.POINTER(ctypes.c_int),ctypes.c_int,ctypes.POINTER(ctypes.c_int)]
 
 genotype=[1,1,1,1,2,0,0,0]
-
+Phen_list=[[1,1,1], [3,1,1,1,1], [2,1,1,1], [2,2,1,1,1,0]]
+gen=[1,1,1,1, 2,0,0,0, 3,4,0,0, 5,0,0,0, 6,0,0,0]
 
 def Do(genotype,phens):
     g_P=(ctypes.c_int*len(genotype))(*genotype)
@@ -22,7 +23,7 @@ def Do(genotype,phens):
     shapes=flat_phens+[0]*buf_len
     s_P=(ctypes.c_int*len(shapes))(*shapes)
     s_s=ctypes.c_int(len(s_P))
-    n_s=ctypes.c_int(len(phens))
+    n_s=ctypes.c_int(len(phens)-1)
     ID_p=(ctypes.c_int*int(len(genotype)/4))()
     Poly_Lib.WrappedGetPhenotypeID(len(genotype),g_P,s_s,s_P,n_s,ID_p)
     IDs=[i for i in ID_p if i!=-2]
@@ -37,12 +38,34 @@ def Do(genotype,phens):
         phens.extend(sub_phens)
     return IDs,phens
         
+import tarfile    
+def LoadGenotypes(part):
+    with tarfile.open("/scratch/asl47/GenL{}".format(part), "r:gz") as tar:
+        for member in tar.getmembers():
+            if  member.isfile():
+                filex=tar.extractfile(member)
+                return np.fromstring(filex.read(), dtype=NP.uint8)
+                
+
+
+def CompilePhenotypes(parts):
+
+    phen_list=[]
+    phen_xfer=[dict() for _ in xrange(len(parts)-1)]
+    phen_list = [[int(i) for i in line.rstrip('\n').split()] for line in open('/scratch/asl47/Phenotype_Split_{}.txt'.format(parts[0]))]
     
-    
+    for p,part in enumerate(parts[1:]):
+        phens = [[int(i) for i in line.rstrip('\n').split()] for line in open('/scratch/asl47/Phenotype_Split_{}.txt'.format(part))]
+        for ind,phen in enumerate(phens):
+            if phen in phen_list:
+                phen_xfer[p][phen_list.index(phen)]=ind
+
+    return phen_xfer
+
+
 
     
 
     
 
-Phen_list=[[1,1,1], [3,1,1,1,1], [2,1,1,1], [2,2,1,1,1,0]]
-gen=[1,1,1,1, 2,0,0,0, 3,4,0,0, 5,0,0,0, 6,0,0,0]
+

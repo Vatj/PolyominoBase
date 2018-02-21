@@ -1,4 +1,5 @@
-#include "graph_analysis.hpp"
+//#include "graph_analysis.hpp"
+#include "stochastic_model.hpp"
 //#include <exception>
 
 int Graph_Analysis_Fast(std::vector<int> genotype) {
@@ -658,7 +659,10 @@ void Clockwise_Rotation(std::vector<int>& Spatial_Occupation,int DELTA_X,int DEL
   std::vector<int> swapper;
   for(int column=0;column<DELTA_X;++column) {
     for(int row=DELTA_Y-1;row>=0;--row) {
-      swapper.emplace_back(Spatial_Occupation[row*DELTA_X+column]);
+      if(Spatial_Occupation[row*DELTA_X+column])
+        swapper.emplace_back(1+(Spatial_Occupation[row*DELTA_X+column])%4+((Spatial_Occupation[row*DELTA_X+column]-1)/4) *4);
+      else
+        swapper.emplace_back(0);
     }
   }
   Spatial_Occupation=swapper;
@@ -668,7 +672,10 @@ void Clockwise_Pi_Rotation(std::vector<int>& Spatial_Occupation,int DELTA_X,int 
   std::vector<int> swapper;
   for(int row=DELTA_Y-1;row>=0;--row) {
     for(int column=DELTA_X-1;column>=0;--column) {
-      swapper.emplace_back(Spatial_Occupation[row*DELTA_X+column]);
+      if(Spatial_Occupation[row*DELTA_X+column])
+        swapper.emplace_back(1+(Spatial_Occupation[row*DELTA_X+column]+1)%4+((Spatial_Occupation[row*DELTA_X+column]-1)/4)*4);
+      else
+        swapper.emplace_back(0);
     }
   }
   Spatial_Occupation=swapper;
@@ -710,7 +717,7 @@ bool GetMultiplePhenotypeFitness(std::vector<int> genome,std::vector<int> target
 }
 
 
-double Get_Phenotype_Fitness(std::vector<int> genome,int Shape_Based_Fitness, bool zeroth_seed) {
+int Get_Phenotype_Fitness(std::vector<int> genome,int Shape_Based_Fitness, bool zeroth_seed) {
   Clean_Genome(genome,-1);
   if(Disjointed_Check(genome)) {
     std::vector<double> disjointed_results;
@@ -718,24 +725,39 @@ double Get_Phenotype_Fitness(std::vector<int> genome,int Shape_Based_Fitness, bo
       std::vector<int>::iterator foundAt=std::find(genome.begin(),genome.end(),-1);
       std::vector<int> partialGenome(genome.begin(),foundAt);
       genome.erase(genome.begin(),foundAt+1);
-      if(Graph_Analysis(partialGenome)>0) {
-        double steric_result=Steric_Check(partialGenome,Shape_Based_Fitness);
-        if(steric_result>0) {
-          if(zeroth_seed)
-            return steric_result;
-          else
+      if(zeroth_seed) {
+        if(Graph_Analysis(partialGenome)>0) {
+          int steric_result=static_cast<int>(Steric_Check(partialGenome,-1));
+          if(steric_result>0) {
             disjointed_results.emplace_back(steric_result);
+          }
+          else 
+            return 0;
         }
-        else 
-          return 0.0;
+        else
+          return 0;
       }
-      else
-        return 0.0;
+      else {
+        int bfit=Brute_Force::Analyse_Genotype_Outcome(partialGenome,Shape_Based_Fitness);
+        if(bfit<0)
+          return 0;
+        else
+          disjointed_results.emplace_back(bfit);
+        
+      }
+
+
     }
-    return *std::max_element(disjointed_results.begin(),disjointed_results.end());
+      return *std::max_element(disjointed_results.begin(),disjointed_results.end());
   }
-  else //Single connected component
-    return Graph_Analysis(genome)>0 ? std::max(0.0,Steric_Check(genome,Shape_Based_Fitness)): 0.0;
+  else { //Single connected component
+    if(zeroth_seed)
+      return Graph_Analysis(genome)>0 ? std::max(0.0,Steric_Check(genome,-1)): 0.0;
+    else {
+      int bfit=Brute_Force::Analyse_Genotype_Outcome(genome,Shape_Based_Fitness);
+      return bfit>0 ? bfit : 0;
+    }
+  }
 }
 
 

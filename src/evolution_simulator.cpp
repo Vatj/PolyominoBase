@@ -1,4 +1,5 @@
 #include <evolution_simulator.hpp>
+//#include <stochastic_model.hpp>
 
 ///////////////////////////////////////
 //GENOME EVOLTUTION RELATED FUNCTIONS//
@@ -220,8 +221,8 @@ void EvolveRegulated(int& Discovery_Generation, int& Adaptation_Generation,doubl
     Genome_Pool.assign(Temporary_Pool.begin(),Temporary_Pool.end());
   }
 }
-
-void EvolveSimple(int& Discovery_Generation, int& Adaptation_Generation,double Mu) {
+*/
+void EvolveSimple(int& Discovery_Generation, int& Adaptation_Generation,int& misclass, double Mu) {
   std::uniform_int_distribution<int> Mutated_Colour(0,Colour_Space);
   std::bernoulli_distribution Mutation_Chance(Mu);
   std::vector<int> Initial_Genome(Num_Tiles*4), Evolving_Genome(Num_Tiles*4), Index_Selections(Num_Genomes);
@@ -243,8 +244,30 @@ void EvolveSimple(int& Discovery_Generation, int& Adaptation_Generation,double M
           } while(Evolving_Genome[t]==previousFace);
         }
       }
-      Phenotype_Fitness_Sizes[n]=Fitness_Function(Get_Phenotype_Fitness(Evolving_Genome,0,true));          
-      if(Phenotype_Fitness_Sizes[n]>=1.-MINIMUM_FITNESS_THRESHOLD) {
+      int bfit=0;
+      if(initial_condition>0) {
+        int cf_fit=Fitness_Function(Get_Phenotype_Fitness(Evolving_Genome,-1,true));//Fitness_Function(Get_Phenotype_Fitness(Evolving_Genome,50,false));
+      
+        switch(initial_condition) {
+        case 1:
+          bfit=cf_fit;
+          break;
+        case 2:
+          bfit=Fitness_Function(Get_Phenotype_Fitness(Evolving_Genome,10,false));
+          break;
+        default:
+          break;
+        }
+
+        if(bfit!=cf_fit) {
+          misclass++;
+        }
+      }
+
+      
+      Phenotype_Fitness_Sizes[n]=bfit;
+
+      if(Phenotype_Fitness_Sizes[n]>=Target_Fitness) {
         ++Num_Maximally_Fit;
         if(Discovery_Generation==-1) //DISCOVERY
           Discovery_Generation=g;
@@ -264,17 +287,19 @@ void EvolveSimple(int& Discovery_Generation, int& Adaptation_Generation,double M
 }
 
 
-void EvolutionSimulation(const double Mu,std::vector<int>& discovery,std::vector<int>& adaptation) {
-#pragma omp parallel for schedule(dynamic) 
+void EvolutionSimulation(const double Mu,std::vector<int>& discovery,std::vector<int>& adaptation,int& misclass) {
+#pragma omp parallel for schedule(dynamic) reduction(+:misclass )
   for(int run =0;run<Num_Runs;++run) {
     int Discovery_Generation=-1, Adaptation_Generation=-1;
-    if(Regulated)
-      EvolveRegulated(Discovery_Generation,Adaptation_Generation,Mu);
+    if(false && Regulated)
+      continue;
+      //EvolveRegulated(Discovery_Generation,Adaptation_Generation,Mu);
     else
-      EvolveSimple(Discovery_Generation,Adaptation_Generation,Mu);                               
+      EvolveSimple(Discovery_Generation,Adaptation_Generation,misclass,Mu);                               
     discovery[run]=Discovery_Generation>0 ? Discovery_Generation : GENERATION_LIMIT;
     adaptation[run]=Adaptation_Generation>0 ? Adaptation_Generation : GENERATION_LIMIT;;
   }
+  
 }
 
 void ManyEvolutionSimulations() {
@@ -284,23 +309,26 @@ void ManyEvolutionSimulations() {
   outName ="//rscratch//asl47//Bulk_Run//Regulation//Evolution_T"+std::to_string(Num_Tiles)+"_C"+std::to_string(Colour_Space+1)+"_N"+std::to_string(Num_Genomes)+"_K"+std::to_string(GENERATION_LIMIT)+"_M"+std::to_string(Fitness_Mode)+"_R"+std::to_string(Regulated)+"_I"+std::to_string(initial_condition)+".txt";
   std::ofstream outFile(outName,std::ios_base::out);
   double muL;
+  
   while (inFile >>muL) {
     std::cout<<"On muL "<<muL<<std::endl;
     std::vector<int> discoveries(Num_Runs), adaptations(Num_Runs);
     double mu= muL/(Num_Tiles*4.);
-    EvolutionSimulation(mu,discoveries,adaptations);
-    outFile <<"muL: "<<muL<<"\nD: ";
+    int misclass=0;
+    EvolutionSimulation(mu,discoveries,adaptations,misclass);
+    outFile <<"muL: "<<muL<<" D: ";
     for(int dis: discoveries) 
       outFile << dis<<" ";
-    outFile << "\nA: ";
+    outFile << " A: ";
     for(int ad: adaptations)
       outFile << ad<<" ";
-    outFile<<"\n";
+    outFile<<"\nMc: "<<misclass<<"\n";
+    
   }
   inFile.close();
   outFile.close();  
 }
-*/
+
 
 
 ////////////////////////////
@@ -319,14 +347,26 @@ int main(int argc, char* argv[]) {
     Set_Runtime_Configurations(argc,argv);
   }
 
-  
+  std::vector<int> g{0, 60, 19, 70, 24, 0, 52, 35, 26, 37, 0, 85, 0, 0, 43, 0, 57, 86, 38, 47, 0, 0, 89, 32, 76, 50, 0, 0, 23, 84, 76, 14, 0, 39, 14, 5, 0, 0, 0, 49, 17, 68, 81, 99, 0, 54, 61, 4, 0, 0, 42, 0, 99, 62, 51, 24, 0, 0, 44, 0, 0, 13, 0, 78, 4, 39, 13, 95, 63, 69, 0, 0, 0, 18, 66, 36, 48, 60, 82, 52};
+ 
+  std::vector<int> g2;
   if(argc>1) {
     switch(argv[1][1]) {
     case 'D':
       FitnessEvolutionDynamic();
       break;
     case 'R':
-      //ManyEvolutionSimulations();
+      ManyEvolutionSimulations();
+      break;
+    case 'X':
+      Clean_Genome(g);
+      Disjointed_Check(g);
+      for(auto x: g)
+        std::cout<<x<<" ";
+      std::cout<<std::endl;
+      g2.assign(g.begin(),std::find(g.begin(),g.end(),-1));
+      //std::cout<<Graph_Analysis(g2)<<std::endl;
+      std::cout<<Brute_Force::Analyse_Genotype_Outcome(g2,2)<<std::endl;;
       break;
     case 'H':
       std::cout<<"\n**Evolution running options**\n -Z for oscillating\n -X for summed\n -Q for sequential\n -A for 5\n -B for 6\n"<<std::endl;
@@ -337,3 +377,4 @@ int main(int argc, char* argv[]) {
     }
   }               
 }
+

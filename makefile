@@ -30,7 +30,7 @@ INCDEP      := -I$(INCDIR)
 #---------------------------------------------------------------------------------
 COMMON_SOURCES     := $(shell find $(SRCDIR) -type f -name graph_*.$(SRCEXT)) 
 EV_SOURCES   := $(shell find $(SRCDIR) -type f -name evolution_*.$(SRCEXT))
-ST_SOURCES := $(shell find $(SRCDIR) -type f -name stochastic_*.$(SRCEXT)) 
+ST_SOURCES := $(shell find $(SRCDIR) -type f -name stochastic_m*.$(SRCEXT)) 
 PR_SOURCES := $(shell find $(SRCDIR) -type f -name processing_*.$(SRCEXT))
 PE_SOURCES := $(shell find $(SRCDIR) -type f -name interface_*.$(SRCEXT))
 GP_SOURCES := $(shell find $(SRCDIR) -type f -name genotype_*.$(SRCEXT))
@@ -55,7 +55,7 @@ clean:
 #Pull in dependency info for *existing* .o files
 -include $(COMMON_OBJECTS:.$(OBJEXT)=.$(DEPEXT))
 -include $(EV_OBJECTS:.$(OBJEXT)=.$(DEPEXT))
--include $(BR_OBJECTS:.$(OBJEXT)=.$(DEPEXT))
+-include $(ST_OBJECTS:.$(OBJEXT)=.$(DEPEXT))
 -include $(PR_OBJECTS:.$(OBJEXT)=.$(DEPEXT))
 -include $(PE_OBJECTS:.$(OBJEXT)=.$(DEPEXT))
 -include $(TEST_OBJECTS:.$(OBJEXT)=.$(DEPEXT))
@@ -64,13 +64,13 @@ clean:
 #$(TARGET): $(OBJECTS)
 #	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(TARGET) $^
 
-Ev: $(EV_OBJECTS) $(COMMON_OBJECTS)
+Ev: $(EV_OBJECTS) $(COMMON_OBJECTS) $(ST_OBJECTS)
 	@mkdir -p $(TARGETDIR)	
 	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(EV_TARGET) $^
 
-St: $(BR_OBJECTS) $(COMMON_OBJECTS)
+St: $(ST_OBJECTS) $(COMMON_OBJECTS)
 	@mkdir -p $(TARGETDIR)
-	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(BR_TARGET) $^
+	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(ST_TARGET) $^
 
 Pr: $(PR_OBJECTS) $(COMMON_OBJECTS)
 	@mkdir -p $(TARGETDIR)

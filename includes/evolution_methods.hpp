@@ -1,4 +1,4 @@
-#include "graph_analysis.hpp"
+#include "stochastic_model.hpp"
 
 extern int Target_Fitness;
 extern int Colour_Space; 
