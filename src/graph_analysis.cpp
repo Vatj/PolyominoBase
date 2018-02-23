@@ -738,7 +738,7 @@ int Get_Phenotype_Fitness(std::vector<int> genome,int Shape_Based_Fitness, bool 
           return 0;
       }
       else {
-        int bfit=Brute_Force::Analyse_Genotype_Outcome(partialGenome,Shape_Based_Fitness);
+        int bfit=0;//Stochastic::Analyse_Genotype_Outcome(partialGenome,Shape_Based_Fitness);
         if(bfit<0)
           return 0;
         else
@@ -754,7 +754,7 @@ int Get_Phenotype_Fitness(std::vector<int> genome,int Shape_Based_Fitness, bool 
     if(zeroth_seed)
       return Graph_Analysis(genome)>0 ? std::max(0.0,Steric_Check(genome,-1)): 0.0;
     else {
-      int bfit=Brute_Force::Analyse_Genotype_Outcome(genome,Shape_Based_Fitness);
+      int bfit=0;//Stochastic::Analyse_Genotype_Outcome(genome,Shape_Based_Fitness);
       return bfit>0 ? bfit : 0;
     }
   }

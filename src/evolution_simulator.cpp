@@ -366,7 +366,7 @@ int main(int argc, char* argv[]) {
       std::cout<<std::endl;
       g2.assign(g.begin(),std::find(g.begin(),g.end(),-1));
       //std::cout<<Graph_Analysis(g2)<<std::endl;
-      std::cout<<Brute_Force::Analyse_Genotype_Outcome(g2,2)<<std::endl;;
+      std::cout<<Stochastic::Analyse_Genotype_Outcome(g2,2)<<std::endl;;
       break;
     case 'H':
       std::cout<<"\n**Evolution running options**\n -Z for oscillating\n -X for summed\n -Q for sequential\n -A for 5\n -B for 6\n"<<std::endl;

@@ -1,17 +1,48 @@
 #include <stochastic_model.hpp>
 
-namespace Brute_Force
+namespace Stochastic
 {
   std::random_device rd;
   std::mt19937 RNG_Generator(rd());
-  
-  std::vector<int> Brute_Force_Polyomino_Builder(std::vector<int> genome, unsigned int THRESHOLD_SIZE, int initial_Tile,int initial_Rotation) {
+
+  int Analyse_Genotype_Outcome(std::vector<int> genome, int N_Repeated_Checks, PhenotypeTable* pt,int seed) {
+    Clean_Genome(genome,-1); 
+    const unsigned int THRESHOLD_SIZE=(genome.size()*genome.size())/4;
+    std::vector<int> Placed_Tiles_Check=Stochastic_Polyomino_Builder(genome,THRESHOLD_SIZE,seed,0);
     
-    std::vector<int> Placed_Tiles{0,0,initial_Tile,initial_Rotation}; //DEFINED AS (X,Y,Tile Type Number, Tile Rotation[in CW rotation])
-    std::vector<int> Interacting_Faces; //DEFINED AS (X,Y,Target Face colour, Target Face Index) 
+    if(Placed_Tiles_Check.empty() || Placed_Tiles_Check.size()/4 > THRESHOLD_SIZE) //STERIC
+      return -1;
+    
+    int dx=-1,dy=-1,dx_prime=-1,dy_prime=-1;
+    std::vector<int> rs_lattice=Generate_Spatial_Occupancy(Placed_Tiles_Check,dx,dy,3),Placed_Tiles_Compare, rs_lattice_prime;
+    
+    for(int nth_repeat=1;nth_repeat<N_Repeated_Checks;++nth_repeat) {
+      Placed_Tiles_Compare=Stochastic_Polyomino_Builder(genome,THRESHOLD_SIZE,seed,0);
+      if(Placed_Tiles_Compare.empty() || Placed_Tiles_Compare.size()/4 > THRESHOLD_SIZE)
+        return -1;
+      if(Placed_Tiles_Check.size()!=Placed_Tiles_Compare.size())
+        return -2;
+      
+      rs_lattice_prime=Generate_Spatial_Occupancy(Placed_Tiles_Compare,dx_prime,dy_prime,3);
+      if(!Compare_Two_Polyominoes_Shapes(rs_lattice,dx,dy,rs_lattice_prime,dx_prime,dy_prime))
+        return -2;
+      if(N_Repeated_Checks-nth_repeat>1) {
+        Placed_Tiles_Check=Placed_Tiles_Compare;
+        rs_lattice=rs_lattice_prime;
+        dx=dx_prime;
+        dy=dy_prime;
+      }
+    }
+    return pt->GetPhenotypeID(Phenotype{dx,dy,rs_lattice}); //Placed_Tiles_Check.size()/4;
+  }
+  
+  std::vector<int> Stochastic_Polyomino_Builder(std::vector<int> genome, unsigned int THRESHOLD_SIZE, int initial_Tile,int initial_Rotation) {
+    
+    std::vector<int> Placed_Tiles{0,0,initial_Tile,initial_Rotation},Interacting_Faces; //DEFINED AS (X,Y,Tile Type Number, Tile Rotation[in CW rotation])
+    //DEFINED AS (X,Y,Target Face colour, Target Face Index) 
     for(int face=0; face<4; ++face) {
       if(genome[initial_Tile*4+ (face-initial_Rotation+4)%4]!=0)
-        Brute_Force_Interacting_Adjacency(Interacting_Faces,genome[initial_Tile*4+ (face-initial_Rotation+4)%4],face,0,0);
+        Stochastic_Interacting_Adjacency(Interacting_Faces,genome[initial_Tile*4+ (face-initial_Rotation+4)%4],face,0,0);
     }
     
     while(!Interacting_Faces.empty()) {  
@@ -48,7 +79,7 @@ namespace Brute_Force
           for(int face=1;face<4;++face) {
             int temp_Face=genome[new_Tile*4+(new_Face+face)%4];
             if(temp_Face!=0)
-              Brute_Force_Interacting_Adjacency(Interacting_Faces,temp_Face,(new_Face+face+rotation)%4,placed_X,placed_Y);
+              Stochastic_Interacting_Adjacency(Interacting_Faces,temp_Face,(new_Face+face+rotation)%4,placed_X,placed_Y);
           }
           break;
         }
@@ -57,133 +88,27 @@ namespace Brute_Force
     return Placed_Tiles;
   }
 
-  void Brute_Force_Interacting_Adjacency(std::vector<int>& Interacting_Faces, int interacting_Face, int face_index, int X, int Y) {
+  void Stochastic_Interacting_Adjacency(std::vector<int>& Interacting_Faces, int interacting_Face, int face_index, int X, int Y) {
     int X_OFFSET=0,Y_OFFSET=0;
     switch(face_index) {
     case 0:
-      X_OFFSET=0;
-      Y_OFFSET=1;
+      X_OFFSET=0;Y_OFFSET=1;
       break;
     case 1:
-      X_OFFSET=1;
-      Y_OFFSET=0;
+      X_OFFSET=1;Y_OFFSET=0;
       break;
     case 2:
-      X_OFFSET=0;
-      Y_OFFSET=-1;
+      X_OFFSET=0;Y_OFFSET=-1;
       break;
     case 3:
-      X_OFFSET=-1;
-      Y_OFFSET=0;
+      X_OFFSET=-1;Y_OFFSET=0;
       break;
     }
-    int conjugate_Face=Interaction_Matrix(interacting_Face);//(1-interacting_Face%2)*(interacting_Face-1)+(interacting_Face%2)*(interacting_Face+1); 
+    int conjugate_Face=Interaction_Matrix(interacting_Face);
     std::uniform_int_distribution<int> Random_Insertion(0,Interacting_Faces.size()/4);
     Interacting_Faces.insert(Interacting_Faces.begin()+Random_Insertion(RNG_Generator)*4,{X+X_OFFSET,Y+Y_OFFSET,conjugate_Face,(face_index+2)%4});
   }
 
-  int Analyse_Genotype_Outcome(std::vector<int> genome, int N_Repeated_Checks) {
-    Clean_Genome(genome,-1); 
-    const unsigned int THRESHOLD_SIZE=(genome.size()*genome.size())/4;
-    bool UND_Check=false;
-    std::vector<int> Placed_Tiles_Check=Brute_Force_Polyomino_Builder(genome,THRESHOLD_SIZE,0,0);
-    
-    if(Placed_Tiles_Check.empty()) //STERIC
-      return -1;
-    if(Placed_Tiles_Check.size()/4 > THRESHOLD_SIZE)
-      return -1;
-    
-    int Delta_X_Check=-1,Delta_Y_Check=-1;
-    std::vector<int> Spatial_Occupation_Check=Generate_Spatial_Occupancy(Placed_Tiles_Check,Delta_X_Check,Delta_Y_Check,3);    
-    //std::vector<int> Spatial_Tile_Check=Generate_Spatial_Occupancy(Placed_Tiles_Check,Delta_X_Check,Delta_Y_Check,1);
-    //std::vector<int> Spatial_Orientation_Check=Generate_Spatial_Occupancy(Placed_Tiles_Check,Delta_X_Check,Delta_Y_Check,2);
-    //Declare but not initialise
-    std::vector<int> Placed_Tiles_Compare, Spatial_Occupation_Compare;//, Spatial_Tile_Compare,Spatial_Orientation_Compare;
-    
-    bool broken_Comparison=false;
-    for(int nth_repeat=1;nth_repeat<N_Repeated_Checks;++nth_repeat) {
-      Placed_Tiles_Compare=Brute_Force_Polyomino_Builder(genome,THRESHOLD_SIZE,nth_repeat%(genome.size()/4),0);
-      if(Placed_Tiles_Compare.empty()) //STERIC
-        return -1;
-      if(Placed_Tiles_Compare.size()/4 > THRESHOLD_SIZE)
-        return -1;
-      if(Placed_Tiles_Check.size()!=Placed_Tiles_Compare.size())
-        return -5;
-      
-      int Delta_X_Compare=-1,Delta_Y_Compare=-1;
-      Spatial_Occupation_Compare=Generate_Spatial_Occupancy(Placed_Tiles_Compare,Delta_X_Compare,Delta_Y_Compare,3);
-      /*
-      std::cout<<"A "<<Delta_X_Check<<","<<Delta_Y_Check<<" : ";
-        for(auto x:Spatial_Occupation_Check)
-          std::cout<<x<<" ";
-        std::cout<<"\nB "<<Delta_X_Compare<<","<<Delta_Y_Compare<<" : ";
-        for(auto x:Spatial_Occupation_Compare)
-          std::cout<<x<<" ";
-        std::cout<<"\n";
-        
-        Clockwise_Pi_Rotation(Spatial_Occupation_Compare,Delta_X_Compare,Delta_Y_Compare);
-        std::cout<<"\nC "<<Delta_X_Compare<<","<<Delta_Y_Compare<<" : ";
-        for(auto x:Spatial_Occupation_Compare)
-          std::cout<<x<<" ";
-        std::cout<<"\n";
-        Clockwise_Rotation(Spatial_Occupation_Compare,Delta_X_Compare,Delta_Y_Compare);
-        std::swap(Delta_X_Compare,Delta_Y_Compare);
-        std::cout<<"\nD "<<Delta_X_Compare<<","<<Delta_Y_Compare<<" : ";
-        for(auto x:Spatial_Occupation_Compare)
-          std::cout<<x<<" ";
-        std::cout<<"\n";
-
-        Clockwise_Rotation(Spatial_Occupation_Compare,Delta_X_Compare,Delta_Y_Compare);
-        std::swap(Delta_X_Compare,Delta_Y_Compare);
-        std::cout<<"\nE "<<Delta_X_Compare<<","<<Delta_Y_Compare<<" : ";
-        for(auto x:Spatial_Occupation_Compare)
-          std::cout<<x<<" ";
-        std::cout<<"\n";
-        */
-      
-      if(!Compare_Two_Polyominoes_Shapes(Spatial_Occupation_Check,Delta_X_Check,Delta_Y_Check,Spatial_Occupation_Compare,Delta_X_Compare,Delta_Y_Compare)) {
-        
-        return -7;
-        broken_Comparison=true;
-        break;
-      }
-      /*
-      else {
-        Spatial_Tile_Compare=Generate_Spatial_Occupancy(Placed_Tiles_Compare,Delta_X_Compare,Delta_Y_Compare,1);
-        if(!Compare_Two_Polyominoes_Shapes(Spatial_Tile_Check,Delta_X_Check,Delta_Y_Check,Spatial_Tile_Compare,Delta_X_Compare,Delta_Y_Compare)) {                      
-          broken_Comparison=true;
-          break;
-        }
-        else {
-          Spatial_Orientation_Compare=Generate_Spatial_Occupancy(Placed_Tiles_Compare,Delta_X_Compare,Delta_Y_Compare,2);
-          if(!Compare_Two_Polyominoes_Shapes(Spatial_Orientation_Check,Delta_X_Check,Delta_Y_Check,Spatial_Orientation_Compare,Delta_X_Compare,Delta_Y_Compare)) {
-            return -6;
-          }
-        
-        }
-      }
-      */
-      if(N_Repeated_Checks-nth_repeat>1) {
-        Placed_Tiles_Check=Placed_Tiles_Compare;
-        Spatial_Occupation_Check=Spatial_Occupation_Compare;
-        //Spatial_Tile_Check=Spatial_Tile_Compare;
-        //Spatial_Orientation_Check=Spatial_Orientation_Compare;
-        Delta_X_Check=Delta_X_Compare;
-        Delta_Y_Check=Delta_Y_Compare;
-      }
-    }    
-    if(UND_Check) {
-      return -5; 
-    }
-    else { //Bound
-      if(broken_Comparison) { //BND
-        return -5;
-      }
-      else {
-        return Placed_Tiles_Check.size()/4;//Steric_Check(genome);
-      }
-    }
-  }
   
   std::vector<int> Generate_Spatial_Occupancy(std::vector<int>& Placed_Tiles_Check, int& DELTA_X_Check,int& DELTA_Y_Check, int generate_mode) {
     std::vector<int> X_Locs_Check, Y_Locs_Check, Tile_Type_Check,Tile_Orientation_Check;
@@ -216,73 +141,41 @@ namespace Brute_Force
     }
     return Spatial_Occupancy_Check;
   }
-  int Compare_Two_Polyominoes_Tile_Details(std::vector<int>& Placed_Tiles_Check, std::vector<int>& Placed_Tiles_Compare) {
-    //return Codes
-    //1 - Not tile deterministic
-    //2 - Tile, but not orientation determinsitic
-    //3 - Tile and orientation determinstic 
-    int return_code=3;
-    for(std::vector<int>::iterator check_iter = Placed_Tiles_Check.begin(); check_iter!=Placed_Tiles_Check.end(); check_iter+=4) {
-      for(std::vector<int>::iterator compare_iter = Placed_Tiles_Compare.begin(); compare_iter!=Placed_Tiles_Compare.end(); compare_iter+=4) {
-        if(*check_iter==*compare_iter && *(check_iter+1) == *(compare_iter+1)) {
-          if(*(check_iter+2)!=*(compare_iter+2)) {
-            return 1;
-          }
-          if(*(check_iter+3)!=*(compare_iter+3)) {
-            return_code=2;
-          }
-        }
-      }
-    }
-    return return_code;
-  }
  
-  bool Compare_Two_Polyominoes_Shapes(std::vector<int>& Spatial_Occupation_Check,int Delta_X_Check,int Delta_Y_Check, std::vector<int>& Spatial_Occupation_Compare,int Delta_X_Compare,int Delta_Y_Compare) {
-    if(std::count_if(Spatial_Occupation_Check.begin(),Spatial_Occupation_Check.end(),[](int i){return i!=0;})!=std::count_if(Spatial_Occupation_Compare.begin(),Spatial_Occupation_Compare.end(),[](int i){return i!=0;})) {
-      std::cout<<"here"<<std::endl;
+  bool Compare_Two_Polyominoes_Shapes(std::vector<int>& rs_lattice,int dx,int dy, std::vector<int>& rs_lattice_prime,int dx_prime,int dy_prime) {
+    if(std::count(rs_lattice.begin(),rs_lattice.end(),0)!=std::count(rs_lattice_prime.begin(),rs_lattice_prime.end(),0))
       return false;
-    }
-    if(Delta_X_Check==Delta_X_Compare && Delta_Y_Check==Delta_Y_Compare && Delta_X_Check==Delta_Y_Check) { //bounding boxes match, symmetric
-      if(Spatial_Occupation_Check==Spatial_Occupation_Compare) {
+    if(dx==dx_prime && dy==dy_prime && dx==dy) { //bounding boxes match, symmetric
+      if(rs_lattice==rs_lattice_prime) 
         return true;
-      }
+      
       else {
         for(int rotation=0;rotation<3;++rotation) {
-          Clockwise_Rotation(Spatial_Occupation_Check,Delta_X_Check,Delta_Y_Check);
-          if(Spatial_Occupation_Check==Spatial_Occupation_Compare) {
+          Clockwise_Rotation(rs_lattice,dx,dy);
+          if(rs_lattice==rs_lattice_prime) 
             return true;
-          }
         }
         return false;
       }
     }
-    if(Delta_X_Check==Delta_X_Compare && Delta_Y_Check==Delta_Y_Compare) { //bounding boxes match, asymmetric
-      if(Spatial_Occupation_Check==Spatial_Occupation_Compare) {
+    if(dx==dx_prime && dy==dy_prime) { //bounding boxes match, asymmetric
+      if(rs_lattice==rs_lattice_prime) 
         return true;
-      }
       else {
-        Clockwise_Pi_Rotation(Spatial_Occupation_Check,Delta_X_Check,Delta_Y_Check);
-        if(Spatial_Occupation_Check==Spatial_Occupation_Compare) {
-          return true;
-        }
-        return false;
+        Clockwise_Pi_Rotation(rs_lattice,dx,dy);
+        return rs_lattice==rs_lattice_prime ? true : false; 
       }
     }
-    if(Delta_X_Check==Delta_Y_Compare && Delta_Y_Check==Delta_X_Compare) { //bounding boxes pi/2 off, asymmetric
-      Clockwise_Rotation(Spatial_Occupation_Check,Delta_X_Check,Delta_Y_Check);
-      std::swap(Delta_X_Check,Delta_Y_Check);
-      if(Spatial_Occupation_Check==Spatial_Occupation_Compare) {
+    if(dx==dy_prime && dy==dx_prime) { //bounding boxes pi/2 off, asymmetric
+      Clockwise_Rotation(rs_lattice,dx,dy);
+      std::swap(dx,dy);
+      if(rs_lattice==rs_lattice_prime)
         return true;
-      }
       else {
-        Clockwise_Pi_Rotation(Spatial_Occupation_Check,Delta_X_Check,Delta_Y_Check);
-        if(Spatial_Occupation_Check==Spatial_Occupation_Compare) {
-          return true;
-        }
-        return false;
+        Clockwise_Pi_Rotation(rs_lattice,dx,dy);
+        return rs_lattice==rs_lattice_prime ? true : false; 
       }
     }
-    //nomiminally else, completely mismatch
     return false;
   }
 }

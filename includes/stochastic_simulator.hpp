@@ -3,7 +3,7 @@
 #include "stdint.h"
 
 
-namespace Brute_Force {
+namespace Stochastic {
 
   
   

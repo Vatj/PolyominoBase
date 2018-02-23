@@ -7,7 +7,7 @@
 
 
 
-namespace Brute_Force {
+namespace Stochastic {
 
   void Brute_vs_Graph_Methods_Comparison_Random_Sample(unsigned int genome_Length,int MAX_C,int num_Samples, int K_Repetitions) {
     std::cout<<"Running for tile size of "+std::to_string(genome_Length/4)+" for "+std::to_string(num_Samples)+" iterations"<<std::endl;
@@ -36,7 +36,7 @@ namespace Brute_Force {
       }
       
       std::vector<int> Bgenome(genome);
-      int B_result=Brute_Force::Analyse_Genotype_Outcome(genome,K_Repetitions);
+      int B_result=Stochastic::Analyse_Genotype_Outcome(genome,K_Repetitions);
       int G_result;
 
       if(Disjointed_Check(genome)) {
@@ -121,8 +121,8 @@ namespace Brute_Force {
       }while(genome.size()!=genome_Length);
 
       std::vector<int> Bgenome(genome);
-      int B_Perfect_result=Brute_Force::Analyse_Genotype_Outcome(genome,250);
-      int B_Test_result=Brute_Force::Analyse_Genotype_Outcome(Bgenome,K_Repetitions);
+      int B_Perfect_result=Stochastic::Analyse_Genotype_Outcome(genome,250);
+      int B_Test_result=Stochastic::Analyse_Genotype_Outcome(Bgenome,K_Repetitions);
 
 #pragma omp critical(mapping)
       {
@@ -245,7 +245,7 @@ int main(int argc, char* argv[]) {
       Topology_Robustness({0,0,0,1,2,2,2,2},std::stoi(argv[2]),{6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 38, 42, 50, 60, 70, 84, 100, 150, 250, 500},std::stoi(argv[3]));
       break;
     case 'C':
-      Brute_Force::Brute_vs_Graph_Methods_Comparison_Random_Sample(std::stoi(argv[2])*4,std::stoi(argv[2])*4+2,std::stoi(argv[3]),25);
+      Stochastic::Brute_vs_Graph_Methods_Comparison_Random_Sample(std::stoi(argv[2])*4,std::stoi(argv[2])*4+2,std::stoi(argv[3]),25);
       break;
     case 'S':
       for(int i=0;i<100;++i) {
@@ -340,7 +340,7 @@ void Generate_Random_Genotypes(int genome_Length,std::vector<std::vector<int> >&
 bool Generating_Condition(std::vector<int>& genome,int condition) {
   switch(condition) {
   case 0: //Want B/D topologies only
-    return (!Disjointed_Check(genome) && Graph_Analysis(genome)>0 && Steric_Check(genome,false)>0); //Brute_Force::Analyse_Genotype_Outcome(genome,50)>0;
+    return (!Disjointed_Check(genome) && Graph_Analysis(genome)>0 && Steric_Check(genome,false)>0); //Stochastic::Analyse_Genotype_Outcome(genome,50)>0;
   case 1: //Want connected topologies only
     return !Disjointed_Check(genome);
   default: //Want any topology
@@ -369,7 +369,7 @@ void Timing_Mode(std::vector<std::vector<int> >& GENOME_VECTOR, std::vector<int>
       std::vector<int> genome=GENOME_VECTOR[t];
       
       if(k>0) {
-        if(Brute_Force::Analyse_Genotype_Outcome(genome,k)>0)
+        if(Stochastic::Analyse_Genotype_Outcome(genome,k)>0)
           ++BD;
       }
       else {
@@ -393,7 +393,7 @@ void Accuracy_Mode(std::vector<std::vector<int> >& GENOME_VECTOR, std::vector<in
 #pragma omp parallel for  schedule(dynamic)
   for(unsigned int t=0;t<GENOME_VECTOR.size();++t) {
     std::vector<int> genome=GENOME_VECTOR[t];
-    int TRUTH_RESULT=Brute_Force::Analyse_Genotype_Outcome(genome,100);
+    int TRUTH_RESULT=Stochastic::Analyse_Genotype_Outcome(genome,100);
     std::vector<int> G_genome2(genome);
     if(Disjointed_Check(G_genome2))
       TRUTH_RESULT=-5;
@@ -405,7 +405,7 @@ void Accuracy_Mode(std::vector<std::vector<int> >& GENOME_VECTOR, std::vector<in
     for(int k:k_repeats) {
       int Test_Result;
       if(k>0)
-        Test_Result=Brute_Force::Analyse_Genotype_Outcome(genome,k);
+        Test_Result=Stochastic::Analyse_Genotype_Outcome(genome,k);
       else {
         std::vector<int> G_genome(genome);
         if(Disjointed_Check(G_genome))
