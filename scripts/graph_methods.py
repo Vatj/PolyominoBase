@@ -416,17 +416,16 @@ def LoadNewtimings(sbst):
 def LoadNewtimingserr():
     errs=0
     tot=0
-    for line in open('/rscratch/asl47/Bulk_Run/Regulation/Evolution_T3_C10_N250_K250_M1_R0_I1.txt'):
+    rats=[]
+    for line in open('/rscratch/asl47/Bulk_Run/Regulation/Evolution_T20_C100_N500_K500_M1_R0_I2.txt'):
         if 'Mc:' not in line:
-            tot+=sum([int(i) for i in line[line.index('A:')+2:].split()])
+            tot=sum([int(i) for i in line[line.index('A:')+2:].split()])
             continue
         else:
-            errs+=int(line.split()[-1])
-    print tot
-    return float(errs)/(500*500)
-def LoadNewGCs():
-
-    return 2
+            errs=int(line.split()[-1])
+            rats.append(float(errs)/((500.*tot)/1000000.))
+    raw=np.array(rats[12:])
+    return np.mean(rats),stats.sem(rats)
 
 def getSeconds(timein):
     return int(timein[1])*60+int(timein[3])+int(timein[5])/1000.
@@ -456,28 +455,56 @@ def LoadNewGCs(T):
     
     
     return np.mean(ratios),var,np.mean(rawe[:,1]),stats.sem(rawe[:,1])
-    
+from matplotlib import gridspec
 def PlotNewComp():
-    plt.figure()
+    gs = gridspec.GridSpec(1, 2, width_ratios=[4, 1])
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(gs[0])
+    ax2 = fig.add_subplot(gs[1],sharey=ax)
 
-    for i in xrange(1,12):
+    for i in range(1,6)+[7,9,11]:
         data=LoadNewGCs(i)
-        plt.errorbar(data[2],data[0],yerr=data[1],xerr=data[3],fmt='o')
-        plt.annotate(r'$\mathrm{{GP}}_{{{}}}$'.format(i),xy=(data[2], data[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom',arrowprops=dict(arrowstyle = '->', connectionstyle='arc3,rad=0'))
+        ax.errorbar(1+data[2],data[0],yerr=data[1],xerr=data[3],fmt='o')
+        ax.annotate(r'$\mathrm{{GP}}_{{{}}}$'.format(i),xy=(1+data[2], data[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom',arrowprops=dict(arrowstyle = '->', connectionstyle='arc3,rad=0'))
+        ax2.errorbar(1+data[2],data[0],yerr=data[1],xerr=data[3],fmt='o')
+        ax2.annotate(r'$\mathrm{{GP}}_{{{}}}$'.format(i),xy=(1+data[2], data[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom',arrowprops=dict(arrowstyle = '->', connectionstyle='arc3,rad=0'))
 
 
-    for i in [(2,8),(3,10)]:#,(20,100)]:
+    for i in [(2,8),(3,10),(20,100)]:
         t=LoadNewtimings(''.join(map(str,i)))
         er=[]
         if i[0]!=20:
             er=(0,0)
         else:
-            er=LoadNewtimingserr(''.join(map(str,i)))
-        plt.errorbar(er[0],t[0],yerr=t[1],xerr=er[1],fmt='o')
-        plt.annotate(r'$S_{{{},{}}}$'.format(*i),xy=(er[0],t[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom',arrowprops=dict(arrowstyle = '->', connectionstyle='arc3,rad=0'))
+            er=LoadNewtimingserr()
+        ax.errorbar(1+er[0],t[0],yerr=t[1],xerr=er[1],fmt='o')
+        ax.annotate(r'$S_{{{},{}}}$'.format(*i),xy=(1+er[0],t[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom',arrowprops=dict(arrowstyle = '->', connectionstyle='arc3,rad=0'))
+        ax2.errorbar(1+er[0],t[0],yerr=t[1],xerr=er[1],fmt='o')
+        ax2.annotate(r'$S_{{{},{}}}$'.format(*i),xy=(1+er[0],t[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom',arrowprops=dict(arrowstyle = '->', connectionstyle='arc3,rad=0'))
 
-    plt.xlabel('Accuracy Improvement')
-    plt.ylabel('Speed Improvement')
-    plt.yscale('log')
+    ax.set_xlabel('Accuracy Improvement')
+    ax.set_ylabel('Speed Improvement')
+    ax.set_yscale('log')
+    ax.set_xscale('log')
+
+    ax2.set_yscale('log')
+    ax2.set_xscale('log')
+    ax.spines['right'].set_visible(False)
+    ax2.spines['left'].set_visible(False)
+    ax.yaxis.tick_left()
+    ax.tick_params(labelright='off')  # don't put tick labels at the top
+    ax2.yaxis.tick_right()
+
+    d = .015  # how big to make the diagonal lines in axes coordinates
+  
+    kwargs = dict(transform=ax.transAxes, color='k', clip_on=False)
+    ax.plot((1 - d, 1 + d),(1 - d, 1 + d), **kwargs)        # top-left diagonal
+    ax.plot((1 - d, 1 + d), (-d, +d), **kwargs)  # top-right diagonal
+
+    kwargs.update(transform=ax2.transAxes)  # switch to the bottom axes
+    ax2.plot((-d*4, +d*4), (1 - d, 1 + d), **kwargs)  # bottom-left diagonal
+    ax2.plot((-d*4, +d*4),(-d, +d), **kwargs) 
+
+
     plt.show(block=False)
     

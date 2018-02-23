@@ -11,9 +11,7 @@ namespace simulation_params
 namespace model_params
 {
   const uint8_t interface_size=CHAR_BIT*sizeof(interface_type);
-  
   double temperature=1,mu_prob=0.2,unbound_factor=1,misbinding_rate=0,fitness_factor=1,UND_threshold=0.2;
- 
   std::binomial_distribution<uint8_t> b_dist(interface_size,mu_prob);
   std::uniform_real_distribution<double> real_dist(0, 1);
   
@@ -27,7 +25,7 @@ namespace interface_model
   //std::mt19937 RNG_Engine(276358710);
   
   inline interface_type reverse_bits(interface_type v) {
-    interface_type s = sizeof(v) * CHAR_BIT; // bit size; must be power of 2
+    interface_type s = sizeof(v) * CHAR_BIT;
     interface_type mask = ~0;         
     while ((s >>= 1) > 0) {
       mask ^= (mask << s);
@@ -58,22 +56,25 @@ namespace interface_model
   double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome,PhenotypeTable* pt,phenotype_ID& pid) {
     uint8_t dx=0,dy=0;
     std::vector<int8_t> assembly_information;
-    std::vector<uint8_t> spatial_information;
+    Phenotype phen;
     std::vector<phenotype_ID> phenotype_IDs;phenotype_IDs.reserve(simulation_params::phenotype_builds);
     for(uint8_t nth=0;nth<simulation_params::phenotype_builds;++nth) {
       assembly_information=AssembleProtein(binary_genome);
-      spatial_information=SpatialGrid(assembly_information,dx,dy);
-      phenotype_IDs.emplace_back(std::accumulate(spatial_information.begin(),spatial_information.end(),0),pt->PhenotypeCheck(spatial_information,dx,dy));
+      if(assembly_information.size()>0) {
+        phen=SpatialGrid(assembly_information,dx,dy);
+        phenotype_IDs.emplace_back(std::count_if(phen.tiling.begin(),phen.tiling.end(),[](const int c){return c != 0;}),pt->PhenotypeCheck(phen));
+      }
+      else
+        phenotype_IDs.emplace_back(0,0);
     }
     auto ID_counter=pt->PhenotypeFrequencies(phenotype_IDs);
     pid=std::max_element(ID_counter.begin(),ID_counter.end(),[] (const auto & p1, const auto & p2) {return p1.second < p2.second;})->first;
-    //pid=MostCommonPhenotype();
     return pt->GenotypeFitness(ID_counter);
   }
 
 
   std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome) {
-    std::vector<int8_t> placed_tiles{0,0};
+    std::vector<int8_t> placed_tiles{0,0,0};
     std::vector<int8_t> growing_perimeter; 
     PerimeterGrowth(0,0,0,-1,0,growing_perimeter,placed_tiles);
     int8_t current_orientation, current_tile, current_direction, current_x, current_y;
@@ -89,12 +90,12 @@ namespace interface_model
       std::shuffle(genome_bases.begin(), genome_bases.end(), RNG_Engine);
       for(uint8_t base : genome_bases) {
         if(model_params::real_dist(RNG_Engine)<std::exp(-1*static_cast<double>(SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[base]))/(model_params::interface_size*model_params::temperature))) {
-          placed_tiles.insert(placed_tiles.end(),{current_x,current_y});//base/4,base%4
+          placed_tiles.insert(placed_tiles.end(),{current_x,current_y,static_cast<int8_t>(base+1)});
             PerimeterGrowth(current_x,current_y,(4+current_direction-(base%4))%4,current_direction,base/4,growing_perimeter,placed_tiles);
             break;
           }
       }    
-      if(placed_tiles.size()>(model_params::unbound_factor*binary_genome.size()*binary_genome.size()/2.))
+      if(placed_tiles.size()>(model_params::unbound_factor*0.75*binary_genome.size()*binary_genome.size()))
         return {};
     }
     return placed_tiles;   
@@ -113,7 +114,7 @@ namespace interface_model
       }
       bool occupied_site=false;
       std::uniform_int_distribution<int> index_randomizer(0, growing_perimeter.size()/5);
-      for(std::vector<int8_t>::reverse_iterator tile_info=placed_tiles.rbegin();tile_info!=placed_tiles.rend();tile_info+=2) {
+      for(std::vector<int8_t>::reverse_iterator tile_info=placed_tiles.rbegin();tile_info!=placed_tiles.rend();tile_info+=3) {
         if(x+dx==*(tile_info+1) && y+dy==*(tile_info)) {
           occupied_site=true;
           break;
@@ -123,36 +124,20 @@ namespace interface_model
         growing_perimeter.insert(growing_perimeter.begin()+5*index_randomizer(RNG_Engine),{static_cast<int8_t>(x+dx),static_cast<int8_t>(y+dy),static_cast<int8_t>((f+2)%4),tile_type,static_cast<int8_t>((4+f-theta)%4)});      
     }
   }
-  /*
-  phenotype_ID MostCommonPhenotype(std::map<phenotype_ID,uint8_t>& ID_counter) {
-    auto pr = std::max_element(ID_counter.begin(),ID_counter.end(),[] (const auto & p1, const auto & p2) {return p1.second < p2.second;});
-    return pr->first;
-    
-    uint8_t highest=0;
-    phenotype_ID most_common;
-    for(auto kv : ID_counter) {
-      if(kv.second>highest) {
-        most_common=kv.first;
-        highest=kv.second;
-      }
-    }
-    return most_common;
-    
-  }
-  */
+
 }//end interface_model namespace
 
-std::vector<uint8_t> SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,uint8_t& dy) {
-  if(placed_tiles.empty())
-    return {};
-  std::vector<int8_t> x_locs, y_locs;
-  x_locs.reserve(placed_tiles.size()/2);
-  y_locs.reserve(placed_tiles.size()/2);
-  //tile_vals.reserve(placed_tiles.size()/4);
-  for(std::vector<int8_t>::iterator check_iter = placed_tiles.begin();check_iter!=placed_tiles.end();check_iter+=2) {
+Phenotype SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,uint8_t& dy) {
+  //if(placed_tiles.empty())
+  //  return {};
+  std::vector<int8_t> x_locs, y_locs,tile_vals;
+  x_locs.reserve(placed_tiles.size()/3);
+  y_locs.reserve(placed_tiles.size()/3);
+  tile_vals.reserve(placed_tiles.size()/3);
+  for(std::vector<int8_t>::iterator check_iter = placed_tiles.begin();check_iter!=placed_tiles.end();check_iter+=3) {
     x_locs.emplace_back(*check_iter);
     y_locs.emplace_back(*(check_iter+1));
-    //tile_vals.emplace_back(*(check_iter+2)*4+*(check_iter+3));
+    tile_vals.emplace_back(*(check_iter+2));//*4+*(check_iter+3));
   }
   std::vector<int8_t>::iterator x_left,x_right,y_top,y_bottom;
   std::tie(x_left,x_right)=std::minmax_element(x_locs.begin(),x_locs.end());
@@ -161,50 +146,68 @@ std::vector<uint8_t> SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,
   dy=*y_top-*y_bottom+1;
   std::vector<uint8_t> spatial_grid(dx*dy); 
   for(uint16_t tileIndex=0;tileIndex<x_locs.size();++tileIndex)
-    spatial_grid[(*y_top-y_locs[tileIndex])*dx + (x_locs[tileIndex]-*x_left)]=1; //tile_vals[tile_index]
-  return spatial_grid;
+    spatial_grid[(*y_top-y_locs[tileIndex])*dx + (x_locs[tileIndex]-*x_left)]=tile_vals[tileIndex];
+  return Phenotype{dx,dy,spatial_grid};
 }
 
-bool ComparePolyominoes(std::vector<uint8_t>& phenotype,uint8_t& dx,uint8_t& dy, std::vector<uint8_t>& phenotype_prime,uint8_t dx_prime,uint8_t dy_prime) {
-  if(std::accumulate(phenotype.begin(),phenotype.end(),0)!=std::accumulate(phenotype_prime.begin(),phenotype_prime.end(),0))
+bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2) {
+  if(std::count(phen1.tiling.begin(),phen1.tiling.end(),0)!=std::count(phen2.tiling.begin(),phen2.tiling.end(),0))
     return false;
-  if(dx==dx_prime && dy==dy_prime && dx==dy) { //bounding boxes match, symmetric
-    if(phenotype==phenotype_prime) 
+  if(phen1.dx==phen2.dx && phen1.dy==phen2.dy && phen1.dx==phen2.dy) { //bounding boxes match, symmetric
+    if(phen1.tiling==phen2.tiling) 
       return true;
     else { //SYMMETRY ARGUMENT TO OPTIMIZE
       for(int rotation=0;rotation<3;++rotation) {
-	ClockwiseRotation(phenotype,dx,dy);
-	if(phenotype==phenotype_prime)
+	ClockwiseRotation(phen1);
+        if(phen1.tiling==phen2.tiling) 
 	  return true;
       }
       return false;
     }
   }
-  if(dx==dx_prime && dy==dy_prime)  //bounding boxes match, asymmetric
-    return phenotype==phenotype_prime ? true : phenotype==ClockwisePiRotation(phenotype_prime);
-  if(dx==dy_prime && dy==dx_prime) { //bounding boxes pi/2 off, asymmetric
-    ClockwiseRotation(phenotype,dx,dy);
-    return phenotype==phenotype_prime ? true : phenotype==ClockwisePiRotation(phenotype_prime);
+  if(phen1.dx==phen2.dx && phen1.dy==phen2.dy) {  //bounding boxes match, asymmetric
+    if(phen1.tiling==phen2.tiling)
+      return true;
+    else {
+      ClockwisePiRotation(phen1);
+      return phen1.tiling==phen2.tiling;
+    }
+  }
+  if(phen1.dx==phen2.dy && phen1.dy==phen2.dx) { //bounding boxes pi/2 off, asymmetric
+    ClockwiseRotation(phen1);
+    if(phen1.tiling==phen2.tiling)
+      return true;
+    else {
+      ClockwisePiRotation(phen1);
+      return phen1.tiling==phen2.tiling;
+    }
   }
   return false;
 }
-void ClockwiseRotation(std::vector<uint8_t>& phenotype,uint8_t& dx,uint8_t& dy) {
+
+void ClockwiseRotation(Phenotype& phen) {
   std::vector<uint8_t> swapper;
-  swapper.reserve(phenotype.size());
-  for(uint8_t column=0;column<dx;++column) 
-    for(uint8_t row=dy;row!=0;--row) 
-      swapper.emplace_back(phenotype[(row-1)*dx+column]);
-  std::swap(dx,dy);
-  phenotype=swapper;
+  swapper.reserve(phen.tiling.size());
+
+  for(uint8_t column=0;column<phen.dx;++column) 
+    for(uint8_t row=phen.dy;row!=0;--row)  {
+      if(phen.tiling[(row-1)*phen.dx+column])
+        swapper.emplace_back(1+(phen.tiling[(row-1)*phen.dx+column])%4+((phen.tiling[(row-1)*phen.dx+column]-1)/4) *4);
+      else
+        swapper.emplace_back(0);                            
+    }
+  std::swap(phen.dx,phen.dy);
+  phen.tiling=swapper;
 }
-std::vector<uint8_t> ClockwisePiRotation(std::vector<uint8_t>& phenotype) {
-  std::reverse(phenotype.begin(),phenotype.end());
-  return phenotype;
+void ClockwisePiRotation(Phenotype& phen) {
+  std::reverse(phen.tiling.begin(),phen.tiling.end());
+  for(auto& base : phen.tiling)
+    base=((base-1)+2)%4+1;
 }
-void PrintShape(std::vector<uint8_t>& spatial_information,uint8_t dx,uint8_t dy) {
-  for(uint8_t y=0;y<dy;++y) {
-    for(uint8_t x=0;x<dx;++x)
-      std::cout<<+spatial_information[y*dx+x]<<" ";
+void PrintShape(Phenotype phen) {
+  for(uint8_t y=0;y<phen.dy;++y) {
+    for(uint8_t x=0;x<phen.dx;++x)
+      std::cout<<+phen.tiling[y*phen.dx+x]<<" ";
     std::cout<<std::endl;
   }
   std::cout<<std::endl;
@@ -216,7 +219,7 @@ uint8_t PhenotypeSymmetryFactor(std::vector<uint8_t>& original_shape, uint8_t dx
   if(original_shape!=rotated_shape)
     return 1;
   if(dx==dy) {
-    ClockwiseRotation(rotated_shape,dx,dy);
+    //ClockwiseRotation(Phenotyrotated_shape,dx,dy);
     if(original_shape==rotated_shape)
       return 4;
   }

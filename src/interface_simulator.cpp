@@ -189,8 +189,8 @@ void EvolvePopulation(std::string run_details) {
     
   } /* End main evolution loop */
   
-
-  
+  pt.PrintTable(fout_phenotype);
+  /*
   for(std::unordered_map<uint8_t,std::vector<uint8_t> >::iterator phen_iter=pt.known_phenotypes.begin();phen_iter!=pt.known_phenotypes.end();++phen_iter) {
     uint16_t n_sized_phenotypes=0;
     for(std::vector<uint8_t>::iterator shape_iter=phen_iter->second.begin();shape_iter!=phen_iter->second.end();) {
@@ -204,6 +204,7 @@ void EvolvePopulation(std::string run_details) {
     }
     fout_size <<+phen_iter->first<<" "<<n_sized_phenotypes<<"\n";
   }
+  */
   
   
   

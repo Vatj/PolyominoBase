@@ -11,6 +11,7 @@
 #include <climits>
 #include <cstdint>
 #include <cmath>
+#include <fstream>
 
 namespace simulation_params
 {
@@ -30,21 +31,30 @@ namespace model_params
   extern std::uniform_real_distribution<double> real_dist;
 
 }
+
+struct Phenotype {
+    uint8_t dx;
+    uint8_t dy;
+    std::vector<uint8_t> tiling;
+  };
+
+
 /* SPATIAL */
-std::vector<uint8_t> SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,uint8_t& dy);
-bool ComparePolyominoes(std::vector<uint8_t>& phenotype,uint8_t& dx,uint8_t& dy, std::vector<uint8_t>& phenotype_prime,uint8_t dx_prime,uint8_t dy_prime);
+Phenotype SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,uint8_t& dy);
+bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2);
 
 /* ROTATIONS */
-void ClockwiseRotation(std::vector<uint8_t>& phenotype,uint8_t& dx,uint8_t& dy);
-std::vector<uint8_t> ClockwisePiRotation(std::vector<uint8_t>& phenotype);
+void ClockwiseRotation(Phenotype& phen);
+void ClockwisePiRotation(Phenotype& phen);
 
 /* PRINTING */
-void PrintShape(std::vector<uint8_t>& spatial_information,uint8_t dx,uint8_t dy);
+void PrintShape(Phenotype phen);
 
 typedef uint8_t interface_type;
 typedef std::pair<uint8_t,uint16_t> phenotype_ID;
 namespace interface_model
 {
+  
   
   struct PhenotypeTable;
 
@@ -67,8 +77,8 @@ namespace interface_model
 
   struct PhenotypeTable {
     //uint32_t n_phenotypes;
-    std::unordered_map<uint8_t,std::vector<uint8_t> > known_phenotypes;
-    std::unordered_map<uint8_t,std::vector<uint8_t> > undiscovered_phenotypes;
+    std::unordered_map<uint8_t,std::vector<Phenotype> > known_phenotypes;
+    std::unordered_map<uint8_t,std::vector<Phenotype> > undiscovered_phenotypes;
     std::unordered_map<uint8_t,std::vector<double> > phenotype_fitnesses{{0,{0}}};
     std::unordered_map<uint8_t,std::vector<uint16_t> > new_phenotype_xfer;
     std::vector<uint16_t> undiscovered_phenotype_counts;
@@ -77,46 +87,36 @@ namespace interface_model
     
     //PhenotypeTable(void) : n_phenotypes(0) {};
 
-    uint16_t PhenotypeCheck(std::vector<uint8_t>& phenotype, uint8_t dx, uint8_t dy) {
-      if(phenotype.empty())
-        return 0;
-      uint16_t phenotype_index=0;
-      uint8_t phenotype_size=std::accumulate(phenotype.begin(),phenotype.end(),0);
-      std::vector<uint8_t> temp_phenotype;
-      for(std::vector<uint8_t>::iterator phen_iter = known_phenotypes[phenotype_size].begin();phen_iter!=known_phenotypes[phenotype_size].end();) {
-        temp_phenotype.assign(phen_iter+2,phen_iter+2+*phen_iter* *(phen_iter+1));
-        if(ComparePolyominoes(phenotype,dx,dy,temp_phenotype,*phen_iter,*(phen_iter+1))) {
+    uint16_t PhenotypeCheck(Phenotype& phen) {
+      //uint16_t phenotype_index=0;
+      uint8_t phenotype_size=std::count_if(phen.tiling.begin(),phen.tiling.end(),[](const int c){return c != 0;});
+
+      for(uint16_t phenotype_index=0; phenotype_index != known_phenotypes[phenotype_size].size();++phenotype_index) {
+        if(ComparePolyominoes(phen,known_phenotypes[phenotype_size][phenotype_index])) 
 	  return phenotype_index;
-	}
-        phen_iter+=*phen_iter* *(phen_iter+1)+2;
-        ++phenotype_index;
       }
       uint8_t new_phenotype_index=0;
-      for(std::vector<uint8_t>::iterator phen_iter = undiscovered_phenotypes[phenotype_size].begin();phen_iter!=undiscovered_phenotypes[phenotype_size].end();) {
-        temp_phenotype.assign(phen_iter+2,phen_iter+2+*phen_iter* *(phen_iter+1));
-        if(ComparePolyominoes(phenotype,dx,dy,temp_phenotype,*phen_iter,*(phen_iter+1))) {
+      for(Phenotype phen_p : undiscovered_phenotypes[phenotype_size]) {
+        if(ComparePolyominoes(phen,phen_p)) {
           if(++undiscovered_phenotype_counts[new_phenotype_index]>=ceil(model_params::UND_threshold*simulation_params::phenotype_builds)) {
-	    new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
-	    known_phenotypes[phenotype_size].insert(known_phenotypes[phenotype_size].end(),phen_iter,phen_iter+2+*phen_iter* *(phen_iter+1));
-	    //std::gamma_distribution<double> fitness_dist(sqrt(static_cast<double>(phenotype_size)),1);
-            std::gamma_distribution<double> fitness_dist(pow(static_cast<double>(phenotype_size),3),1);
-	    phenotype_fitnesses[phenotype_size].emplace_back(fitness_dist(RNG_Engine));
-	    new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()-1);
+            new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
+            known_phenotypes[phenotype_size].push_back(phen);
+            //std::gamma_distribution<double> fitness_dist(sqrt(static_cast<double>(phenotype_size)),1);
+            std::gamma_distribution<double> fitness_dist(pow(static_cast<double>(phenotype_size),2),1);
+            phenotype_fitnesses[phenotype_size].emplace_back(fitness_dist(RNG_Engine));
+            new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()-1);
             
-	    return phenotype_fitnesses[phenotype_size].size()-1;
-	  }
-	  else {
-	    return phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds;
-	  }
-	  
-	}
-        phen_iter+=*phen_iter* *(phen_iter+1)+2;
+            return phenotype_fitnesses[phenotype_size].size()-1;
+          }
+          else
+            return phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds;
+        }
         ++new_phenotype_index;
       }
-      
-      undiscovered_phenotypes[phenotype_size].emplace_back(dx);
-      undiscovered_phenotypes[phenotype_size].emplace_back(dy);
-      undiscovered_phenotypes[phenotype_size].insert(undiscovered_phenotypes[phenotype_size].end(),phenotype.begin(),phenotype.end());
+      undiscovered_phenotypes[phenotype_size].emplace_back(phen);
+      //undiscovered_phenotypes[phenotype_size].emplace_back(dx);
+      //undiscovered_phenotypes[phenotype_size].emplace_back(dy);
+      //undiscovered_phenotypes[phenotype_size].insert(undiscovered_phenotypes[phenotype_size].end(),phenotype.begin(),phenotype.end());
       undiscovered_phenotype_counts.emplace_back(1);
       return phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds;
     }
@@ -124,8 +124,8 @@ namespace interface_model
     std::map<phenotype_ID,uint8_t> PhenotypeFrequencies(std::vector<phenotype_ID >& phenotype_IDs) {
       /* Replace previously undiscovered phenotype IDs with new one */
       for(std::unordered_map<uint8_t,std::vector<uint16_t> >::iterator xfer_iter=new_phenotype_xfer.begin();xfer_iter!=new_phenotype_xfer.end();++xfer_iter) 
-	for(std::vector<uint16_t>::iterator rep_iter=xfer_iter->second.begin();rep_iter!=xfer_iter->second.end();rep_iter+=2) 
-	std::replace(phenotype_IDs.begin(),phenotype_IDs.end(),std::make_pair(xfer_iter->first,*(rep_iter)),std::make_pair(xfer_iter->first,*(rep_iter+1)));
+        for(std::vector<uint16_t>::iterator rep_iter=xfer_iter->second.begin();rep_iter!=xfer_iter->second.end();rep_iter+=2) 
+          std::replace(phenotype_IDs.begin(),phenotype_IDs.end(),std::make_pair(xfer_iter->first,*(rep_iter)),std::make_pair(xfer_iter->first,*(rep_iter+1)));
       /* Count each ID frequency */
       std::map<phenotype_ID, uint8_t> ID_counter;
       for(std::vector<phenotype_ID >::const_iterator ID_iter = phenotype_IDs.begin(); ID_iter!=phenotype_IDs.end(); ++ID_iter)
@@ -160,8 +160,21 @@ namespace interface_model
       }
     }
 
+    void PrintTable(std::ofstream& fout) {
+      for(auto known_phens : known_phenotypes) {
+        uint16_t n_phen=0;
+        for(Phenotype known : known_phens.second) {
+          fout<<+known_phens.first<<" "<<+n_phen++<<" "<<known.dx<<" "<<known.dy<<" ";
+          for(auto tile : known.tiling)
+            fout<<tile<<" ";
+          fout<<"\n";
+        }
+      }
+    }
+
   };
 }
+
 
 uint8_t PhenotypeSymmetryFactor(std::vector<uint8_t>& original_shape, uint8_t dx, uint8_t dy);
 void DistributionStatistics(std::vector<double>& intf, double& mean, double& variance);
