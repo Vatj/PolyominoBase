@@ -392,3 +392,92 @@ def Plot_Method_Testing(Ts,R):
     plt.show(block=False)
     #return accuracy_list[2]
 
+import re
+from scipy import stats
+def LoadNewtimings(sbst):
+    timings=[]
+    tempL=[]
+    for line in open('/rscratch/asl47/binaries/timingS{}.txt'.format(sbst)):
+        if 'user' not in line:
+            continue
+        else:
+            tempL.append(getSeconds(re.split('(\d+)', line.split()[1])))
+        if len(tempL)==3:
+            timings.append(tempL)
+            tempL=[]
+            
+    raw=np.array(timings)
+    raw[:,1]-=raw[:,0]
+    raw[:,2]-=raw[:,0]
+    ratios=raw[:,1]/raw[:,2]
+    var=np.mean(ratios)*np.sqrt( (stats.sem(raw[:,1])/np.mean(raw[:,1]))**2 + (stats.sem(raw[:,2])/np.mean(raw[:,2]))**2 )
+    return np.mean(ratios),var
+
+def LoadNewtimingserr():
+    errs=0
+    tot=0
+    for line in open('/rscratch/asl47/Bulk_Run/Regulation/Evolution_T3_C10_N250_K250_M1_R0_I1.txt'):
+        if 'Mc:' not in line:
+            tot+=sum([int(i) for i in line[line.index('A:')+2:].split()])
+            continue
+        else:
+            errs+=int(line.split()[-1])
+    print tot
+    return float(errs)/(500*500)
+def LoadNewGCs():
+
+    return 2
+
+def getSeconds(timein):
+    return int(timein[1])*60+int(timein[3])+int(timein[5])/1000.
+
+def LoadNewGCs(T):
+    raw_time=[]
+    raw_err=[]
+    for i in xrange(10):
+        timings=[]
+        errors=[]
+        for line in open('/rscratch/asl47/binaries/GC_Space_{}_{}.txt'.format(T,i)):
+            if 'Runtime' in line:
+                timings.append(float(line.split()[2]))
+            elif 'Over' in line:
+                errors.append(int(line.split()[3])+int(line.split()[5]))
+            if len(timings)==2:
+                raw_time.append(timings)
+                timings=[]
+            elif len(errors)==2:
+                raw_err.append(errors)
+                errors=[]
+                
+    raw=np.array(raw_time)
+    ratios=raw[:,1]/raw[:,0]
+    var=np.mean(ratios)*np.sqrt( (stats.sem(raw[:,0])/np.mean(raw[:,0]))**2 + (stats.sem(raw[:,1])/np.mean(raw[:,1]))**2 )
+    rawe=np.array(raw_err)
+    
+    
+    return np.mean(ratios),var,np.mean(rawe[:,1]),stats.sem(rawe[:,1])
+    
+def PlotNewComp():
+    plt.figure()
+
+    for i in xrange(1,12):
+        data=LoadNewGCs(i)
+        plt.errorbar(data[2],data[0],yerr=data[1],xerr=data[3],fmt='o')
+        plt.annotate(r'$\mathrm{{GP}}_{{{}}}$'.format(i),xy=(data[2], data[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom',arrowprops=dict(arrowstyle = '->', connectionstyle='arc3,rad=0'))
+
+
+    for i in [(2,8),(3,10)]:#,(20,100)]:
+        t=LoadNewtimings(''.join(map(str,i)))
+        er=[]
+        if i[0]!=20:
+            er=(0,0)
+        else:
+            er=LoadNewtimingserr(''.join(map(str,i)))
+        plt.errorbar(er[0],t[0],yerr=t[1],xerr=er[1],fmt='o')
+        plt.annotate(r'$S_{{{},{}}}$'.format(*i),xy=(er[0],t[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom',arrowprops=dict(arrowstyle = '->', connectionstyle='arc3,rad=0'))
+
+    plt.xlabel('Accuracy Improvement')
+    plt.ylabel('Speed Improvement')
+    plt.yscale('log')
+    plt.show(block=False)
+    
