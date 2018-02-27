@@ -2,6 +2,7 @@
 #include <vector>
 #include <iostream>
 #include <utility>
+#include <functional>
 #include <tuple>
 #include <array>
 #include <numeric>
@@ -12,6 +13,7 @@
 #include <cstdint>
 #include <cmath>
 #include <fstream>
+#include <set>
 
 namespace simulation_params
 {
@@ -38,6 +40,8 @@ struct Phenotype {
     std::vector<uint8_t> tiling;
   };
 
+typedef uint8_t interface_type;
+typedef std::pair<uint8_t,uint16_t> phenotype_ID;
 
 /* SPATIAL */
 Phenotype SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,uint8_t& dy);
@@ -50,8 +54,12 @@ void ClockwisePiRotation(Phenotype& phen);
 /* PRINTING */
 void PrintShape(Phenotype phen);
 
-typedef uint8_t interface_type;
-typedef std::pair<uint8_t,uint16_t> phenotype_ID;
+void MinimalTilingRepresentation(std::vector<uint8_t>& tiling);
+uint8_t PhenotypeSymmetryFactor(std::vector<uint8_t>& original_shape, uint8_t dx, uint8_t dy);
+void DistributionStatistics(std::vector<double>& intf, double& mean, double& variance);
+void InterfaceStrengths(std::vector<interface_type>& interfaces, std::vector<uint32_t>& strengths);
+
+
 namespace interface_model
 {
   
@@ -113,6 +121,8 @@ namespace interface_model
         }
         ++new_phenotype_index;
       }
+      
+      MinimalTilingRepresentation(phen.tiling);
       undiscovered_phenotypes[phenotype_size].emplace_back(phen);
       //undiscovered_phenotypes[phenotype_size].emplace_back(dx);
       //undiscovered_phenotypes[phenotype_size].emplace_back(dy);
@@ -164,9 +174,9 @@ namespace interface_model
       for(auto known_phens : known_phenotypes) {
         uint16_t n_phen=0;
         for(Phenotype known : known_phens.second) {
-          fout<<+known_phens.first<<" "<<+n_phen++<<" "<<known.dx<<" "<<known.dy<<" ";
-          for(auto tile : known.tiling)
-            fout<<tile<<" ";
+          fout<<+known_phens.first<<" "<<+n_phen++<<" "<<+known.dx<<" "<<+known.dy<<" ";
+          for(uint8_t tile : known.tiling)
+            fout<<+tile<<" ";
           fout<<"\n";
         }
       }
@@ -176,9 +186,6 @@ namespace interface_model
 }
 
 
-uint8_t PhenotypeSymmetryFactor(std::vector<uint8_t>& original_shape, uint8_t dx, uint8_t dy);
-void DistributionStatistics(std::vector<double>& intf, double& mean, double& variance);
-void InterfaceStrengths(std::vector<interface_type>& interfaces, std::vector<uint32_t>& strengths);
 
 
 
