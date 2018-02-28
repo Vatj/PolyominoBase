@@ -81,10 +81,11 @@ void EvolvePopulation(std::string run_details) {
       if(record_strengths)
         InterfaceStrengths(evolving_genotype.genotype,interface_counter);
       
-      for(interface_type base_value : evolving_genotype.genotype)
-        fout_genotype_history << +base_value << " ";
-      fout_genotype_history<<"x ";
-      fout_phenotype_history << +evolving_genotype.pid.first <<" "<<+evolving_genotype.pid.second<<" ";
+      //for(interface_type base_value : evolving_genotype.genotype)
+      //  fout_genotype_history << +base_value << " ";
+      //fout_genotype_history<<"x ";
+      //fout_phenotype_history << +evolving_genotype.pid.first <<" "<<+evolving_genotype.pid.second<<" ";
+      
       if(generation>0) {
         if(SequenceDifference(evolving_genotype.genotype,reproduced_population[nth_genotype].genotype).size()>1) {
             population_fitnesses[nth_genotype]=0;
@@ -173,8 +174,8 @@ void EvolvePopulation(std::string run_details) {
       }
       ++nth_genotype;
     } 
-    fout_genotype_history<<"\n";
-    fout_phenotype_history<<"\n";
+    //fout_genotype_history<<"\n";
+    //fout_phenotype_history<<"\n";
     /* End genotype loop */
 
     /* Write data to file */
@@ -197,9 +198,9 @@ void EvolvePopulation(std::string run_details) {
         reproduced_population[nth_reproduction]=evolving_population[selection_indices[nth_reproduction]];
       }
       evolving_population.assign(reproduced_population.begin(),reproduced_population.end());
-      for(uint16_t selection_index : selection_indices)
-        fout_phenotype_history << +selection_index << " ";
-      fout_phenotype_history<<"\n";
+      //for(uint16_t selection_index : selection_indices)
+      //  fout_phenotype_history << +selection_index << " ";
+      //fout_phenotype_history<<"\n";
     }
     /* End selection */
     

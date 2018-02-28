@@ -184,7 +184,7 @@ Phenotype SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,uint8_t& dy
 }
 
 bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2) {
-  if(std::count(phen1.tiling.begin(),phen1.tiling.end(),0)!=std::count(phen2.tiling.begin(),phen2.tiling.end(),0))
+  if(phen1.tiling.size()!=phen2.tiling.size() || std::count(phen1.tiling.begin(),phen1.tiling.end(),0)!=std::count(phen2.tiling.begin(),phen2.tiling.end(),0))
     return false;
   if(phen1.dx==phen2.dx && phen1.dy==phen2.dy && phen1.dx==phen2.dy) { //bounding boxes match, symmetric
     if(phen1.tiling==phen2.tiling) 
@@ -206,17 +206,6 @@ bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2) {
       return phen1.tiling==phen2.tiling;
     }
   }
-  /*
-  if(phen1.dx==phen2.dy && phen1.dy==phen2.dx) { //bounding boxes pi/2 off, asymmetric
-    ClockwiseRotation(phen1);
-    if(phen1.tiling==phen2.tiling)
-      return true;
-    else {
-      ClockwisePiRotation(phen1);
-      return phen1.tiling==phen2.tiling;
-    }
-  }
-  */
   return false;
 }
 

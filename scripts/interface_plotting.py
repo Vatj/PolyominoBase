@@ -10,8 +10,8 @@ from tile_shape_visuals import Visualise_Shape_From_Binary as VSFB
 import glob
 
 #BASE_FILE_PATH='/scratch/asl47/Data_Runs/Interface_Cron/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
-BASE_FILE_PATH='/rscratch/asl47/Bulk_Run/Interfaces/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
-#BASE_FILE_PATH='../{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+#BASE_FILE_PATH='/rscratch/asl47/Bulk_Run/Interfaces/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+BASE_FILE_PATH='../{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
 
 def GetMaxRun(r_type,temperature,mu,gamma):
      return max([int(s[s.rindex('Run')+3:-4]) for s in glob.glob(BASE_FILE_PATH.format('Sizes',r_type,temperature,mu,gamma,'*'))])
@@ -20,6 +20,7 @@ def VisualisePhenotypes(r_type,temperature,mu,gamma,run):
      line_count=0
      page_max=24
      shapes_data=sorted([[int(i) for i in line.split()] for line in open(BASE_FILE_PATH.format('Phenotypes',r_type,temperature,mu,gamma,run))],key=lambda z: sum(z[4:]))
+     return shapes_data
      for shape in shapes_data:
           if line_count%page_max==0:
                fig, axarr = plt.subplots(6,4,figsize=(8.27,11.69))
@@ -32,7 +33,15 @@ def VisualisePhenotypes(r_type,temperature,mu,gamma,run):
                axarr.reshape(-1)[l].set_axis_off()
      
      plt.show(block=False)
-     
+
+def Test():
+     un=set()
+     for r in xrange(20):
+          for v in VisualisePhenotypes('S',0.000001,.5,1,r):
+               un.add(tuple(v[2:]))
+          print len(un)
+     return sorted(list(un),key = lambda z : sum([1 for i in z[2:] if i!=0]))
+             
 def LoadSizes(r_type,temperature,mu,gamma,runs=0):
      sizes=defaultdict(int)
      phen_count=[]

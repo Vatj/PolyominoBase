@@ -72,7 +72,7 @@ extern "C" void WrappedGetPhenotypeID(int g_size, int* genotype,int k_size,int* 
 }
 */
 void ExhaustivePhen() {
-  PhenotypeTable pt;
+  StochasticPhenotypeTable pt;
   int k_builds=3;
 
   std::ofstream fout("TestG.txt", std::ios_base::out);
@@ -97,9 +97,11 @@ void ExhaustivePhen() {
               for(int e=0;e<max_col2;++e) {
                 for(int r=0;r<max_col2;++r) {
                   
-                  std::vector<int> genotype={i,j,k,l, q,w,e,r};
-                  for(int seed=0;seed<genotype.size()/4;++seed)
-                    fout<<Stochastic::Analyse_Genotype_Outcome(genotype,k_builds,&pt,0)<<" ";
+                  std::vector<int> genotype{i,j,k,l, q,w,e,r};
+                  for(int seed=0;seed<genotype.size()/4;++seed) {
+		    Phenotype_ID phen_id=Stochastic::Analyse_Genotype_Outcome(genotype,k_builds,&pt,0);
+		    fout<<+phen_id.first<<" "<<+phen_id.second<<" ";
+		  }
                   fout<<"\n";
                   
                 }

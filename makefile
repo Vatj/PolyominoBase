@@ -34,6 +34,7 @@ ST_SOURCES := $(shell find $(SRCDIR) -type f -name stochastic_m*.$(SRCEXT))
 PR_SOURCES := $(shell find $(SRCDIR) -type f -name processing_*.$(SRCEXT))
 PE_SOURCES := $(shell find $(SRCDIR) -type f -name interface_*.$(SRCEXT))
 GP_SOURCES := $(shell find $(SRCDIR) -type f -name genotype_*.$(SRCEXT))
+Core_P_SOURCES := $(shell find $(SRCDIR) -type f -name core_*.$(SRCEXT))
 
 
 COMMON_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(COMMON_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
@@ -42,7 +43,7 @@ ST_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(ST_SOURCES:.$(SRCEXT)=.
 PR_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(PR_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 PE_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(PE_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 GP_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(GP_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
-
+Core_P_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(Core_P_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 
 
 #Default Make
@@ -68,7 +69,7 @@ Ev: $(EV_OBJECTS) $(COMMON_OBJECTS) $(ST_OBJECTS)
 	@mkdir -p $(TARGETDIR)	
 	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(EV_TARGET) $^
 
-St: $(ST_OBJECTS) $(COMMON_OBJECTS)
+St: $(ST_OBJECTS) $(COMMON_OBJECTS) $(Core_P_OBJECTS)
 	@mkdir -p $(TARGETDIR)
 	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(ST_TARGET) $^
 
@@ -80,7 +81,7 @@ Pe: $(PE_OBJECTS)
 	@mkdir -p $(TARGETDIR)
 	$(CXX) $(CXXFLAGS)  -o $(TARGETDIR)/$(PE_TARGET) $^
 
-GP: $(GP_OBJECTS) $(COMMON_OBJECTS) $(ST_OBJECTS)
+GP: $(GP_OBJECTS) $(COMMON_OBJECTS) $(ST_OBJECTS) $(Core_P_OBJECTS)
 	@mkdir -p $(TARGETDIR)	
 	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(GP_TARGET) $^
 
