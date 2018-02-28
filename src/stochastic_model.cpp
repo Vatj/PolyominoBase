@@ -30,7 +30,12 @@ namespace Stochastic
 
       }
     }
-    return pt->GetPhenotypeID(phen2); //Placed_Tiles_Check.size()/4;
+    Phenotype_ID result;
+    #pragma omp critical (table_lookup)
+    {
+      result=pt->GetPhenotypeID(phen2); //Placed_Tiles_Check.size()/4;
+    }
+    return result;
   }
   
   std::vector<int> Stochastic_Polyomino_Builder(std::vector<int> genome, unsigned int THRESHOLD_SIZE, int initial_Tile,int initial_Rotation) {

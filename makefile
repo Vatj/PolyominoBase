@@ -21,7 +21,7 @@ DEPEXT      := d
 OBJEXT      := o
 
 #Flags, Libraries and Includes
-CXXFLAGS    := -std=gnu++14 -Wall -Wextra -pedantic -pipe -O3 -fopenmp -march=ivybridge -flto -flto-partition=none #-fprofile-use -fprofile-correction -fprofile-dir=$(PROFDIR)/
+CXXFLAGS    := -std=gnu++14 -Wall -Wextra -pedantic -pipe -O3 -fopenmp -march=ivybridge -flto -flto-partition=none -fpic #-fprofile-use -fprofile-correction -fprofile-dir=$(PROFDIR)/
 INC         := -I$(INCDIR)
 INCDEP      := -I$(INCDIR)
 
@@ -84,6 +84,10 @@ Pe: $(PE_OBJECTS)
 GP: $(GP_OBJECTS) $(COMMON_OBJECTS) $(ST_OBJECTS) $(Core_P_OBJECTS)
 	@mkdir -p $(TARGETDIR)	
 	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(GP_TARGET) $^
+
+SO: $(GP_OBJECTS) $(COMMON_OBJECTS) $(ST_OBJECTS) $(Core_P_OBJECTS)
+	@mkdir -p $(TARGETDIR)	
+	$(CXX) -shared $(CXXFLAGS) -o $(TARGETDIR)/AGF.so $^
 
 
 #Compile

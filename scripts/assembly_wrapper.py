@@ -9,12 +9,19 @@ import numpy as np
 Poly_Lib=ctypes.cdll.LoadLibrary('./AGF.so')
 #np.ctypeslib.ndpointer(dtype=np.float64,ndim=1,flags='C_CONTIGUOUS')
 
-Poly_Lib.WrappedGetPhenotypeID.restype=None
-Poly_Lib.WrappedGetPhenotypeID.argtypes=[ctypes.c_int,ctypes.POINTER(ctypes.c_int),ctypes.c_int,ctypes.POINTER(ctypes.c_int),ctypes.c_int,ctypes.POINTER(ctypes.c_int)]
+def NewMethod(fileName):
+    Poly_Lib.WrappedGetPhenotypesID.resetype=None
+    Poly_Lib.WrappedGetPhenotypesID.argtypes=[ctypes.POINTER(ctypes.c_char)]
+    c_=ctypes.c_buffer(fileName+".txt")
+    Poly_Lib.WrappedGetPhenotypesID(c_)
 
-genotype=[1,1,1,1,2,0,0,0]
-Phen_list=[[1,1,1], [3,1,1,1,1], [2,1,1,1], [2,2,1,1,1,0]]
-gen=[1,1,1,1, 2,0,0,0, 3,4,0,0, 5,0,0,0, 6,0,0,0]
+def OldMethod():
+    Poly_Lib.WrappedGetPhenotypeID.restype=None
+    Poly_Lib.WrappedGetPhenotypeID.argtypes=[ctypes.c_int,ctypes.POINTER(ctypes.c_int),ctypes.c_int,ctypes.POINTER(ctypes.c_int),ctypes.c_int,ctypes.POINTER(ctypes.c_int)]
+
+    genotype=[1,1,1,1,2,0,0,0]
+    Phen_list=[[1,1,1], [3,1,1,1,1], [2,1,1,1], [2,2,1,1,1,0]]
+    gen=[1,1,1,1, 2,0,0,0, 3,4,0,0, 5,0,0,0, 6,0,0,0]
 
 def Do(genotype,phens):
     g_P=(ctypes.c_int*len(genotype))(*genotype)
