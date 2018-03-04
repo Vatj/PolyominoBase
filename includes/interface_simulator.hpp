@@ -5,7 +5,7 @@
 
 struct PopulationGenotype {
   std::vector<interface_type> genotype;
-  phenotype_ID pid;
+  Phenotype_ID pid;
   std::vector<uint8_t> interacting_interfaces;
 
   PopulationGenotype(void) : genotype(simulation_params::n_tiles*4), pid{0,0} {};

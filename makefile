@@ -21,7 +21,7 @@ DEPEXT      := d
 OBJEXT      := o
 
 #Flags, Libraries and Includes
-CXXFLAGS    := -std=gnu++14 -Wall -Wextra -pedantic -pipe -O3 -fopenmp -march=ivybridge -flto -flto-partition=none -fpic #-fprofile-use -fprofile-correction -fprofile-dir=$(PROFDIR)/
+CXXFLAGS    := -std=gnu++14 -Wall -Wextra -pedantic -pipe -O3 -fopenmp -march=ivybridge -flto-partition=none #-fpic #-fprofile-use -fprofile-correction -fprofile-dir=$(PROFDIR)/
 INC         := -I$(INCDIR)
 INCDEP      := -I$(INCDIR)
 
@@ -77,7 +77,7 @@ Pr: $(PR_OBJECTS) $(COMMON_OBJECTS)
 	@mkdir -p $(TARGETDIR)
 	$(CXX) $(CXXFLAGS)  -o $(TARGETDIR)/$(PR_TARGET) $^
 
-Pe: $(PE_OBJECTS)
+Pe: $(PE_OBJECTS) $(Core_P_OBJECTS)
 	@mkdir -p $(TARGETDIR)
 	$(CXX) $(CXXFLAGS)  -o $(TARGETDIR)/$(PE_TARGET) $^
 

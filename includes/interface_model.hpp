@@ -1,19 +1,25 @@
 #include <algorithm>
-#include <vector>
+
 #include <iostream>
 #include <utility>
 #include <functional>
 #include <tuple>
 #include <array>
 #include <numeric>
-#include <unordered_map>
+
 #include <map>
 #include <random>
 #include <climits>
+
 #include <cstdint>
 #include <cmath>
-#include <fstream>
+
 #include <set>
+#include <fstream>
+#include <unordered_map>
+#include <vector>
+
+#include "core_phenotype.hpp"
 
 namespace simulation_params
 {
@@ -34,22 +40,16 @@ namespace model_params
 
 }
 
-struct Phenotype {
-    uint8_t dx;
-    uint8_t dy;
-    std::vector<uint8_t> tiling;
-  };
-
 typedef uint8_t interface_type;
-typedef std::pair<uint8_t,uint16_t> phenotype_ID;
+//typedef std::pair<uint8_t,uint16_t> Phenotype_ID;
 
 /* SPATIAL */
-Phenotype SpatialGrid(std::vector<int8_t>& placed_tiles, uint8_t& dx,uint8_t& dy);
-bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2);
+Phenotype SpatialGrid(std::vector<int8_t>& placed_tiles);
+//bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2);
 
 /* ROTATIONS */
-void ClockwiseRotation(Phenotype& phen);
-void ClockwisePiRotation(Phenotype& phen);
+//void ClockwiseRotation(Phenotype& phen);
+//void ClockwisePiRotation(Phenotype& phen);
 
 /* PRINTING */
 void PrintShape(Phenotype phen);
@@ -64,7 +64,7 @@ namespace interface_model
 {
   
   
-  struct PhenotypeTable;
+  struct InterfacePhenotypeTable;
 
   extern std::random_device rd;
   extern std::mt19937 RNG_Engine;
@@ -74,18 +74,18 @@ namespace interface_model
   void MutateInterfaces(std::vector<interface_type>& binary_genome);
 
   /* ASSEMBLY */
-  double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome, PhenotypeTable* pt,phenotype_ID& pid);
+  double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome, InterfacePhenotypeTable* pt,Phenotype_ID& pid);
   std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome);
   void PerimeterGrowth(int8_t x,int8_t y,int8_t theta,int8_t direction, int8_t tile_type,std::vector<int8_t>& growing_perimeter,std::vector<int8_t>& placed_tiles);
 
   /* MISC */
-  //phenotype_ID MostCommonPhenotype(std::map<phenotype_ID,uint8_t>& ID_counter);
+  //Phenotype_ID MostCommonPhenotype(std::map<Phenotype_ID,uint8_t>& ID_counter);
 
   
 
-  struct PhenotypeTable {
+  struct InterfacePhenotypeTable : PhenotypeTable {
     //uint32_t n_phenotypes;
-    std::unordered_map<uint8_t,std::vector<Phenotype> > known_phenotypes;
+    //std::unordered_map<uint8_t,std::vector<Phenotype> > known_phenotypes;
     std::unordered_map<uint8_t,std::vector<Phenotype> > undiscovered_phenotypes;
     std::unordered_map<uint8_t,std::vector<double> > phenotype_fitnesses{{0,{0}}};
     std::unordered_map<uint8_t,std::vector<uint16_t> > new_phenotype_xfer;
@@ -93,7 +93,7 @@ namespace interface_model
     
 
     
-    //PhenotypeTable(void) : n_phenotypes(0) {};
+    //InterfacePhenotypeTable(void) : n_phenotypes(0) {};
 
     uint16_t PhenotypeCheck(Phenotype& phen) {
       //uint16_t phenotype_index=0;
@@ -131,14 +131,14 @@ namespace interface_model
       return phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds;
     }
     
-    std::map<phenotype_ID,uint8_t> PhenotypeFrequencies(std::vector<phenotype_ID >& phenotype_IDs) {
+    std::map<Phenotype_ID,uint8_t> PhenotypeFrequencies(std::vector<Phenotype_ID >& Phenotype_IDs) {
       /* Replace previously undiscovered phenotype IDs with new one */
       for(std::unordered_map<uint8_t,std::vector<uint16_t> >::iterator xfer_iter=new_phenotype_xfer.begin();xfer_iter!=new_phenotype_xfer.end();++xfer_iter) 
         for(std::vector<uint16_t>::iterator rep_iter=xfer_iter->second.begin();rep_iter!=xfer_iter->second.end();rep_iter+=2) 
-          std::replace(phenotype_IDs.begin(),phenotype_IDs.end(),std::make_pair(xfer_iter->first,*(rep_iter)),std::make_pair(xfer_iter->first,*(rep_iter+1)));
+          std::replace(Phenotype_IDs.begin(),Phenotype_IDs.end(),std::make_pair(xfer_iter->first,*(rep_iter)),std::make_pair(xfer_iter->first,*(rep_iter+1)));
       /* Count each ID frequency */
-      std::map<phenotype_ID, uint8_t> ID_counter;
-      for(std::vector<phenotype_ID >::const_iterator ID_iter = phenotype_IDs.begin(); ID_iter!=phenotype_IDs.end(); ++ID_iter)
+      std::map<Phenotype_ID, uint8_t> ID_counter;
+      for(std::vector<Phenotype_ID >::const_iterator ID_iter = Phenotype_IDs.begin(); ID_iter!=Phenotype_IDs.end(); ++ID_iter)
         if(ID_iter->second < phenotype_fitnesses[ID_iter->first].size())
           ++ID_counter[std::make_pair(ID_iter->first,ID_iter->second)];
       
@@ -148,10 +148,10 @@ namespace interface_model
       return ID_counter;
 
     }
-    double GenotypeFitness(std::map<phenotype_ID,uint8_t> ID_counter) {
+    double GenotypeFitness(std::map<Phenotype_ID,uint8_t> ID_counter) {
       double fitness=0;
       /* Add fitness contribution from each phenotype */
-      for(std::map<phenotype_ID,uint8_t >::const_iterator phen_iter =ID_counter.begin();phen_iter!=ID_counter.end();++phen_iter)
+      for(std::map<Phenotype_ID,uint8_t >::const_iterator phen_iter =ID_counter.begin();phen_iter!=ID_counter.end();++phen_iter)
         if(phen_iter->second >= ceil(model_params::UND_threshold*simulation_params::phenotype_builds))
 	    fitness+=phenotype_fitnesses[phen_iter->first.first][phen_iter->first.second] * std::pow(static_cast<double>(phen_iter->second)/simulation_params::phenotype_builds,model_params::fitness_factor);
 
@@ -169,7 +169,7 @@ namespace interface_model
 	}
       }
     }
-
+    /*
     void PrintTable(std::ofstream& fout) {
       for(auto known_phens : known_phenotypes) {
         uint16_t n_phen=0;
@@ -181,6 +181,7 @@ namespace interface_model
         }
       }
     }
+    */
 
   };
 }

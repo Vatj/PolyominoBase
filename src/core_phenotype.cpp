@@ -1,8 +1,4 @@
-#include <stdint.h>
 #include "core_phenotype.hpp"
-#include <iostream>
-
-
 
 bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2) {
   if(phen1.tiling.size()!=phen2.tiling.size() || std::count(phen1.tiling.begin(),phen1.tiling.end(),0)!=std::count(phen2.tiling.begin(),phen2.tiling.end(),0))
