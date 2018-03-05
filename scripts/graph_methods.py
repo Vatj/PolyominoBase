@@ -425,7 +425,7 @@ def LoadNewtimingserr():
             errs=int(line.split()[-1])
             rats.append(float(errs)/((500.*tot)/1000000.))
     raw=np.array(rats[12:])
-    return np.mean(rats),stats.sem(rats)
+    return np.mean(raw),stats.sem(raw)
 
 def getSeconds(timein):
     return int(timein[1])*60+int(timein[3])+int(timein[5])/1000.
@@ -439,25 +439,25 @@ def LoadNewGCs(T):
         for line in open('/rscratch/asl47/binaries/GC_Space_{}_{}.txt'.format(T,i)):
             if 'Runtime' in line:
                 timings.append(float(line.split()[2]))
-            elif 'Over' in line:
+            if 'Over' in line:
                 errors.append(int(line.split()[3])+int(line.split()[5]))
             if len(timings)==2:
                 raw_time.append(timings)
                 timings=[]
-            elif len(errors)==2:
+            if len(errors)==2:
                 raw_err.append(errors)
                 errors=[]
                 
     raw=np.array(raw_time)
     ratios=raw[:,1]/raw[:,0]
     var=np.mean(ratios)*np.sqrt( (stats.sem(raw[:,0])/np.mean(raw[:,0]))**2 + (stats.sem(raw[:,1])/np.mean(raw[:,1]))**2 )
+    
     rawe=np.array(raw_err)
-    
-    
     return np.mean(ratios),var,np.mean(rawe[:,1]),stats.sem(rawe[:,1])
+
 from matplotlib import gridspec
 def PlotNewComp():
-    gs = gridspec.GridSpec(1, 2, width_ratios=[4, 1])
+    gs = gridspec.GridSpec(1, 2, width_ratios=[6, 1])
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(gs[0])
     ax2 = fig.add_subplot(gs[1],sharey=ax)
@@ -465,9 +465,9 @@ def PlotNewComp():
     for i in range(1,6)+[7,9,11]:
         data=LoadNewGCs(i)
         ax.errorbar(1+data[2],data[0],yerr=data[1],xerr=data[3],fmt='o')
-        ax.annotate(r'$\mathrm{{GP}}_{{{}}}$'.format(i),xy=(1+data[2], data[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom',arrowprops=dict(arrowstyle = '->', connectionstyle='arc3,rad=0'))
+        ax.annotate(r'$\mathrm{{GP}}_{{{}}}$'.format(i),xy=(1+data[2], data[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom')
         ax2.errorbar(1+data[2],data[0],yerr=data[1],xerr=data[3],fmt='o')
-        ax2.annotate(r'$\mathrm{{GP}}_{{{}}}$'.format(i),xy=(1+data[2], data[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom',arrowprops=dict(arrowstyle = '->', connectionstyle='arc3,rad=0'))
+        ax2.annotate(r'$\mathrm{{GP}}_{{{}}}$'.format(i),xy=(1+data[2], data[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom')
 
 
     for i in [(2,8),(3,10),(20,100)]:
@@ -478,10 +478,9 @@ def PlotNewComp():
         else:
             er=LoadNewtimingserr()
         ax.errorbar(1+er[0],t[0],yerr=t[1],xerr=er[1],fmt='o')
-        ax.annotate(r'$S_{{{},{}}}$'.format(*i),xy=(1+er[0],t[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom',arrowprops=dict(arrowstyle = '->', connectionstyle='arc3,rad=0'))
+        ax.annotate(r'$S_{{{},{}}}$'.format(*i),xy=(1+er[0],t[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom')
         ax2.errorbar(1+er[0],t[0],yerr=t[1],xerr=er[1],fmt='o')
-        ax2.annotate(r'$S_{{{},{}}}$'.format(*i),xy=(1+er[0],t[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom',arrowprops=dict(arrowstyle = '->', connectionstyle='arc3,rad=0'))
-
+        ax2.annotate(r'$S_{{{},{}}}$'.format(*i),xy=(1+er[0],t[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom')
     ax.set_xlabel('Accuracy Improvement')
     ax.set_ylabel('Speed Improvement')
     ax.set_yscale('log')

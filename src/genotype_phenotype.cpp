@@ -74,8 +74,7 @@ extern "C" void WrappedGetPhenotypeID(int g_size, int* genotype,int k_size,int* 
 
 }
 */
-
-extern "C" void WrappedGetPhenotypesID(char* a) {
+extern "C" void WrappedGetPhenotypesID(const char* a) {
 
   std::ofstream fout("Genotype_Codes.txt", std::ios_base::out);
   std::ofstream fout2("Phenotype_Table.txt", std::ios_base::out);
@@ -83,15 +82,20 @@ extern "C" void WrappedGetPhenotypesID(char* a) {
   StochasticPhenotypeTable pt;
   int k_builds=10;
   std::vector<int> genotype;
-  
+
+ 
   std::string filename(a);
   std::ifstream file(filename);
   std::string str; 
   while (std::getline(file, str)) {
     std::istringstream is( str );
     genotype.assign( std::istream_iterator<int>( is ), std::istream_iterator<int>() );
+    Clean_Genome(genotype,-1);
     for(uint8_t seed=0;seed<genotype.size()/4;++seed) {
-      Phenotype_ID phen_id=Stochastic::Analyse_Genotype_Outcome(genotype,k_builds,&pt,0);
+      Phenotype_ID phen_id=Stochastic::Analyse_Genotype_Outcome(genotype,k_builds,&pt,seed);
+      //for(auto x : genotype)
+      //  fout<<+x<<" ";
+      //fout<<" || "<<+phen_id.first<<" "<<+phen_id.second<<"\n";
       fout<<+phen_id.first<<" "<<+phen_id.second<<" ";
     }
     fout<<"\n";
@@ -106,7 +110,7 @@ void ExhaustivePhen() {
 
   std::ofstream fout("TestG.txt", std::ios_base::out);
   std::ofstream fout2("TestP.txt", std::ios_base::out);
-  int max_col1=5;
+  //int max_col1=5;
   int max_col2=7;
   
   for(int i=0;i<2;++i) {
@@ -120,7 +124,7 @@ void ExhaustivePhen() {
                 for(int r=0;r<max_col2;++r) {
                   
                   std::vector<int> genotype{i,j,k,l, q,w,e,r};
-                  for(int seed=0;seed<genotype.size()/4;++seed) {
+                  for(uint8_t seed=0;seed<genotype.size()/4;++seed) {
 		    Phenotype_ID phen_id=Stochastic::Analyse_Genotype_Outcome(genotype,k_builds,&pt,0);
 		    fout<<+phen_id.first<<" "<<+phen_id.second<<" ";
 		  }
@@ -162,9 +166,13 @@ extern "C" void PhenTuples(int g_size, int* genotype_p,int k_builds, int* IDs_p)
 */
 
 int main(int argc, char* argv[]) {
-  std::vector<int> g{0,0,1,0, 2,0,0,0, 2,0,3,4};
-  //PhenTuples(g);
-  ExhaustivePhen();
+  //if(argc>2) {
+  //  std::cout<<argv[1][0]<<std::endl;
+  //}
+  
+  char const *p ="/rscratch/asl47/GraphTopologies_T2_C10.txt";
+  std::cout<<"wtf "<<std::endl;
+  WrappedGetPhenotypesID(p);
   return 0;
 
 

@@ -7,6 +7,7 @@ ST_TARGET   := StochasticAssembler
 PR_TARGET   := BulkProcessor
 PE_TARGET   := ProteinEvolution
 GP_TARGET   := GP_Mapping
+SO_TARGET   := AGF.so
 
 
 
@@ -21,7 +22,7 @@ DEPEXT      := d
 OBJEXT      := o
 
 #Flags, Libraries and Includes
-CXXFLAGS    := -std=gnu++14 -Wall -Wextra -pedantic -pipe -O3 -fopenmp -march=ivybridge -flto-partition=none #-fpic #-fprofile-use -fprofile-correction -fprofile-dir=$(PROFDIR)/
+CXXFLAGS    := -std=gnu++14 -Wall -Wextra -pedantic -pipe -O3 -fopenmp -march=ivybridge -flto-partition=none -fpic  #-fprofile-use -fprofile-correction -fprofile-dir=$(PROFDIR)/
 INC         := -I$(INCDIR)
 INCDEP      := -I$(INCDIR)
 
@@ -87,7 +88,7 @@ GP: $(GP_OBJECTS) $(COMMON_OBJECTS) $(ST_OBJECTS) $(Core_P_OBJECTS)
 
 SO: $(GP_OBJECTS) $(COMMON_OBJECTS) $(ST_OBJECTS) $(Core_P_OBJECTS)
 	@mkdir -p $(TARGETDIR)	
-	$(CXX) -shared $(CXXFLAGS) -o $(TARGETDIR)/AGF.so $^
+	$(CXX)  -shared $(CXXFLAGS) -o scripts/AGF.so $^
 
 
 #Compile

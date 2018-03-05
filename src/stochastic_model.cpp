@@ -6,7 +6,7 @@ namespace Stochastic
   std::mt19937 RNG_Generator(rd());
 
   Phenotype_ID Analyse_Genotype_Outcome(std::vector<int> genome, int N_Repeated_Checks, StochasticPhenotypeTable* pt,int seed) {
-    Clean_Genome(genome,-1); 
+    //Clean_Genome(genome,-1); 
     const unsigned int THRESHOLD_SIZE=(genome.size()*genome.size())/4;
     std::vector<int> Placed_Tiles_Check=Stochastic_Polyomino_Builder(genome,THRESHOLD_SIZE,seed,0),Placed_Tiles_Compare;
     
