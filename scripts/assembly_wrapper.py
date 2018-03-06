@@ -10,10 +10,27 @@ Poly_Lib=ctypes.cdll.LoadLibrary('./AGF.so')
 #np.ctypeslib.ndpointer(dtype=np.float64,ndim=1,flags='C_CONTIGUOUS')
 
 def NewMethod(fileName):
-    Poly_Lib.WrappedGetPhenotypesID.resetype=None
+    Poly_Lib.WrappedGetPhenotypesID.restype=None
     Poly_Lib.WrappedGetPhenotypesID.argtypes=[ctypes.POINTER(ctypes.c_char)]
     c_=ctypes.c_buffer(fileName+".txt")
     Poly_Lib.WrappedGetPhenotypesID(c_)
+
+def G2I(genotype,colours,n_genes):
+    Poly_Lib.genotype_to_index.restype=ctypes.c_int
+    Poly_Lib.genotype_to_index.argtypes=[ctypes.POINTER(ctypes.c_int),ctypes.c_int,ctypes.c_int]
+    g_P=(ctypes.c_int*len(genotype))(*genotype)
+    return int(Poly_Lib.genotype_to_index(g_P,colours,n_genes))
+
+def I2G(index,colours,n_genes):
+    Poly_Lib.index_to_genotype.restype=None
+    Poly_Lib.index_to_genotype.argtypes=[ctypes.c_int,ctypes.POINTER(ctypes.c_int),ctypes.c_int,ctypes.c_int]
+    g_P=(ctypes.c_int*(n_genes*4))()
+    Poly_Lib.index_to_genotype(index,g_P,colours,n_genes)
+    return list(g_P)
+
+
+
+
 
 def OldMethod():
     Poly_Lib.WrappedGetPhenotypeID.restype=None

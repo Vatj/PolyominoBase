@@ -74,6 +74,23 @@ extern "C" void WrappedGetPhenotypeID(int g_size, int* genotype,int k_size,int* 
 
 }
 */
+extern "C" int genotype_to_index(int* genotype, int colours, int n_genes) {
+  int count=0;
+  for(uint8_t index=0;index<n_genes*4;++index)
+    count+= genotype[index] * pow(colours,n_genes*4-index-1);
+  return count;
+}
+
+extern "C" void index_to_genotype(int index, int* genotype, int colours, int n_genes) {
+  int count=0;
+  for(uint8_t count=0;count<n_genes*4;++count) {
+    int value=index/pow(colours,n_genes*4-count-1);
+    genotype[count]=value;
+    index-= value * pow(colours,n_genes*4-count-1);
+    }
+}
+
+
 extern "C" void WrappedGetPhenotypesID(const char* a) {
 
   std::ofstream fout("Genotype_Codes.txt", std::ios_base::out);
