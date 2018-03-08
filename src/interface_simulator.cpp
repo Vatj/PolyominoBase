@@ -1,7 +1,7 @@
 #include "interface_simulator.hpp"
 
 //./bin/ProteinEvolution -E -N 3 -P 50 -K 5 -B 50 -S 1 -D 1 -V 0 -F 1 -M 0.05 -T 0.09 -X 0.2
-const uint16_t printing_resolution=1; /* NOTE RESOLUTION IS 1 */
+const uint16_t printing_resolution=100; /* NOTE RESOLUTION IS 1 */
 
 
 
@@ -73,8 +73,31 @@ void EvolvePopulation(std::string run_details) {
       
       for(interface_type base_value : evolving_genotype.genotype)
         fout_genotype_history << +base_value << " ";
-      //fout_genotype_history<<"x ";
       fout_phenotype_history << +evolving_genotype.pid.first <<" "<<+evolving_genotype.pid.second<<" ";
+      /*
+      std::vector<uint8_t> mutation_sites=SequenceDifference(evolving_genotype.genotype,reproduced_population[nth_genotype].genotype);
+      for(auto mutated_site : mutation_sites) {
+        uint8_t conj_site=ConjugateInterface(mutated_site);
+        auto site_iter=std::find(evolving_genotype.interacting_interfaces.begin(),evolving_genotype.interacting_interfaces.end(),mutated_site)
+        if(site_iter!=evolving_genotype.interacting_interfaces.end()) {
+          if(conj_site==255)
+          continue;
+
+
+        }
+        
+        
+        if(conj_site==255)
+          continue;
+        
+
+      }
+      if(!mutation_sites.empty()) {
+        
+
+
+      }
+      if(SequenceDifference(evolving_genotype.genotype,reproduced_population[nth_genotype].genotype).size()>1)
       
       if(generation>0) {
         if(SequenceDifference(evolving_genotype.genotype,reproduced_population[nth_genotype].genotype).size()>1) {
@@ -99,6 +122,7 @@ void EvolvePopulation(std::string run_details) {
 	    std::cout<<"\n";
 	    std::cout<<"Mutating up end"<<std::endl;
 	    */
+      /*
 	    for(uint8_t site : mutated_sites) {
 	      uint8_t conj_site=ConjugateInterface(evolving_genotype.genotype,site);
 	      
@@ -122,6 +146,7 @@ void EvolvePopulation(std::string run_details) {
 	    std::cout<<"\n";
 	    std::cout<<"Mutating down end"<<std::endl;
 	    */
+      /*
 	    for(uint8_t site : mutated_sites) {
 	      //std::cout<<"mutated at "<<+site<<std::endl;
 	      auto site_iter=std::find(evolving_genotype.interacting_interfaces.begin(),evolving_genotype.interacting_interfaces.end(),site);
@@ -142,6 +167,7 @@ void EvolvePopulation(std::string run_details) {
          
                  
         }
+        */
 	/*
 	std::cout<<"gen "<<generation<<", known edge strengths ";
           for(auto it= evolving_genotype.interacting_interfaces.begin();it!=evolving_genotype.interacting_interfaces.end();it+=2) {
@@ -160,13 +186,14 @@ void EvolvePopulation(std::string run_details) {
             }
           }
           std::cout<<std::endl;
-	*/
+	
       }
+        */
       ++nth_genotype;
-    } 
+    } /* End genotype loop */
     fout_genotype_history<<"\n";
     fout_phenotype_history<<"\n";
-    /* End genotype loop */
+    
 
     /* Write data to file */
     if(record_strengths) {
@@ -273,6 +300,9 @@ int main(int argc, char* argv[]) {
     break;
   case 'X':
     std::cout<<"Unused at this time"<<std::endl;
+    break;
+  case 'D':
+    std::cout<<"ProteinEvolution -E -N 2 -P 100 -K 250 -B 25 -S 1 -R 0 -F 1 -X 1 -T 0.000001 -M 0.25 -D 1"<<std::endl;
     break;
   case 'H':
   default:

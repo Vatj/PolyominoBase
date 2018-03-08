@@ -22,7 +22,7 @@ DEPEXT      := d
 OBJEXT      := o
 
 #Flags, Libraries and Includes
-CXXFLAGS    := -std=gnu++14 -Wall -Wextra -pedantic -pipe -O3 -fopenmp -march=ivybridge -flto-partition=none -fpic  #-fprofile-use -fprofile-correction -fprofile-dir=$(PROFDIR)/
+CXXFLAGS    := -std=gnu++14 -Wall -Wextra -pedantic -pipe -O3 -fopenmp -march=ivybridge -flto-partition=none $(cmdflag)  #-fprofile-use -fprofile-correction -fprofile-dir=$(PROFDIR)/
 INC         := -I$(INCDIR)
 INCDEP      := -I$(INCDIR)
 

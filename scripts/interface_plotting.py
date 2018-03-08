@@ -7,6 +7,7 @@ from operator import itemgetter
 from collections import defaultdict
 from matplotlib.backends.backend_pdf import PdfPages
 from tile_shape_visuals import Visualise_Shape_From_Binary as VSFB
+
 import glob
 
 #BASE_FILE_PATH='/scratch/asl47/Data_Runs/Interface_Cron/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
@@ -314,11 +315,13 @@ def PlotAll(temp,mu,gamma,runs,N_t):
  
 
 def PlotBindingStrengths(Ts,I_size):
-     plt.figure()
+     #plt.figure()
      cs=['firebrick','royalblue','darkgreen','coral','orchid','goldenrod','c','k','y','r','b','g']
      for T,c in zip(Ts,cs):
           plt.plot(np.linspace(0,1,101),np.exp(-1*np.linspace(1,0,101)/T),lw=2,ls='--',label='T={}'.format(T),c=c)
           plt.plot(np.linspace(0,1,I_size+1),np.exp(-1*np.linspace(1,0,I_size+1)/T),lw=2,ls='',marker='o',c=c,markersize=6,markeredgewidth=1)
+
+          plt.plot(np.linspace(0,1,101),np.linspace(0,1,101)**(5./T),lw=2,ls='--',label='T={}'.format(T),c=c)
           
      plt.legend()
      plt.yscale('log',nonposy='mask')
@@ -440,13 +443,14 @@ def HistoryDiagram(IDs,selections,low=-1,high=-1):
      seen_phens.add((0,0))
      phen_col={(0,0):[0,0,0]}
      unique_phens= set([item for sublist in IDs[low:high] for item in sublist])
+     
      for phen in unique_phens:
           if sum(phen):
                phen_col[phen]=icy.generate_new_color(phen_col.values(),0)
           
      for g,(ID,sel) in enumerate(zip(IDs[low:high],selections[low:high])):
           for gen,idp in enumerate(ID):
-
+               continue
                plt.scatter(gen,g,marker='o',c=phen_col[idp],lw=0.5,edgecolor='k',zorder=10)
           if g==0:
                for i,s in enumerate(sel):
@@ -457,7 +461,9 @@ def HistoryDiagram(IDs,selections,low=-1,high=-1):
                plt.plot([s,i],[g,g+1],'k--',lw=0.5,zorder=10)
 
      for idpx,c in phen_col.iteritems():
+          continue
           plt.scatter(-10,0,c=c,label=idpx)
+     
 
 
      ##attempt
@@ -467,7 +473,7 @@ def HistoryDiagram(IDs,selections,low=-1,high=-1):
      printed_paths=set()
      for init in xrange(len(rev_sel[0])):
           fixation=init
-          tm=99
+          tm=len(selections)-1
           for nex in rev_sel[1:]:
                next_fix=nex[fixation]
                path=(fixation,next_fix,tm,tm-1)

@@ -417,7 +417,7 @@ def LoadNewtimingserr():
     errs=0
     tot=0
     rats=[]
-    for line in open('/rscratch/asl47/Bulk_Run/Regulation/Evolution_T20_C100_N500_K500_M1_R0_I2.txt'):
+    for line in open('/rscratch/asl47/Bulk_Run/Regulation/Evolution_T15_C75_N100_K300_M1_R0_I2.txt'):
         if 'Mc:' not in line:
             tot=sum([int(i) for i in line[line.index('A:')+2:].split()])
             continue
@@ -470,10 +470,10 @@ def PlotNewComp():
         ax2.annotate(r'$\mathrm{{GP}}_{{{}}}$'.format(i),xy=(1+data[2], data[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom')
 
 
-    for i in [(2,8),(3,10),(20,100)]:
+    for i in [(2,8),(3,10),(20,100),(15,75)]:
         t=LoadNewtimings(''.join(map(str,i)))
         er=[]
-        if i[0]!=20:
+        if i[0]!=15:
             er=(0,0)
         else:
             er=LoadNewtimingserr()

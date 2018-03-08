@@ -9,7 +9,7 @@ from collections import Counter
 from itertools import product
 
 
-icy.Use_Seaborn()
+#icy.Use_Seaborn()
 
 def LoadData(t,mu,o=0):
     details='O{}'.format(o) if t!=3 else ''
@@ -131,6 +131,32 @@ def smooth(y, box_pts):
     box = np.ones(box_pts)/box_pts
     y_smooth = np.convolve(y, box, mode='same')
     return y_smooth
+
+def VisualiseSingleShape(shape):
+    cols=['darkgreen','royalblue','firebrick','goldenrod','mediumorchid']
+    ar_offsets={0:(0,-.25,0,.25),1:(-.25,0,.25,0),2:(0,.25,0,-.25),3:(.25,0,-.25,0)}
+    plt.figure()
+    ax = plt.gca()
+
+    dx=shape[0]
+    dy=shape[1]
+    for i in xrange(dx):
+        for j in xrange(dy):
+            if(shape[2+i+j*dx]):
+                ax.add_patch(Rectangle((i-dx/2., dy/2.-j-1), 1, 1, facecolor=cols[(shape[2+i+j*dx]-1)/4],edgecolor='slategrey',fill=True,hatch='////',lw=0))
+                
+                ax.add_patch(Rectangle((i-dx/2., dy/2.-j-1), 1, 1,edgecolor='maroon',fill=False,lw=2.5))
+                theta=(shape[2+i+j*dx]-1)%4;
+                ax.arrow(i-dx/2.+.5+ar_offsets[theta][0], dy/2.-j-.5+ar_offsets[theta][1], ar_offsets[theta][2], ar_offsets[theta][3], head_width=0.05, head_length=0.1, fc='k', ec='k')
+
+
+    maxB=max(dx,dy)
+    ax.set_xlim([-maxB/2.-0.5,maxB/2.+0.5])
+    ax.set_ylim([-maxB/2.-0.5,maxB/2.+0.5])
+    ax.set_aspect('equal')
+    ax.set_axis_off()
+    plt.show(block=False)
+    
                     
 def Visualise_Shape_From_Binary(Shape_String_X,count,currentAxis,X_Y_LIMS,tightBounded=False,num=""):
     d={-10:"Connected UND",-5:"Disjointed \n UND",-4:"Disjointed \n Divergence",-1:"Steric"}

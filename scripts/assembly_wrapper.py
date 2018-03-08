@@ -9,11 +9,11 @@ import numpy as np
 Poly_Lib=ctypes.cdll.LoadLibrary('./AGF.so')
 #np.ctypeslib.ndpointer(dtype=np.float64,ndim=1,flags='C_CONTIGUOUS')
 
-def NewMethod(fileName):
+def NewMethod(fileName,file_of_genotypes=True,cols=0,ngenes=0):
     Poly_Lib.WrappedGetPhenotypesID.restype=None
-    Poly_Lib.WrappedGetPhenotypesID.argtypes=[ctypes.POINTER(ctypes.c_char)]
+    Poly_Lib.WrappedGetPhenotypesID.argtypes=[ctypes.POINTER(ctypes.c_char),ctypes.c_bool,ctypes.c_int,ctypes.c_int]
     c_=ctypes.c_buffer(fileName+".txt")
-    Poly_Lib.WrappedGetPhenotypesID(c_)
+    Poly_Lib.WrappedGetPhenotypesID(c_,file_of_genotypes,cols,ngenes)
 
 def G2I(genotype,colours,n_genes):
     Poly_Lib.genotype_to_index.restype=ctypes.c_int

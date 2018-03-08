@@ -1,32 +1,26 @@
-#include <algorithm>
+#include "core_phenotype.hpp"
 
 #include <iostream>
-#include <utility>
 #include <functional>
 #include <tuple>
-#include <array>
 #include <numeric>
-
 #include <map>
 #include <random>
 #include <climits>
-
-#include <cstdint>
 #include <cmath>
 
-#include <set>
-#include <fstream>
-#include <unordered_map>
-#include <vector>
 
-#include "core_phenotype.hpp"
+
+
+
+
 
 namespace simulation_params
 {
-
+  extern uint8_t n_tiles,phenotype_builds;
   extern uint16_t population_size;
   extern uint32_t generation_limit,independent_trials,run_offset;
-  extern uint8_t n_tiles,phenotype_builds;
+
   extern bool fitness_selection,random_initilisation;
 }
 
@@ -41,15 +35,10 @@ namespace model_params
 }
 
 typedef uint8_t interface_type;
-//typedef std::pair<uint8_t,uint16_t> Phenotype_ID;
 
 /* SPATIAL */
 Phenotype SpatialGrid(std::vector<int8_t>& placed_tiles);
-//bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2);
 
-/* ROTATIONS */
-//void ClockwiseRotation(Phenotype& phen);
-//void ClockwisePiRotation(Phenotype& phen);
 
 /* PRINTING */
 void PrintShape(Phenotype phen);
@@ -78,27 +67,18 @@ namespace interface_model
   std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome);
   void PerimeterGrowth(int8_t x,int8_t y,int8_t theta,int8_t direction, int8_t tile_type,std::vector<int8_t>& growing_perimeter,std::vector<int8_t>& placed_tiles);
 
-  /* MISC */
-  //Phenotype_ID MostCommonPhenotype(std::map<Phenotype_ID,uint8_t>& ID_counter);
 
   
 
   struct InterfacePhenotypeTable : PhenotypeTable {
-    //uint32_t n_phenotypes;
-    //std::unordered_map<uint8_t,std::vector<Phenotype> > known_phenotypes;
+
     std::unordered_map<uint8_t,std::vector<Phenotype> > undiscovered_phenotypes;
     std::unordered_map<uint8_t,std::vector<double> > phenotype_fitnesses{{0,{0}}};
     std::unordered_map<uint8_t,std::vector<uint16_t> > new_phenotype_xfer;
     std::vector<uint16_t> undiscovered_phenotype_counts;
-    
-
-    
-    //InterfacePhenotypeTable(void) : n_phenotypes(0) {};
 
     uint16_t PhenotypeCheck(Phenotype& phen) {
-      //uint16_t phenotype_index=0;
       uint8_t phenotype_size=std::count_if(phen.tiling.begin(),phen.tiling.end(),[](const int c){return c != 0;});
-
       for(uint16_t phenotype_index=0; phenotype_index != known_phenotypes[phenotype_size].size();++phenotype_index) {
         if(ComparePolyominoes(phen,known_phenotypes[phenotype_size][phenotype_index])) 
 	  return phenotype_index;
@@ -124,9 +104,6 @@ namespace interface_model
       
       MinimalTilingRepresentation(phen.tiling);
       undiscovered_phenotypes[phenotype_size].emplace_back(phen);
-      //undiscovered_phenotypes[phenotype_size].emplace_back(dx);
-      //undiscovered_phenotypes[phenotype_size].emplace_back(dy);
-      //undiscovered_phenotypes[phenotype_size].insert(undiscovered_phenotypes[phenotype_size].end(),phenotype.begin(),phenotype.end());
       undiscovered_phenotype_counts.emplace_back(1);
       return phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds;
     }
@@ -151,12 +128,9 @@ namespace interface_model
     double GenotypeFitness(std::map<Phenotype_ID,uint8_t> ID_counter) {
       double fitness=0;
       /* Add fitness contribution from each phenotype */
-      for(std::map<Phenotype_ID,uint8_t >::const_iterator phen_iter =ID_counter.begin();phen_iter!=ID_counter.end();++phen_iter)
-        if(phen_iter->second >= ceil(model_params::UND_threshold*simulation_params::phenotype_builds))
-	    fitness+=phenotype_fitnesses[phen_iter->first.first][phen_iter->first.second] * std::pow(static_cast<double>(phen_iter->second)/simulation_params::phenotype_builds,model_params::fitness_factor);
-
-      
-      
+      for(std::map<Phenotype_ID,uint8_t >::const_iterator p_it =ID_counter.begin();p_it!=ID_counter.end();++p_it)
+        if(p_it->second >= ceil(model_params::UND_threshold*simulation_params::phenotype_builds))
+	    fitness+=phenotype_fitnesses[p_it->first.first][p_it->first.second] * std::pow(static_cast<double>(p_it->second)/simulation_params::phenotype_builds,model_params::fitness_factor);     
       return fitness;
     }
 
@@ -169,19 +143,6 @@ namespace interface_model
 	}
       }
     }
-    /*
-    void PrintTable(std::ofstream& fout) {
-      for(auto known_phens : known_phenotypes) {
-        uint16_t n_phen=0;
-        for(Phenotype known : known_phens.second) {
-          fout<<+known_phens.first<<" "<<+n_phen++<<" "<<+known.dx<<" "<<+known.dy<<" ";
-          for(uint8_t tile : known.tiling)
-            fout<<+tile<<" ";
-          fout<<"\n";
-        }
-      }
-    }
-    */
 
   };
 }

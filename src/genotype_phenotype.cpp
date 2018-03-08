@@ -82,7 +82,6 @@ extern "C" int genotype_to_index(int* genotype, int colours, int n_genes) {
 }
 
 extern "C" void index_to_genotype(int index, int* genotype, int colours, int n_genes) {
-  int count=0;
   for(uint8_t count=0;count<n_genes*4;++count) {
     int value=index/pow(colours,n_genes*4-count-1);
     genotype[count]=value;
@@ -91,7 +90,7 @@ extern "C" void index_to_genotype(int index, int* genotype, int colours, int n_g
 }
 
 
-extern "C" void WrappedGetPhenotypesID(const char* a) {
+extern "C" void WrappedGetPhenotypesID(const char* a,bool file_of_genotypes,int colours=0,int n_genes=0) {
 
   std::ofstream fout("Genotype_Codes.txt", std::ios_base::out);
   std::ofstream fout2("Phenotype_Table.txt", std::ios_base::out);
@@ -105,8 +104,13 @@ extern "C" void WrappedGetPhenotypesID(const char* a) {
   std::ifstream file(filename);
   std::string str; 
   while (std::getline(file, str)) {
-    std::istringstream is( str );
-    genotype.assign( std::istream_iterator<int>( is ), std::istream_iterator<int>() );
+    if(file_of_genotypes) {
+      std::istringstream is( str );
+      genotype.assign( std::istream_iterator<int>( is ), std::istream_iterator<int>() );
+    }
+    else {
+      index_to_genotype(std::stoi(str),genotype.data(),colours,n_genes);
+    }
     Clean_Genome(genotype,-1);
     for(uint8_t seed=0;seed<genotype.size()/4;++seed) {
       Phenotype_ID phen_id=Stochastic::Analyse_Genotype_Outcome(genotype,k_builds,&pt,seed);
@@ -189,7 +193,7 @@ int main(int argc, char* argv[]) {
   
   char const *p ="/rscratch/asl47/GraphTopologies_T2_C10.txt";
   std::cout<<"wtf "<<std::endl;
-  WrappedGetPhenotypesID(p);
+  //WrappedGetPhenotypesID(p);
   return 0;
 
 
