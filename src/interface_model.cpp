@@ -25,7 +25,7 @@ namespace interface_model
   //std::mt19937 RNG_Engine(276358710);
   
   inline interface_type reverse_bits(interface_type v) {
-    interface_type s = sizeof(v) * CHAR_BIT;
+    interface_type s(model_params::interface_size);
     interface_type mask = ~0;         
     while ((s >>= 1) > 0) {
       mask ^= (mask << s);

@@ -68,7 +68,8 @@ void EvolvePopulation(std::string run_details) {
       
 
       interface_model::MutateInterfaces(evolving_genotype.genotype);
-      evolving_genotype.genotype={10,81,115,10,10,10,46,117, 139,0,0,88, 49,229,10,10};
+      //evolving_genotype.genotype={10,81,115,10, 10,10,46,117, 139,0,0,88, 49,229,10,10};
+      //evolving_genotype.genotype={10,10,10,49, 114,10,10,10};
       std::vector<std::pair<interface_type,interface_type> > pid_interactions;
       population_fitnesses[nth_genotype]=interface_model::ProteinAssemblyOutcome(evolving_genotype.genotype,&pt,evolving_genotype.pid,pid_interactions);
       if(!pid_interactions.empty()) {

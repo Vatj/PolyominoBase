@@ -26,14 +26,13 @@ def LoadEvolutionHistory(temperature=0.000001,mu=1,gamma=1,run=0):
      return np.array(phenotype_IDs,dtype=np.uint8),np.array(selections,np.uint16)
 
 def LoadGenotypeHistory(n_tiles,temperature=0.000001,mu=1,gamma=1,run=0):
-    genotypes=[]
-    for line in open(BASE_FILE_PATH.format('GenotypeHistory','S',temperature,mu,gamma,run)):
+     genotypes=[]
+     for line in open(BASE_FILE_PATH.format('GenotypeHistory','S',temperature,mu,gamma,run)):
           converted=[int(i) for i in line.split()]
           genotypes.append([[int(i) for i in j] for j in [converted[i:i + 4*n_tiles] for i in xrange(0, len(converted), 4*n_tiles)]])
           #print [[int(i) for i in j] for j in [converted[i:i + 4*n_tiles] for i in xrange(0, len(converted), 4*n_tiles)]]
           #break
-    print len(genotypes)
-    return np.array(genotypes,dtype=np.uint8)
+     return np.array(genotypes,dtype=np.uint8)
 
 def LoadStrengthHistory(temperature=0.000001,mu=1,gamma=1,run=0):
     strengths=[]
@@ -43,13 +42,21 @@ def LoadStrengthHistory(temperature=0.000001,mu=1,gamma=1,run=0):
 
     return strengths
 
+def LoadT():
+     mu=0.25
+     t=0.000001
+     g=LoadGenotypeHistory(2,mu=mu,temperature=t)
+     st=LoadStrengthHistory(mu=mu,temperature=t)
+     p,s=LoadEvolutionHistory(mu=mu,temperature=t)
+     return (g,s,st)
+
 
 from random import randint
 def RandomHistorySampling(genotypes,selections,strengths,goback=10):
-    rg=randint(genotypes.shape[0]/2,genotypes.shape[0])
-    rp=randint(0,genotypes.shape[1])
+    rg=randint(genotypes.shape[0]/2,genotypes.shape[0]-1)
+    rp=randint(0,genotypes.shape[1]-1)
 
-    rg=140
+    #rg=140
 
     assert rg>=goback, "going back too far"
     print "random sampling from g: ",rg," and p: ",rp
@@ -61,7 +68,10 @@ def RandomHistorySampling(genotypes,selections,strengths,goback=10):
         
         rp=selections[rg-bg][rp]
         print "now ",genotypes[rg-bg][rp]
-        print "new strengths", strengths[rg-bg][rp]
+        print "new inters", strengths[rg-bg][rp]
+        
+        print "strs ",[SammingDistance(*[genotypes[rg-bg][rp][j] for j in i]) for i in strengths[rg-bg][rp]]
+        
 
         
         
