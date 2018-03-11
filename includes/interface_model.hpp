@@ -9,6 +9,8 @@
 #include <climits>
 #include <cmath>
 
+#include <set>
+
 
 
 
@@ -26,7 +28,7 @@ namespace simulation_params
 
 namespace model_params
 {
-  extern double temperature,mu_prob,misbinding_rate,fitness_factor,unbound_factor,UND_threshold;
+  extern double temperature,mu_prob,misbinding_rate,fitness_factor,unbound_factor,UND_threshold,interface_threshold;
   extern const uint8_t interface_size;
 
   extern std::binomial_distribution<uint8_t> b_dist;
@@ -63,8 +65,8 @@ namespace interface_model
   void MutateInterfaces(std::vector<interface_type>& binary_genome);
 
   /* ASSEMBLY */
-  double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome, InterfacePhenotypeTable* pt,Phenotype_ID& pid);
-  std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome);
+  double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome, InterfacePhenotypeTable* pt,Phenotype_ID& pid,std::vector<std::pair<interface_type,interface_type> >& pid_interactions);
+  std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome,std::set< std::pair<interface_type,interface_type> >& interacting_indices);
   void PerimeterGrowth(int8_t x,int8_t y,int8_t theta,int8_t direction, int8_t tile_type,std::vector<int8_t>& growing_perimeter,std::vector<int8_t>& placed_tiles);
 
 
@@ -107,21 +109,28 @@ namespace interface_model
       undiscovered_phenotype_counts.emplace_back(1);
       return phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds;
     }
-    
-    std::map<Phenotype_ID,uint8_t> PhenotypeFrequencies(std::vector<Phenotype_ID >& Phenotype_IDs) {
+
+    void RelabelPhenotypes(std::vector<Phenotype_ID >& Phenotype_IDs,std::map<Phenotype_ID, std::map<std::pair<interface_type,interface_type>, uint8_t> >& phenotype_interactions) {
       /* Replace previously undiscovered phenotype IDs with new one */
       for(std::unordered_map<uint8_t,std::vector<uint16_t> >::iterator xfer_iter=new_phenotype_xfer.begin();xfer_iter!=new_phenotype_xfer.end();++xfer_iter) 
-        for(std::vector<uint16_t>::iterator rep_iter=xfer_iter->second.begin();rep_iter!=xfer_iter->second.end();rep_iter+=2) 
+        for(std::vector<uint16_t>::iterator rep_iter=xfer_iter->second.begin();rep_iter!=xfer_iter->second.end();rep_iter+=2) {
           std::replace(Phenotype_IDs.begin(),Phenotype_IDs.end(),std::make_pair(xfer_iter->first,*(rep_iter)),std::make_pair(xfer_iter->first,*(rep_iter+1)));
+	  for(auto& imap :phenotype_interactions[std::make_pair(xfer_iter->first,*(rep_iter))])
+	    phenotype_interactions[std::make_pair(xfer_iter->first,*(rep_iter+1))][imap.first]+=imap.second;
+	  //phenotype_interactions[std::make_pair(xfer_iter->first,*(rep_iter+1))].insert(phenotype_interactions[std::make_pair(xfer_iter->first,*(rep_iter))].begin(),phenotype_interactions[std::make_pair(xfer_iter->first,*(rep_iter))].end());
+	}
+      undiscovered_phenotypes.clear();
+      undiscovered_phenotype_counts.clear();
+      new_phenotype_xfer.clear();
+
+    }
+    
+    std::map<Phenotype_ID,uint8_t> PhenotypeFrequencies(std::vector<Phenotype_ID >& Phenotype_IDs) {
       /* Count each ID frequency */
       std::map<Phenotype_ID, uint8_t> ID_counter;
       for(std::vector<Phenotype_ID >::const_iterator ID_iter = Phenotype_IDs.begin(); ID_iter!=Phenotype_IDs.end(); ++ID_iter)
         if(ID_iter->second < phenotype_fitnesses[ID_iter->first].size())
           ++ID_counter[std::make_pair(ID_iter->first,ID_iter->second)];
-      
-      undiscovered_phenotypes.clear();
-      undiscovered_phenotype_counts.clear();
-      new_phenotype_xfer.clear();
       return ID_counter;
 
     }

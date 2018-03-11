@@ -97,7 +97,7 @@ extern "C" void WrappedGetPhenotypesID(const char* a,bool file_of_genotypes,int 
 
   StochasticPhenotypeTable pt;
   int k_builds=10;
-  std::vector<int> genotype;
+  std::vector<int> genotype(n_genes*4);
 
  
   std::string filename(a);

@@ -35,20 +35,33 @@ def LoadGenotypeHistory(n_tiles,temperature=0.000001,mu=1,gamma=1,run=0):
     print len(genotypes)
     return np.array(genotypes,dtype=np.uint8)
 
+def LoadStrengthHistory(temperature=0.000001,mu=1,gamma=1,run=0):
+    strengths=[]
+    for line in open(BASE_FILE_PATH.format('Strengths','S',temperature,mu,gamma,run)):
+         strengths.append([[tuple(np.uint8(i) for i in j.split()) for j in tmp.split(',')[:-1]] for tmp in line.split('.')[:-1]])
+
+
+    return strengths
+
+
 from random import randint
-def RandomHistorySampling(genotypes,selections,goback=20):
+def RandomHistorySampling(genotypes,selections,strengths,goback=10):
     rg=randint(genotypes.shape[0]/2,genotypes.shape[0])
     rp=randint(0,genotypes.shape[1])
-    rg=20
-    rp=7
+
+    rg=140
+
     assert rg>=goback, "going back too far"
     print "random sampling from g: ",rg," and p: ",rp
-    print genotypes[rg][rp]
-    
+    print "started from ",genotypes[rg][rp]
+
+    print "staring strengths", strengths[rg][rp]
     for bg in xrange(1,goback+1):
         print "selected from: ",selections[rg-bg][rp]
+        
         rp=selections[rg-bg][rp]
-        print genotypes[rg-bg][rp]
+        print "now ",genotypes[rg-bg][rp]
+        print "new strengths", strengths[rg-bg][rp]
 
         
         
@@ -56,8 +69,8 @@ def SeqDiff(genotype1,genotype2):
     return [i for i in xrange(len(genotype1)) if genotype1[i] != genotype2[i]]
 
 def SammingDistance(base1,base2):
-    assert type(base1)==np.uint8 and type(base2)==np.uint8 , "wrong type"
-    return bin(np.bitwise_xor(base1,revbits(base2))).count("1")
+    #assert type(base1)==np.uint8 and type(base2)==np.uint8 , "wrong type"
+    return bin(np.bitwise_xor(np.uint8(base1),revbits(np.uint8(base2)))).count("1")
 
 def revbits(x):
     return int(bin(~np.uint8(x))[2:].zfill(8)[::-1], 2)

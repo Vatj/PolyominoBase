@@ -52,6 +52,7 @@ void EvolvePopulation(std::string run_details) {
   uint16_t fitness_jiggle=landscape_changer(interface_model::RNG_Engine);
 
   /* Start main evolution loop */
+  
   for(uint32_t generation=0;generation<simulation_params::generation_limit;++generation) {
     if(fitness_jiggle--==0) {
       pt.ReassignFitness(); /* NOTE JIGGLER OFF */
@@ -64,9 +65,24 @@ void EvolvePopulation(std::string run_details) {
     /* Start genotype loop */
     int nth_genotype=0;
     for(PopulationGenotype& evolving_genotype : evolving_population) {
+      
 
       interface_model::MutateInterfaces(evolving_genotype.genotype);
-      population_fitnesses[nth_genotype]=interface_model::ProteinAssemblyOutcome(evolving_genotype.genotype,&pt,evolving_genotype.pid);
+      evolving_genotype.genotype={10,81,115,10,10,10,46,117, 139,0,0,88, 49,229,10,10};
+      std::vector<std::pair<interface_type,interface_type> > pid_interactions;
+      population_fitnesses[nth_genotype]=interface_model::ProteinAssemblyOutcome(evolving_genotype.genotype,&pt,evolving_genotype.pid,pid_interactions);
+      if(!pid_interactions.empty()) {
+	
+	//for(auto x: evolving_genotype.genotype)
+	//  std::cout<<+x<<" ";
+	//std::cout<<" and ints ";
+      for(auto x : pid_interactions)
+	fout_strength<<+x.first<<" "<<+x.second<<",";
+      
+	  
+      
+      }
+      fout_strength<<".";
 
       if(record_strengths)
         InterfaceStrengths(evolving_genotype.genotype,interface_counter);
@@ -193,6 +209,7 @@ void EvolvePopulation(std::string run_details) {
     } /* End genotype loop */
     fout_genotype_history<<"\n";
     fout_phenotype_history<<"\n";
+    fout_strength<<"\n";
     
 
     /* Write data to file */
@@ -218,7 +235,9 @@ void EvolvePopulation(std::string run_details) {
       for(uint16_t selection_index : selection_indices)
         fout_phenotype_history << +selection_index << " ";
       fout_phenotype_history<<"\n";
+     
     }
+    
     /* End selection */
     
   } /* End main evolution loop */
@@ -335,6 +354,7 @@ void SetRuntimeConfigurations(int argc, char* argv[]) {
       case 'M': model_params::mu_prob=std::stod(argv[arg+1]);break;
       case 'T': model_params::temperature=std::stod(argv[arg+1]);break;
       case 'X': model_params::UND_threshold=std::stod(argv[arg+1]);break;
+      case 'I': model_params::interface_threshold=std::stod(argv[arg+1]);break;
 	
       case 'A': model_params::misbinding_rate=std::stod(argv[arg+1]);break;
       case 'U': model_params::unbound_factor=std::stod(argv[arg+1]);break;
