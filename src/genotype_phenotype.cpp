@@ -187,13 +187,10 @@ extern "C" void PhenTuples(int g_size, int* genotype_p,int k_builds, int* IDs_p)
 */
 
 int main(int argc, char* argv[]) {
-  //if(argc>2) {
-  //  std::cout<<argv[1][0]<<std::endl;
-  //}
+  if(argc>2) {
+    std::cout<<argv[1][0]<<std::endl;
+  }
   
-  char const *p ="/rscratch/asl47/GraphTopologies_T2_C10.txt";
-  std::cout<<"wtf "<<std::endl;
-  //WrappedGetPhenotypesID(p);
   return 0;
 
 

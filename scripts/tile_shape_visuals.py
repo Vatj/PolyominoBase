@@ -402,3 +402,5 @@ def find_Difference(stringSet1, stringSet2):
                 print string
 
                 
+def f(x,a,b):
+    return (a+1)/(1.+a*x**b)-(a+1)
