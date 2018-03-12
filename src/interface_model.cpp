@@ -11,7 +11,7 @@ namespace simulation_params
 namespace model_params
 {
   const uint8_t interface_size=CHAR_BIT*sizeof(interface_type);
-  double temperature=1,mu_prob=0.2,unbound_factor=1,misbinding_rate=0,fitness_factor=1,UND_threshold=0.2;
+  double temperature=1,mu_prob=0.2,unbound_factor=1,misbinding_rate=0,fitness_factor=1,UND_threshold=0.2,interface_threshold=0.2;
   std::binomial_distribution<uint8_t> b_dist(interface_size,mu_prob);
   std::uniform_real_distribution<double> real_dist(0, 1);
   
@@ -21,11 +21,11 @@ namespace model_params
 namespace interface_model
 {
   std::random_device rd;
-  //std::mt19937 RNG_Engine(rd());  
-  std::mt19937 RNG_Engine(276358710);
+  std::mt19937 RNG_Engine(rd());  
+  //std::mt19937 RNG_Engine(276358710);
   
   inline interface_type reverse_bits(interface_type v) {
-    interface_type s = sizeof(v) * CHAR_BIT;
+    interface_type s(model_params::interface_size);
     interface_type mask = ~0;         
     while ((s >>= 1) > 0) {
       mask ^= (mask << s);
@@ -53,26 +53,38 @@ namespace interface_model
     }
   }
 
-  double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome,InterfacePhenotypeTable* pt,Phenotype_ID& pid) {
+  double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome,InterfacePhenotypeTable* pt,Phenotype_ID& pid,std::vector<std::pair<interface_type,interface_type> >& pid_interactions) {
     std::vector<int8_t> assembly_information;
     Phenotype phen;
     std::vector<Phenotype_ID> Phenotype_IDs;Phenotype_IDs.reserve(simulation_params::phenotype_builds);
+    std::set<std::pair<interface_type,interface_type> > interacting_indices;
+    //std::map<Phenotype_ID, std::set<std::pair<interface_type,interface_type> > > phenotype_interactions;
+    std::map<Phenotype_ID, std::map<std::pair<interface_type,interface_type>, uint8_t> > phenotype_interactions;
     for(uint8_t nth=0;nth<simulation_params::phenotype_builds;++nth) {
-      assembly_information=AssembleProtein(binary_genome);
+      assembly_information=AssembleProtein(binary_genome,interacting_indices);
       if(assembly_information.size()>0) {
         phen=SpatialGrid(assembly_information);
         Phenotype_IDs.emplace_back(std::count_if(phen.tiling.begin(),phen.tiling.end(),[](const int c){return c != 0;}),pt->PhenotypeCheck(phen));
+	for(auto interacting_pair : interacting_indices)
+	  ++phenotype_interactions[Phenotype_IDs.back()][interacting_pair];//insert(interacting_indices.begin(),interacting_indices.end());
       }
       else
         Phenotype_IDs.emplace_back(0,0);
+      interacting_indices.clear();
     }
+    pt->RelabelPhenotypes(Phenotype_IDs,phenotype_interactions);
     auto ID_counter=pt->PhenotypeFrequencies(Phenotype_IDs);
     pid=std::max_element(ID_counter.begin(),ID_counter.end(),[] (const auto & p1, const auto & p2) {return p1.second < p2.second;})->first;
+    for(auto& imap : phenotype_interactions[pid]) 
+      if(imap.second>=static_cast<uint8_t>(simulation_params::phenotype_builds*model_params::interface_threshold))
+	pid_interactions.emplace_back(imap.first);
+	
+    //pid_interactions=phenotype_interactions[pid];
     return pt->GenotypeFitness(ID_counter);
   }
 
 
-  std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome) {
+  std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome,std::set< std::pair<interface_type,interface_type> >& interacting_indices) {
     std::vector<int8_t> placed_tiles{0,0,1},growing_perimeter;
     PerimeterGrowth(0,0,0,-1,0,growing_perimeter,placed_tiles);
     int8_t current_orientation, current_tile, current_direction, current_x, current_y;
@@ -89,6 +101,11 @@ namespace interface_model
       std::shuffle(genome_bases.begin(), genome_bases.end(), RNG_Engine);
       for(uint8_t base : genome_bases) {
         if(model_params::real_dist(RNG_Engine)<std::exp(-1*static_cast<double>(SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[base]))/(model_params::interface_size*model_params::temperature))) {
+	  //std::cout<<+binary_genome[current_tile*4+current_orientation]<<" "<<+binary_genome[base]<<std::endl;
+	  if(std::exp(-1*static_cast<double>(SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[base]))/(model_params::interface_size*model_params::temperature))<0.01) {
+	    std::cout<<"prob "<<std::exp(-1*static_cast<double>(SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[base]))/(model_params::interface_size*model_params::temperature))<<std::endl;
+	  }
+	  interacting_indices.insert(std::minmax(static_cast<uint8_t>(current_tile*4+current_orientation),base));
           placed_tiles.insert(placed_tiles.end(),{current_x,current_y,static_cast<int8_t>(base-base%4+(current_direction-base%4+4)%4+1)});
 	  PerimeterGrowth(current_x,current_y,(4+current_direction-(base%4))%4,current_direction,base/4,growing_perimeter,placed_tiles);
 	  break;
