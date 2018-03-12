@@ -17,6 +17,7 @@ void EvolvePopulation(std::string run_details) {
   std::ofstream fout_phenotype_history(file_base_path+"PhenotypeHistory_"+file_simulation_details, std::ios_base::out);
 
   interface_model::InterfacePhenotypeTable pt = interface_model::InterfacePhenotypeTable();
+  //static auto binding_probabilities = BindingProbabilities();
   std::vector<double> population_fitnesses(simulation_params::population_size);
   std::vector<uint32_t> interface_counter(1.5*model_params::interface_size+2);
   //std::vector<phenotype_ID> population_phenotypes(simulation_params::population_size),reproduced_phenotypes(simulation_params::population_size);
@@ -25,27 +26,13 @@ void EvolvePopulation(std::string run_details) {
 
   std::vector<PopulationGenotype> evolving_population(simulation_params::population_size),reproduced_population(simulation_params::population_size);
 
-  
-  /* Genotype initilisation, either zero or random, + duplicate */
-  /*
-  std::vector< std::vector<interface_type> > population_genotypes(simulation_params::population_size, std::vector<interface_type>(simulation_params::n_tiles*4, 0));
   if(simulation_params::random_initilisation) {
     std::uniform_int_distribution<interface_type> dist;
     auto interface_filler = std::bind(dist, interface_model::RNG_Engine);
-    for(std::vector<interface_type>& genotype : population_genotypes)
-      std::generate(genotype.begin(),genotype.end(),interface_filler);   
+    for(auto& species : evolving_population)
+      std::generate(species.genotype.begin(),species.genotype.end(),interface_filler);
   }
-  std::vector< std::vector<interface_type> > reproduced_genotypes(population_genotypes);
-  */
-  
-  /* Write initial population to file */
-  /*
-  for(std::vector<interface_type>& genotype : population_genotypes)
-    for(interface_type base_value : genotype)
-      fout_genotype_history << +base_value << " "; 
-  fout_genotype_history<<"\n";
-  */
-  
+ 
 
   /* Median time to complete interface mutation, characteristic time for fitness re-assignment */
   std::poisson_distribution<uint16_t> landscape_changer(log(1-pow(2,-1./model_params::interface_size))/log(1-model_params::mu_prob/(4*simulation_params::n_tiles*model_params::interface_size)));
@@ -55,7 +42,7 @@ void EvolvePopulation(std::string run_details) {
   
   for(uint32_t generation=0;generation<simulation_params::generation_limit;++generation) {
     if(fitness_jiggle--==0) {
-      pt.ReassignFitness(); /* NOTE JIGGLER OFF */
+      //pt.ReassignFitness(); /* NOTE JIGGLER OFF */
       fitness_jiggle=landscape_changer(interface_model::RNG_Engine);
     }
     if(generation+100>=simulation_params::generation_limit)
@@ -69,7 +56,7 @@ void EvolvePopulation(std::string run_details) {
 
       interface_model::MutateInterfaces(evolving_genotype.genotype);
       //evolving_genotype.genotype={10,81,115,10, 10,10,46,117, 139,0,0,88, 49,229,10,10};
-      //evolving_genotype.genotype={10,10,10,49, 114,10,10,10};
+      //evolving_genotype.genotype={10,10,10,0, 65535,10,10,10};
       std::vector<std::pair<interface_type,interface_type> > pid_interactions;
       population_fitnesses[nth_genotype]=interface_model::ProteinAssemblyOutcome(evolving_genotype.genotype,&pt,evolving_genotype.pid,pid_interactions);
       if(!pid_interactions.empty()) {
@@ -91,121 +78,7 @@ void EvolvePopulation(std::string run_details) {
       for(interface_type base_value : evolving_genotype.genotype)
         fout_genotype_history << +base_value << " ";
       fout_phenotype_history << +evolving_genotype.pid.first <<" "<<+evolving_genotype.pid.second<<" ";
-      /*
-      std::vector<uint8_t> mutation_sites=SequenceDifference(evolving_genotype.genotype,reproduced_population[nth_genotype].genotype);
-      for(auto mutated_site : mutation_sites) {
-        uint8_t conj_site=ConjugateInterface(mutated_site);
-        auto site_iter=std::find(evolving_genotype.interacting_interfaces.begin(),evolving_genotype.interacting_interfaces.end(),mutated_site)
-        if(site_iter!=evolving_genotype.interacting_interfaces.end()) {
-          if(conj_site==255)
-          continue;
-
-
-        }
-        
-        
-        if(conj_site==255)
-          continue;
-        
-
-      }
-      if(!mutation_sites.empty()) {
-        
-
-
-      }
-      if(SequenceDifference(evolving_genotype.genotype,reproduced_population[nth_genotype].genotype).size()>1)
       
-      if(generation>0) {
-        if(SequenceDifference(evolving_genotype.genotype,reproduced_population[nth_genotype].genotype).size()>1) {
-            population_fitnesses[nth_genotype]=0;
-             ++nth_genotype;
-	     //std::cout<<"gen "<<generation<<" multiple mutations"<<std::endl;
-            continue;
-          }
-        if(evolving_genotype.pid.first && evolving_genotype.pid!=reproduced_population[nth_genotype].pid) {
-	  std::vector<uint8_t> mutated_sites= SequenceDifference(evolving_genotype.genotype,reproduced_population[nth_genotype].genotype);
-          
-	  
-	  if(evolving_genotype.pid>reproduced_population[nth_genotype].pid) {
-	    /*
-	    std::cout<<"Mutating up"<<std::endl;
-	    std::cout<<"parent ";
-	    for(auto x : reproduced_population[nth_genotype].genotype)
-	      std::cout<<+x<<" ";
-	    std::cout<<"\nchild ";
-	    for(auto x : evolving_genotype.genotype)
-	      std::cout<<+x<<" ";
-	    std::cout<<"\n";
-	    std::cout<<"Mutating up end"<<std::endl;
-	    */
-      /*
-	    for(uint8_t site : mutated_sites) {
-	      uint8_t conj_site=ConjugateInterface(evolving_genotype.genotype,site);
-	      
-	     
-	      if(conj_site!=255) {
-		evolving_genotype.interacting_interfaces.insert(evolving_genotype.interacting_interfaces.end(),{site,conj_site});
-                
-		//std::cout<<"mutations at "<<+site<<" and conj "<<+conj_site<<std::endl;
-	      }
-	    }
-	  }
-	  else {
-	    /*
-	    std::cout<<"Mutating down"<<std::endl;
-	    std::cout<<"parent ";
-	    for(auto x : reproduced_population[nth_genotype].genotype)
-	      std::cout<<+x<<" ";
-	    std::cout<<"\nchild ";
-	    for(auto x : evolving_genotype.genotype)
-	      std::cout<<+x<<" ";
-	    std::cout<<"\n";
-	    std::cout<<"Mutating down end"<<std::endl;
-	    */
-      /*
-	    for(uint8_t site : mutated_sites) {
-	      //std::cout<<"mutated at "<<+site<<std::endl;
-	      auto site_iter=std::find(evolving_genotype.interacting_interfaces.begin(),evolving_genotype.interacting_interfaces.end(),site);
-	      if(site_iter!=evolving_genotype.interacting_interfaces.end()) {
-		if((site_iter-evolving_genotype.interacting_interfaces.begin())%2==0) {
-		  //std::cout<<"removing E "<<+*site_iter<<" and "<<+*(site_iter+1)<<std::endl;
-		  evolving_genotype.interacting_interfaces.erase(site_iter,site_iter+2);
-
-		}
-		else {
-		  //std::cout<<"removing O "<<+*site_iter<<" and "<<+*(site_iter-1)<<std::endl;
-		  evolving_genotype.interacting_interfaces.erase(site_iter-1,site_iter+1);
-		}
-	      }
-	    }
-
-	  }
-         
-                 
-        }
-        */
-	/*
-	std::cout<<"gen "<<generation<<", known edge strengths ";
-          for(auto it= evolving_genotype.interacting_interfaces.begin();it!=evolving_genotype.interacting_interfaces.end();it+=2) {
-	    
-            std::cout<<+interface_model::SammingDistance(evolving_genotype.genotype[*it], evolving_genotype.genotype[*(it+1)])<<" ";
-            if(interface_model::SammingDistance(evolving_genotype.genotype[*it], evolving_genotype.genotype[*(it+1)])!=0) {
-              std::cout<<"\n";
-              std::cout<<"parent ";
-              for(auto x : reproduced_population[nth_genotype].genotype)
-                std::cout<<+x<<" ";
-              std::cout<<"\nchild ";
-              for(auto x : evolving_genotype.genotype)
-                std::cout<<+x<<" ";
-              std::cout<<"\n";
-              std::cout<<+*it<<" "<<+*(it+1)<<std::endl;
-            }
-          }
-          std::cout<<std::endl;
-	
-      }
-        */
       ++nth_genotype;
     } /* End genotype loop */
     fout_genotype_history<<"\n";
@@ -313,7 +186,8 @@ int main(int argc, char* argv[]) {
     run_option=argv[1][1];
     SetRuntimeConfigurations(argc,argv);
   }
-
+  
+  //auto a = BindingProbabilities();
   switch(run_option) {
   case 'E':
     EvolutionRunner();
@@ -323,6 +197,10 @@ int main(int argc, char* argv[]) {
     break;
   case 'D':
     std::cout<<"ProteinEvolution -E -N 2 -P 100 -K 250 -B 25 -S 1 -R 0 -F 1 -X 1 -T 0.000001 -M 0.25 -D 1"<<std::endl;
+    break;
+  case '?':
+    for(auto b : model_params::binding_probabilities)
+      std::cout<<b<<std::endl;
     break;
   case 'H':
   default:
@@ -365,6 +243,7 @@ void SetRuntimeConfigurations(int argc, char* argv[]) {
       }
     }
     model_params::b_dist.param(std::binomial_distribution<uint8_t>::param_type(model_params::interface_size,model_params::mu_prob/(model_params::interface_size*4*simulation_params::n_tiles)));
+    model_params::binding_probabilities=GenBindingProbsLUP();
   }
 }
 

@@ -2,6 +2,7 @@
 #include <functional>
 
 
+//std::array<double,model_params::interface_size+1> binding_probabilities;
 
 struct PopulationGenotype {
   std::vector<interface_type> genotype;

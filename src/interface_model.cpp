@@ -5,24 +5,26 @@ namespace simulation_params
   uint16_t population_size=10;
   uint8_t phenotype_builds=10,n_tiles=2;
   uint32_t generation_limit=5,independent_trials=1,run_offset=0;
-  bool fitness_selection=false,random_initilisation=false;
+  bool fitness_selection=true,random_initilisation=false;
 }
 
 namespace model_params
 {
-  const uint8_t interface_size=CHAR_BIT*sizeof(interface_type);
+  
   double temperature=1,mu_prob=0.2,unbound_factor=1,misbinding_rate=0,fitness_factor=1,UND_threshold=0.2,interface_threshold=0.2;
   std::binomial_distribution<uint8_t> b_dist(interface_size,mu_prob);
   std::uniform_real_distribution<double> real_dist(0, 1);
+  std::array<double,model_params::interface_size+1> binding_probabilities;
   
 
 }
 
+
 namespace interface_model
 {
   std::random_device rd;
-  std::mt19937 RNG_Engine(rd());  
-  //std::mt19937 RNG_Engine(276358710);
+  //std::mt19937 RNG_Engine(rd());  
+  std::mt19937 RNG_Engine(128417);
   
   inline interface_type reverse_bits(interface_type v) {
     interface_type s(model_params::interface_size);
@@ -43,6 +45,8 @@ namespace interface_model
     return static_cast<uint8_t>(ArbitraryPopcount(face1 ^ reverse_bits(~face2)));
   }
 
+  
+
   void MutateInterfaces(std::vector<interface_type>& binary_genome) {
     std::vector<uint8_t> interface_indices(model_params::interface_size);
     std::iota(interface_indices.begin(),interface_indices.end(),0);
@@ -58,7 +62,6 @@ namespace interface_model
     Phenotype phen;
     std::vector<Phenotype_ID> Phenotype_IDs;Phenotype_IDs.reserve(simulation_params::phenotype_builds);
     std::set<std::pair<interface_type,interface_type> > interacting_indices;
-    //std::map<Phenotype_ID, std::set<std::pair<interface_type,interface_type> > > phenotype_interactions;
     std::map<Phenotype_ID, std::map<std::pair<interface_type,interface_type>, uint8_t> > phenotype_interactions;
     for(uint8_t nth=0;nth<simulation_params::phenotype_builds;++nth) {
       assembly_information=AssembleProtein(binary_genome,interacting_indices);
@@ -66,7 +69,7 @@ namespace interface_model
         phen=SpatialGrid(assembly_information);
         Phenotype_IDs.emplace_back(std::count_if(phen.tiling.begin(),phen.tiling.end(),[](const int c){return c != 0;}),pt->PhenotypeCheck(phen));
 	for(auto interacting_pair : interacting_indices)
-	  ++phenotype_interactions[Phenotype_IDs.back()][interacting_pair];//insert(interacting_indices.begin(),interacting_indices.end());
+	  ++phenotype_interactions[Phenotype_IDs.back()][interacting_pair];
       }
       else
         Phenotype_IDs.emplace_back(0,0);
@@ -78,8 +81,7 @@ namespace interface_model
     for(auto& imap : phenotype_interactions[pid]) 
       if(imap.second>=static_cast<uint8_t>(simulation_params::phenotype_builds*model_params::interface_threshold))
 	pid_interactions.emplace_back(imap.first);
-	
-    //pid_interactions=phenotype_interactions[pid];
+       
     return pt->GenotypeFitness(ID_counter);
   }
 
@@ -99,12 +101,9 @@ namespace interface_model
       current_x=growing_perimeter.back();growing_perimeter.pop_back();
       
       std::shuffle(genome_bases.begin(), genome_bases.end(), RNG_Engine);
+      
       for(uint8_t base : genome_bases) {
-        if(model_params::real_dist(RNG_Engine)<std::exp(-1*static_cast<double>(SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[base]))/(model_params::interface_size*model_params::temperature))) {
-	  //std::cout<<+binary_genome[current_tile*4+current_orientation]<<" "<<+binary_genome[base]<<std::endl;
-	  if(std::exp(-1*static_cast<double>(SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[base]))/(model_params::interface_size*model_params::temperature))<0.01) {
-	    std::cout<<"prob "<<std::exp(-1*static_cast<double>(SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[base]))/(model_params::interface_size*model_params::temperature))<<std::endl;
-	  }
+        if(model_params::real_dist(RNG_Engine)<model_params::binding_probabilities[SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[base])]) {
 	  interacting_indices.insert(std::minmax(static_cast<uint8_t>(current_tile*4+current_orientation),base));
           placed_tiles.insert(placed_tiles.end(),{current_x,current_y,static_cast<int8_t>(base-base%4+(current_direction-base%4+4)%4+1)});
 	  PerimeterGrowth(current_x,current_y,(4+current_direction-(base%4))%4,current_direction,base/4,growing_perimeter,placed_tiles);
@@ -223,6 +222,12 @@ void InterfaceStrengths(std::vector<interface_type>& interfaces, std::vector<uin
   }
 }
 
-
-
+std::array<double,model_params::interface_size+1> GenBindingProbsLUP() {
+  std::array<double,model_params::interface_size+1> probs;
+  double lower_bound=0.5 * erfc(0.5/model_params::temperature * M_SQRT1_2);
+  double upper_bound=0.5 * erfc(-0.5/model_params::temperature * M_SQRT1_2);
+  for(uint8_t i = 0; i <=model_params::interface_size; ++i)
+      probs[i] = std::exp(-1*static_cast<double>(i)/(model_params::interface_size*model_params::temperature));
+  return probs;
+}
 

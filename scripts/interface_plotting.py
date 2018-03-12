@@ -319,12 +319,15 @@ def PlotBindingStrengths(Ts,I_size):
      cs=['firebrick','royalblue','darkgreen','coral','orchid','goldenrod','c','k','y','r','b','g']
      for T,c in zip(Ts,cs):
           plt.plot(np.linspace(0,1,101),np.exp(-1*np.linspace(1,0,101)/T),lw=2,ls='--',label='T={}'.format(T),c=c)
-          plt.plot(np.linspace(0,1,I_size+1),np.exp(-1*np.linspace(1,0,I_size+1)/T),lw=2,ls='',marker='o',c=c,markersize=6,markeredgewidth=1)
+          plt.plot(np.linspace(0,1,I_size+1),np.exp(-1*np.linspace(1,0,I_size+1)/T),lw=2,marker='o',ls='',c=c)
 
-          plt.plot(np.linspace(0,1,101),np.linspace(0,1,101)**(5./T),lw=2,ls='--',label='T={}'.format(T),c=c)
+          plt.plot(np.linspace(0,1,I_size+1),FF(np.linspace(0,1,I_size+1),T),lw=2,marker='o',ls='',c=c)
+          #plt.plot(np.linspace(0,1,I_size+1),np.exp(-1*np.linspace(1,0,I_size+1)/T),lw=2,ls='',marker='o',c=c,markersize=6,markeredgewidth=1)
+
+          #plt.plot(np.linspace(0,1,101),np.linspace(0,1,101)**(5./T),lw=2,ls='--',label='T={}'.format(T),c=c)
           
      plt.legend()
-     plt.yscale('log',nonposy='mask')
+     #plt.yscale('log',nonposy='mask')
      plt.show(block=False)
      
 
@@ -489,4 +492,22 @@ def HistoryDiagram(IDs,selections,low=-1,high=-1):
      plt.tight_layout()
      plt.xlim([-1,len(selections[0])+1])
      plt.show(block=False)
-               
+
+from interface_analysis import LoadT,RandomHistorySampling
+def PlotAnalysis():
+     sampled_history_strengths=RandomHistorySampling(*LoadT())
+     #return sampled_history_strengths
+     plt.figure()
+     for key,interface_pairing in sampled_history_strengths.iteritems():
+          for sequence in interface_pairing:
+               print sequence
+               plt.plot(range(len(sequence)),sequence)
+     plt.show(block=False)
+     
+def FF(xs,t):
+     mi=stats.norm.cdf(xs[0],.5,t)
+     ma=stats.norm.cdf(xs[-1],.5,t)
+     #print ma,mi
+     scal=1./(ma-mi)
+     #print scal,mi
+     return (stats.norm.cdf(xs,.5,t)-mi)*scal#*xs**3

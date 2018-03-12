@@ -464,10 +464,10 @@ void Clean_Genome(std::vector<int>& genome,int secondNonInteracting,bool Remove_
   Minimize_Tile_Set(genome);
   if(Remove_Duplicates) {
     for(int check_index=genome.size()/4-1;check_index>0;--check_index) {
-      std::vector<int> check_Genome(genome.begin()+check_index*4,genome.begin()+check_index*4+4);
+      //std::vector<int> check_Genome(genome.begin()+check_index*4,genome.begin()+check_index*4+4);
       for(int compare_index=check_index-1;compare_index>=0;--compare_index) {
-        std::vector<int> compare_Genome(genome.begin()+compare_index*4,genome.begin()+compare_index*4+4);
-        if(check_Genome==compare_Genome) {
+        //std::vector<int> compare_Genome(genome.begin()+compare_index*4,genome.begin()+compare_index*4+4);
+        if(std::equal(genome.begin()+check_index*4,genome.begin()+check_index*4+4,genome.begin()+compare_index*4)) {
           genome.erase(genome.begin()+check_index*4,genome.begin()+check_index*4+4);
           break;
         }
@@ -475,8 +475,6 @@ void Clean_Genome(std::vector<int>& genome,int secondNonInteracting,bool Remove_
     }
   }  
 }
-
-
 
 void Minimize_Tile_Set(std::vector<int>& genome) {
   std::vector<int> Minimal_Genome;

@@ -74,6 +74,22 @@ extern "C" void WrappedGetPhenotypeID(int g_size, int* genotype,int k_size,int* 
 
 }
 */
+
+std::vector<uint8_t> DuplicateGenes(std::vector<int>& genome) {
+  std::vector<uint8_t> dups;
+  for(int check_index=genome.size()/4-1;check_index>0;--check_index) {
+    for(int compare_index=check_index-1;compare_index>=0;--compare_index) {
+      if(std::equal(genome.begin()+check_index*4,genome.begin()+check_index*4+4,genome.begin()+compare_index*4)) {
+        genome.erase(genome.begin()+check_index*4,genome.begin()+check_index*4+4);
+        dups.emplace_back(check_index);
+        dups.emplace_back(compare_index);
+        break;
+      }
+    }
+  }
+  return dups;
+}
+
 extern "C" int genotype_to_index(int* genotype, int colours, int n_genes) {
   int count=0;
   for(uint8_t index=0;index<n_genes*4;++index)
@@ -86,14 +102,15 @@ extern "C" void index_to_genotype(int index, int* genotype, int colours, int n_g
     int value=index/pow(colours,n_genes*4-count-1);
     genotype[count]=value;
     index-= value * pow(colours,n_genes*4-count-1);
-    }
+  }
 }
 
 
-extern "C" void WrappedGetPhenotypesID(const char* a,bool file_of_genotypes,int colours=0,int n_genes=0) {
+extern "C" void WrappedGetPhenotypesID(const char* a,const char* b,bool file_of_genotypes,int colours=0,int n_genes=0) {
 
-  std::ofstream fout("Genotype_Codes.txt", std::ios_base::out);
-  std::ofstream fout2("Phenotype_Table.txt", std::ios_base::out);
+  std::string file_path(b);
+  std::ofstream fout(file_path+"Genotype_Codes_N"+std::to_string(n_genes)+"_C"+std::to_string(colours)+".txt", std::ios_base::out);
+  std::ofstream fout2(file_path+"Phenotype_Table_N"+std::to_string(n_genes)+"_C"+std::to_string(colours)+".txt", std::ios_base::out);
 
   StochasticPhenotypeTable pt;
   int k_builds=10;

@@ -10,12 +10,11 @@
 #include <cmath>
 
 #include <set>
+#include <array>
 
 
 
-
-
-
+typedef uint16_t interface_type;
 
 namespace simulation_params
 {
@@ -29,14 +28,31 @@ namespace simulation_params
 namespace model_params
 {
   extern double temperature,mu_prob,misbinding_rate,fitness_factor,unbound_factor,UND_threshold,interface_threshold;
-  extern const uint8_t interface_size;
+  const uint8_t interface_size=CHAR_BIT*sizeof(interface_type);
 
   extern std::binomial_distribution<uint8_t> b_dist;
   extern std::uniform_real_distribution<double> real_dist;
-
+  extern std::array<double,model_params::interface_size+1> binding_probabilities;
 }
 
-typedef uint8_t interface_type;
+
+
+
+/*
+struct BindingProbabilities {
+  double values[model_params::interface_size+1];
+  BindingProbabilities() : values() {
+    //double lower_bound=0.5 * erfc(0.5/model_params::temperature * M_SQRT1_2);
+    //double upper_bound=0.5 * erfc(-0.5/model_params::temperature * M_SQRT1_2);
+    for(uint8_t i = 0; i <=model_params::interface_size; ++i)
+      values[i] = std::exp(-1*static_cast<double>(i)/(model_params::interface_size*model_params::temperature));//(0.5 * erfc((static_cast<double>(i)/model_params::interface_size-0.5)/model_params::temperature * M_SQRT1_2)-lower_bound)/(upper_bound-lower_bound);//*pow(static_cast<double>(i)/model_params::interface_size,3.);
+  }
+  
+};
+*/
+std::array<double,model_params::interface_size+1> GenBindingProbsLUP();
+
+
 
 /* SPATIAL */
 Phenotype SpatialGrid(std::vector<int8_t>& placed_tiles);
@@ -53,6 +69,8 @@ void InterfaceStrengths(std::vector<interface_type>& interfaces, std::vector<uin
 
 namespace interface_model
 {
+
+
   
   
   struct InterfacePhenotypeTable;
@@ -92,8 +110,9 @@ namespace interface_model
             new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
             known_phenotypes[phenotype_size].push_back(phen);
             //std::gamma_distribution<double> fitness_dist(sqrt(static_cast<double>(phenotype_size)),1);
-            std::gamma_distribution<double> fitness_dist(pow(static_cast<double>(phenotype_size),2),1);
+            std::gamma_distribution<double> fitness_dist(pow(static_cast<double>(phenotype_size),3),1);
             phenotype_fitnesses[phenotype_size].emplace_back(fitness_dist(RNG_Engine));
+            std::cout<<"fitness of "<<+phenotype_size<<" "<<phenotype_fitnesses[phenotype_size].size()-1<<" is "<<phenotype_fitnesses[phenotype_size].back()<<std::endl;
             new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()-1);
             
             return phenotype_fitnesses[phenotype_size].size()-1;
@@ -110,14 +129,13 @@ namespace interface_model
       return phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds;
     }
 
-    void RelabelPhenotypes(std::vector<Phenotype_ID >& Phenotype_IDs,std::map<Phenotype_ID, std::map<std::pair<interface_type,interface_type>, uint8_t> >& phenotype_interactions) {
+    void RelabelPhenotypes(std::vector<Phenotype_ID >& pids,std::map<Phenotype_ID, std::map<std::pair<interface_type,interface_type>, uint8_t> >& p_ints) {
       /* Replace previously undiscovered phenotype IDs with new one */
       for(std::unordered_map<uint8_t,std::vector<uint16_t> >::iterator xfer_iter=new_phenotype_xfer.begin();xfer_iter!=new_phenotype_xfer.end();++xfer_iter) 
         for(std::vector<uint16_t>::iterator rep_iter=xfer_iter->second.begin();rep_iter!=xfer_iter->second.end();rep_iter+=2) {
-          std::replace(Phenotype_IDs.begin(),Phenotype_IDs.end(),std::make_pair(xfer_iter->first,*(rep_iter)),std::make_pair(xfer_iter->first,*(rep_iter+1)));
-	  for(auto& imap :phenotype_interactions[std::make_pair(xfer_iter->first,*(rep_iter))])
-	    phenotype_interactions[std::make_pair(xfer_iter->first,*(rep_iter+1))][imap.first]+=imap.second;
-	  //phenotype_interactions[std::make_pair(xfer_iter->first,*(rep_iter+1))].insert(phenotype_interactions[std::make_pair(xfer_iter->first,*(rep_iter))].begin(),phenotype_interactions[std::make_pair(xfer_iter->first,*(rep_iter))].end());
+          std::replace(pids.begin(),pids.end(),std::make_pair(xfer_iter->first,*(rep_iter)),std::make_pair(xfer_iter->first,*(rep_iter+1)));
+	  for(auto& imap :p_ints[std::make_pair(xfer_iter->first,*(rep_iter))])
+	    p_ints[std::make_pair(xfer_iter->first,*(rep_iter+1))][imap.first]+=imap.second;
 	}
       undiscovered_phenotypes.clear();
       undiscovered_phenotype_counts.clear();
@@ -125,10 +143,10 @@ namespace interface_model
 
     }
     
-    std::map<Phenotype_ID,uint8_t> PhenotypeFrequencies(std::vector<Phenotype_ID >& Phenotype_IDs) {
+    std::map<Phenotype_ID,uint8_t> PhenotypeFrequencies(std::vector<Phenotype_ID >& pids) {
       /* Count each ID frequency */
       std::map<Phenotype_ID, uint8_t> ID_counter;
-      for(std::vector<Phenotype_ID >::const_iterator ID_iter = Phenotype_IDs.begin(); ID_iter!=Phenotype_IDs.end(); ++ID_iter)
+      for(std::vector<Phenotype_ID >::const_iterator ID_iter = pids.begin(); ID_iter!=pids.end(); ++ID_iter)
         if(ID_iter->second < phenotype_fitnesses[ID_iter->first].size())
           ++ID_counter[std::make_pair(ID_iter->first,ID_iter->second)];
       return ID_counter;
