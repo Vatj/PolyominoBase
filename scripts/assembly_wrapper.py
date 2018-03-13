@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import ctypes
 import os
+import os.path
 from sys import platform
 import numpy as np
 
@@ -9,17 +10,29 @@ import numpy as np
 Poly_Lib=ctypes.cdll.LoadLibrary('./AGF.so')
 #np.ctypeslib.ndpointer(dtype=np.float64,ndim=1,flags='C_CONTIGUOUS')
 
-def NewMethod(fileName,file_of_genotypes=True,cols=0,ngenes=0):
+def NewMethod(fileName,out_path='/',file_of_genotypes=True,cols=0,ngenes=0):
     Poly_Lib.WrappedGetPhenotypesID.restype=None
-    Poly_Lib.WrappedGetPhenotypesID.argtypes=[ctypes.POINTER(ctypes.c_char),ctypes.c_bool,ctypes.c_int,ctypes.c_int]
+    Poly_Lib.WrappedGetPhenotypesID.argtypes=[ctypes.POINTER(ctypes.c_char),ctypes.POINTER(ctypes.c_char),ctypes.c_bool,ctypes.c_int,ctypes.c_int]
     c_=ctypes.c_buffer(fileName+".txt")
-    Poly_Lib.WrappedGetPhenotypesID(c_,file_of_genotypes,cols,ngenes)
+    o_=ctypes.c_buffer(out_path)
+    assert os.path.isfile(fileName+".txt"), "not a valid file"
+    
+    Poly_Lib.WrappedGetPhenotypesID(c_,o_,file_of_genotypes,cols,ngenes)
+
+def WriteMethod(fileName,file_of_genotypes=True,cols=0,ngenes=0):
+    Poly_Lib.GGenerator.restype=None
+    Poly_Lib.GGenerator.argtypes=[ctypes.POINTER(ctypes.c_char),ctypes.c_bool,ctypes.c_uint8,ctypes.c_uint8]
+    c_=ctypes.c_buffer(fileName+".txt")
+
+    Poly_Lib.GGenerator(c_,file_of_genotypes,cols,ngenes)
+    
 
 def G2I(genotype,colours,n_genes):
-    Poly_Lib.genotype_to_index.restype=ctypes.c_int
-    Poly_Lib.genotype_to_index.argtypes=[ctypes.POINTER(ctypes.c_int),ctypes.c_int,ctypes.c_int]
-    g_P=(ctypes.c_int*len(genotype))(*genotype)
-    return int(Poly_Lib.genotype_to_index(g_P,colours,n_genes))
+    Poly_Lib.genotype_to_index.restype=ctypes.c_uint64
+    Poly_Lib.genotype_to_index.argtypes=[ctypes.POINTER(ctypes.c_uint8),ctypes.c_uint8,ctypes.c_uint8]
+    g_P=(ctypes.c_uint8*len(genotype))(*genotype)
+    print g_P
+    return Poly_Lib.genotype_to_index(g_P,colours,n_genes)
 
 def I2G(index,colours,n_genes):
     Poly_Lib.index_to_genotype.restype=None

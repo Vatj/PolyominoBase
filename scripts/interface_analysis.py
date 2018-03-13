@@ -43,8 +43,8 @@ def LoadStrengthHistory(temperature=0.000001,mu=1,gamma=1,run=0):
     return strengths
 
 def LoadT():
-     mu=0.25
-     t=0.000001
+     mu=1
+     t=0.025
      g=LoadGenotypeHistory(2,mu=mu,temperature=t)
      st=LoadStrengthHistory(mu=mu,temperature=t)
      p,s=LoadEvolutionHistory(mu=mu,temperature=t)
@@ -56,6 +56,8 @@ from collections import defaultdict
 def RandomHistorySampling(genotypes,selections,phenotypes,strengths,goback=10):
      rg=randint(genotypes.shape[0]/2,genotypes.shape[0]-1)
      rp=randint(0,genotypes.shape[1]-1)
+
+     rg=150
 
 
      strength_tracker=defaultdict(list)
