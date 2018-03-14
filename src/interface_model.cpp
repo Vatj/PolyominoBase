@@ -223,11 +223,16 @@ void InterfaceStrengths(std::vector<interface_type>& interfaces, std::vector<uin
 }
 
 std::array<double,model_params::interface_size+1> GenBindingProbsLUP() {
+  const double TEMP_OFFSET=0.05;
   std::array<double,model_params::interface_size+1> probs;
-  double lower_bound=0.5 * erfc(0.5/model_params::temperature * M_SQRT1_2);
-  double upper_bound=0.5 * erfc(-0.5/model_params::temperature * M_SQRT1_2);
-  for(uint8_t i = 0; i <=model_params::interface_size; ++i)
-      probs[i] = std::exp(-1*static_cast<double>(i)/(model_params::interface_size*model_params::temperature));
+  //double lower_bound=0.5 * erfc((model_params::temperature)/TEMP_OFFSET * M_SQRT1_2);
+  //double upper_bound=0.5 * erfc((model_params::temperature-1)/TEMP_OFFSET * M_SQRT1_2);
+  //std::cout<<lower_bound<<" "<<upper_bound<<std::endl;
+  for(uint8_t i = 1; i <model_params::interface_size; ++i)
+    //probs[i] = std::exp(-1*static_cast<double>(i)/(model_params::interface_size*model_params::temperature));
+    probs[i]=0.5 * erfc((static_cast<double>(i)/model_params::interface_size-model_params::temperature)/TEMP_OFFSET * M_SQRT1_2);//-lower_bound)/(upper_bound-lower_bound);//*pow(static_cast<double>(i)/model_params::interface_size,3.);
+  probs[0]=1;
+  probs[model_params::interface_size]=0;
   return probs;
 }
 

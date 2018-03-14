@@ -1,10 +1,6 @@
 #include "core_phenotype.hpp"
 
-#include <iostream>
 #include <functional>
-#include <tuple>
-#include <numeric>
-#include <map>
 #include <random>
 #include <climits>
 #include <cmath>
@@ -12,6 +8,7 @@
 #include <set>
 #include <array>
 
+#include <iostream>
 
 
 typedef uint16_t interface_type;

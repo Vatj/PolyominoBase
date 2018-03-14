@@ -44,7 +44,7 @@ def LoadStrengthHistory(temperature=0.000001,mu=1,gamma=1,run=0):
 
 def LoadT():
      mu=1
-     t=0.025
+     t=0.35
      g=LoadGenotypeHistory(2,mu=mu,temperature=t)
      st=LoadStrengthHistory(mu=mu,temperature=t)
      p,s=LoadEvolutionHistory(mu=mu,temperature=t)
@@ -54,32 +54,37 @@ def LoadT():
 from random import randint
 from collections import defaultdict
 def RandomHistorySampling(genotypes,selections,phenotypes,strengths,goback=10):
+     printer=False
      rg=randint(genotypes.shape[0]/2,genotypes.shape[0]-1)
      rp=randint(0,genotypes.shape[1]-1)
 
-     rg=150
+     #rg=150
 
 
      strength_tracker=defaultdict(list)
 
+     if(goback>rg):
+          rg=goback
      assert rg>=goback, "going back too far"
-     print "random sampling from g: ",rg," and p: ",rp
-     print "started from ",genotypes[rg][rp],phenotypes[rg][rp]
-
-     print "staring strengths", strengths[rg][rp]
+     if printer:
+          print "random sampling from g: ",rg," and p: ",rp
+          print "started from ",genotypes[rg][rp],phenotypes[rg][rp]
+          print "staring strengths", strengths[rg][rp]
+          
      for stren in strengths[rg][rp]:
           strength_tracker[stren].append([BindingStrength(*[genotypes[rg][rp][j] for j in stren])])
 
      
 
      for bg in xrange(1,goback+1):
-          print "selected from: ",selections[rg-bg][rp]
+          if printer:
+               print "selected from: ",selections[rg-bg][rp]
          
           rp=selections[rg-bg][rp]
-          print "now ",genotypes[rg-bg][rp],phenotypes[rg-bg][rp]
-          print "new inters", strengths[rg-bg][rp]
-        
-          print "strs ",[BindingStrength(*[genotypes[rg-bg][rp][j] for j in i]) for i in strengths[rg-bg][rp]]
+          if printer:
+               print "now ",genotypes[rg-bg][rp],phenotypes[rg-bg][rp]
+               print "new inters", strengths[rg-bg][rp]
+               print "strs ",[BindingStrength(*[genotypes[rg-bg][rp][j] for j in i]) for i in strengths[rg-bg][rp]]
 
           for stren in strengths[rg-bg][rp]:
                if stren in strength_tracker:
