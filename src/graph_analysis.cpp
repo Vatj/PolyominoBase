@@ -1,39 +1,6 @@
-//#include "graph_analysis.hpp"
-#include "stochastic_model.hpp"
-//#include <exception>
+#include "graph_analysis.hpp"
+//#include "stochastic_model.hpp"
 
-int Graph_Analysis_Fast(std::vector<int> genotype) {
-  std::vector<int> Null_Check{0,0,0,0};
-  if(genotype==Null_Check)
-      return 1;
-  if(Double_BP_Check(genotype))
-    return -1;
-  int SIF_result=SIF_Elimination(genotype);
-  if(SIF_result!=0)
-    return SIF_result;
-  if(BP_Check(genotype))
-    return -1;
-  int Bound_Limit=0;
-  int loop_result=loop_Analysis(genotype,Bound_Limit);
-  return loop_result>0 ? 1 : -1;
-}
-
-int FastGraphAnalysis(std::vector<int> genotype) {
-  std::vector<int> Null_Check{0,0,0,0};
-  if(genotype==Null_Check)
-      return 1;
-  if(Double_BP_Check(genotype))
-    return -1;
-  int SIF_result=SIF_Elimination(genotype);
-  if(SIF_result!=0)
-    return SIF_result;  
-  if(BP_Disjointed_Check(genotype))
-    return -1;
-  if(BP_Check(genotype))
-    return -1;
-  return FastLoopAnalysis(genotype); 
-  
-}
 
 
 
@@ -230,14 +197,6 @@ double Steric_Check(std::vector<int>& genome,int Shape_Based_Fitness) {
       //occupied_spiral[SpiralCoordinate(currentX+X_OFFSET,currentY+Y_OFFSET)]=1;
       processingQueue.insert(processingQueue.end(),{currentX+X_OFFSET,currentY+Y_OFFSET,tileN,tileO,f});
       if(tilesInformation.size()>1.25*genome.size()*genome.size()) {
-#pragma omp critical(ster)
-        {
-          std::cout<<"HARD EXIT, STERIC OVERFLOW from"<<std::endl;
-          for(auto& g: genome) {
-            std::cout<<g<<" ";
-          }
-          std::cout<<std::endl;
-        }
         return -1;        
       }
     }    
@@ -357,14 +316,6 @@ std::vector<int> Steric_Check_Occupation(std::vector<int>& genome) {
       tilesInformation.insert(tilesInformation.end(),{currentX+X_OFFSET,currentY+Y_OFFSET,tileN,tileO,f});
       processingQueue.insert(processingQueue.end(),{currentX+X_OFFSET,currentY+Y_OFFSET,tileN,tileO,f});
       if(tilesInformation.size()>1.25*genome.size()*genome.size()) {
-#pragma omp critical(ster)
-        {
-          std::cout<<"HARD EXIT, STERIC OVERFLOW from"<<std::endl;
-          for(auto& g: genome) {
-            std::cout<<g<<" ";
-          }
-          std::cout<<std::endl;
-        }
         return {-1};        
       }
     }    
@@ -420,7 +371,6 @@ int Steric_Check_Table(std::vector<int>& genome,std::vector<int>& Known_Shapes,i
   int comingFrom=-1;
   int ip=0;
   bool superBREAK=false;
-  bool advanced_Steric_Check=false;
   while(!processingQueue.empty()) {
     ++ip;
     comingFrom=processingQueue.back();
@@ -491,7 +441,6 @@ int Steric_Check_Table(std::vector<int>& genome,std::vector<int>& Known_Shapes,i
           else {
             return -1;
             if(std::count(genome.begin()+*(it+2)*4,genome.begin()+(1+*(it+2))*4,0)==std::count(genome.begin()+tileN*4,genome.begin()+(1+tileN)*4,0)) {
-              advanced_Steric_Check=true;
               break;
             }
             else {
@@ -531,26 +480,6 @@ int Steric_Check_Table(std::vector<int>& genome,std::vector<int>& Known_Shapes,i
   for(unsigned int tileIndex=0;tileIndex<X_LOCs.size();++tileIndex) {
     Spatial_Occupation[(*TOP_Y-Y_LOCs[tileIndex])*DELTA_X + (X_LOCs[tileIndex]-*LEFT_X)]=1;
     ++Spatial_Grid[(*TOP_Y-Y_LOCs[tileIndex])*DELTA_X + (X_LOCs[tileIndex]-*LEFT_X)];
-  }
-  
-  if(advanced_Steric_Check) {
-    bool doubleBreak=false;
-    for(int r=0;r<DELTA_Y;++r) {
-      for(int c=0;c<DELTA_X;++c) {
-        if(Spatial_Grid[r*DELTA_X+c]==1) {
-          if(!Traverse_Numbered_Sterics(Spatial_Grid,DELTA_X,DELTA_Y,c,r,-1)) {
-            return -1;
-          }
-          else {
-            doubleBreak=true;
-            break;
-          }
-        }
-      }
-      if(doubleBreak) {
-        break;
-      }
-    }
   }
   
   if(Known_Shapes.empty()) {
@@ -604,55 +533,6 @@ int Steric_Check_Table(std::vector<int>& genome,std::vector<int>& Known_Shapes,i
 }
 
 
-bool Traverse_Numbered_Sterics(std::vector<int>& Spatial_Grid,int DELTA_X,int DELTA_Y,int x,int y,int cameFrom) {
-  for(int f=0;f<4;++f) {
-    if(cameFrom!=-1 && f==(cameFrom+2)%4) {
-      continue;
-    }
-    int nextX,nextY;
-    switch(f) {
-    case 0:
-      nextX=x;
-      nextY=y-1;
-      break;
-    case 1:
-      nextX=x+1;
-      nextY=y;
-      break;
-    case 2:
-      nextX=x;
-      nextY=y+1;
-      break;
-    case 3:
-      nextX=x-1;
-      nextY=y;
-      break;
-    }
-    if((nextX<0||nextX>=DELTA_X)||(nextY<0||nextY>=DELTA_Y)) {
-      continue;
-    }
-    if(Spatial_Grid[nextX+nextY*DELTA_X]>=2) {
-      continue;
-    }
-    if(Spatial_Grid[nextX+nextY*DELTA_X]==1) {
-      Spatial_Grid[x+y*DELTA_X]=0;
-      Traverse_Numbered_Sterics(Spatial_Grid,DELTA_X,DELTA_Y,nextX,nextY,f);
-    }  
-  }
-  if(cameFrom!=-1) {
-    Spatial_Grid[x+y*DELTA_X]=0;
-    return false;
-  }
-  if(cameFrom==-1) {
-    if(std::count(Spatial_Grid.begin(),Spatial_Grid.end(),1)>=1) {
-      return false;
-    }
-    else {
-      return true;
-    }
-  }
-  return false;
-}
 
 
 void Clockwise_Rotation(std::vector<int>& Spatial_Occupation,int DELTA_X,int DELTA_Y) {
@@ -683,7 +563,7 @@ void Clockwise_Pi_Rotation(std::vector<int>& Spatial_Occupation,int DELTA_X,int 
 
 bool GetMultiplePhenotypeFitness(std::vector<int> genome,std::vector<int> target_types,std::vector<double>& target_fitnesses,int active_targets) {
   std::vector<int> phenotype_information;
-  Clean_Genome(genome,-1);
+  Clean_Genome(genome,0,true);
   if(Disjointed_Check(genome))
     genome.erase(std::find(genome.begin(),genome.end(),-1),genome.end());
   if(Graph_Analysis(genome)>0)
@@ -718,7 +598,7 @@ bool GetMultiplePhenotypeFitness(std::vector<int> genome,std::vector<int> target
 
 
 int Get_Phenotype_Fitness(std::vector<int> genome,int Shape_Based_Fitness, bool zeroth_seed) {
-  Clean_Genome(genome,-1);
+  Clean_Genome(genome,0,true);
   if(Disjointed_Check(genome)) {
     std::vector<double> disjointed_results;
     while(std::find(genome.begin(),genome.end(),-1)!=genome.end()) {
@@ -994,4 +874,89 @@ double StericNew(std::vector<int>& genome) {
     }
   }
 }
+
+
+
+int Graph_Analysis_Fast(std::vector<int> genotype) {
+  std::vector<int> Null_Check{0,0,0,0};
+  if(genotype==Null_Check)
+      return 1;
+  if(Double_BP_Check(genotype))
+    return -1;
+  int SIF_result=SIF_Elimination(genotype);
+  if(SIF_result!=0)
+    return SIF_result;
+  if(BP_Check(genotype))
+    return -1;
+  int Bound_Limit=0;
+  int loop_result=loop_Analysis(genotype,Bound_Limit);
+  return loop_result>0 ? 1 : -1;
+}
+
+int FastGraphAnalysis(std::vector<int> genotype) {
+  std::vector<int> Null_Check{0,0,0,0};
+  if(genotype==Null_Check)
+      return 1;
+  if(Double_BP_Check(genotype))
+    return -1;
+  int SIF_result=SIF_Elimination(genotype);
+  if(SIF_result!=0)
+    return SIF_result;  
+  if(BP_Disjointed_Check(genotype))
+    return -1;
+  if(BP_Check(genotype))
+    return -1;
+  return FastLoopAnalysis(genotype); 
+  
+}
+bool Traverse_Numbered_Sterics(std::vector<int>& Spatial_Grid,int DELTA_X,int DELTA_Y,int x,int y,int cameFrom) {
+  for(int f=0;f<4;++f) {
+    if(cameFrom!=-1 && f==(cameFrom+2)%4) {
+      continue;
+    }
+    int nextX,nextY;
+    switch(f) {
+    case 0:
+      nextX=x;
+      nextY=y-1;
+      break;
+    case 1:
+      nextX=x+1;
+      nextY=y;
+      break;
+    case 2:
+      nextX=x;
+      nextY=y+1;
+      break;
+    case 3:
+      nextX=x-1;
+      nextY=y;
+      break;
+    }
+    if((nextX<0||nextX>=DELTA_X)||(nextY<0||nextY>=DELTA_Y)) {
+      continue;
+    }
+    if(Spatial_Grid[nextX+nextY*DELTA_X]>=2) {
+      continue;
+    }
+    if(Spatial_Grid[nextX+nextY*DELTA_X]==1) {
+      Spatial_Grid[x+y*DELTA_X]=0;
+      Traverse_Numbered_Sterics(Spatial_Grid,DELTA_X,DELTA_Y,nextX,nextY,f);
+    }  
+  }
+  if(cameFrom!=-1) {
+    Spatial_Grid[x+y*DELTA_X]=0;
+    return false;
+  }
+  if(cameFrom==-1) {
+    if(std::count(Spatial_Grid.begin(),Spatial_Grid.end(),1)>=1) {
+      return false;
+    }
+    else {
+      return true;
+    }
+  }
+  return false;
+}
+
 */

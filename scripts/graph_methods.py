@@ -43,17 +43,16 @@ def Draw_Graph(graph,kit):
 
 
 def StripIsomorphisms(file_in):
-    tile_kits=[[int(i) for i in line.rstrip('\n').split()] for line in open('/rscratch/asl47/Bulk_Run/Modular/{}.txt'.format(file_in))]
+    tile_kits=[[int(i) for i in line.rstrip('\n').split()] for line in open(file_in)]
     assembly_graphs=zip(range(len(tile_kits)),[Transform_Graph_From_List(tile_kit) for tile_kit in tile_kits])
 
     unique_assembly_graphs_indices=[]
     
     while len(assembly_graphs)>1:
-        #print len(assembly_graphs)
         unique_assembly_graphs_indices.append(assembly_graphs[0][0])
         assembly_graphs[:]=[assembly_graph for assembly_graph in assembly_graphs[1:] if not nx.is_isomorphic(assembly_graph[1],assembly_graphs[0][1])]
 
-    with open('/rscratch/asl47/Bulk_Run/Modular/{}_stripped.txt'.format(file_in), 'w') as outfile:
+    with open(file_in.rstrip('.txt')+'_Out.txt', 'w') as outfile:
         for index in unique_assembly_graphs_indices:
             genotype= ' '.join(map(str,tile_kits[index]))+'\n'
             outfile.write(genotype)
@@ -433,7 +432,14 @@ def getSeconds(timein):
 def LoadNewGCs(T):
     raw_time=[]
     raw_err=[]
-    for i in xrange(10):
+    rs={16:4,17:1,18:3,19:1,20:2}
+    runs=-1
+    if T not in rs:
+        runs=10
+    else:
+        runs=rs[T]
+    runs=2
+    for i in xrange(10,12):
         timings=[]
         errors=[]
         for line in open('/rscratch/asl47/binaries/GC_Space_{}_{}.txt'.format(T,i)):
@@ -453,16 +459,35 @@ def LoadNewGCs(T):
     var=np.mean(ratios)*np.sqrt( (stats.sem(raw[:,0])/np.mean(raw[:,0]))**2 + (stats.sem(raw[:,1])/np.mean(raw[:,1]))**2 )
     
     rawe=np.array(raw_err)
+    return raw[:,:2]
     return np.mean(ratios),var,np.mean(rawe[:,1]),stats.sem(rawe[:,1])
 
 from matplotlib import gridspec
+def PlotNewSimple():
+    fig = plt.figure(figsize=(8, 6))
+    T_max=20
+    ts=np.empty((T_max,2))
+    for i in range(1,T_max+1):#+[7,9,11]:
+        ts[i-1]=np.mean(LoadNewGCs(i),axis=0)
+        
+    #plt.plot(range(1,16),ts[:,0],lw=2,ls='--',c='royalblue')
+    #plt.plot(range(1,16),ts[:,1],lw=2,ls='-',c='firebrick')
+
+    plt.plot(range(1,T_max+1),40*ts[:,0],marker='o',ls='',c='royalblue')
+    plt.plot(range(1,T_max+1),40*ts[:,1],marker='s',ls='',c='firebrick')
+    
+    plt.yscale('log')
+    sns.despine(right=1,top=1)
+
+    plt.show(block=False)
+    
 def PlotNewComp():
     gs = gridspec.GridSpec(1, 2, width_ratios=[6, 1])
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(gs[0])
     ax2 = fig.add_subplot(gs[1],sharey=ax)
 
-    for i in range(1,6)+[7,9,11]:
+    for i in range(1,15):#+[7,9,11]:
         data=LoadNewGCs(i)
         ax.errorbar(1+data[2],data[0],yerr=data[1],xerr=data[3],fmt='o')
         ax.annotate(r'$\mathrm{{GP}}_{{{}}}$'.format(i),xy=(1+data[2], data[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom')
@@ -470,7 +495,7 @@ def PlotNewComp():
         ax2.annotate(r'$\mathrm{{GP}}_{{{}}}$'.format(i),xy=(1+data[2], data[0]), xytext=(-10, 10),textcoords='offset points', ha='right', va='bottom')
 
 
-    for i in [(2,8),(3,10),(20,100),(15,75)]:
+    for i in []:#[(2,8),(3,10),(20,100),(15,75)]:
         t=LoadNewtimings(''.join(map(str,i)))
         er=[]
         if i[0]!=15:

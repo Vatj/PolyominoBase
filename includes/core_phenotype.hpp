@@ -1,9 +1,9 @@
-#include <cstdint>
-#include <vector>
-#include <algorithm>
+#include "core_methods.hpp"
+
+
 #include <fstream>
 #include <unordered_map>
-#include <utility>
+
 
 struct Phenotype {
   uint8_t dx=1;

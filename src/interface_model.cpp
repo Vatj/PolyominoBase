@@ -22,8 +22,8 @@ namespace model_params
 
 namespace interface_model
 {
-  std::random_device rd;
-  //std::mt19937 RNG_Engine(rd());  
+  //std::random_device rd;
+  //std::mt19937 RNG_Engine(std::random_device{}());  
   std::mt19937 RNG_Engine(128417);
   
   inline interface_type reverse_bits(interface_type v) {

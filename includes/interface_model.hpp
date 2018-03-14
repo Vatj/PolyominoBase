@@ -75,7 +75,7 @@ namespace interface_model
   
   struct InterfacePhenotypeTable;
 
-  extern std::random_device rd;
+  //extern std::random_device rd;
   extern std::mt19937 RNG_Engine;
   interface_type reverse_bits(interface_type v);
   uint8_t ArbitraryPopcount(interface_type face1);

@@ -1,13 +1,5 @@
 #include "graph_methods.hpp"
 
-
-//Provides the conjugate face
-//Positive interfaces: odd<-->even
-//Negative interfaces: self-interaction 
-int Interaction_Matrix(int input_face) {
-  return input_face>0 ?  (1-input_face%2)*(input_face-1)+(input_face%2)*(input_face+1) : input_face;
-}
-
 int SIF_Elimination(std::vector<int>& genome,bool erase_ends) {
   if(genome.size()==(unsigned int)std::count(genome.begin(),genome.end(),0) || two_SIF_Check(genome))
     return 5;
@@ -447,104 +439,7 @@ bool Loop_Rank_One_Check(std::vector<int>& loop_Path) {
 }
 
 
-void Clean_Genome(std::vector<int>& genome,int secondNonInteracting,bool Remove_Duplicates) {
-  //defaults set to -1 and true//
-  //Removes any non-bonding interfaces and reduces additional non-interacting faces to 0s
-  //Note, no need to check for negatives, as either present and able to self-interact, or absent and no need to act
-  if(secondNonInteracting!=-1) {
-    std::replace(genome.begin(),genome.end(),secondNonInteracting,0);
-  }
-  for(int t=1;t<=*std::max_element(genome.begin(),genome.end());t+=2) { 
-    if(std::count(genome.begin(),genome.end(),t)==0) //genotype doens't contain this face
-        std::replace(genome.begin(),genome.end(),t+1,0);
-    else //genotype does contain this face
-      if(std::find(genome.begin(),genome.end(),t+1)==genome.end()) //genotype doesn't contain conjugate
-        std::replace(genome.begin(),genome.end(),t,0);
-  }
-  Minimize_Tile_Set(genome);
-  if(Remove_Duplicates) {
-    for(int check_index=genome.size()/4-1;check_index>0;--check_index) {
-      //std::vector<int> check_Genome(genome.begin()+check_index*4,genome.begin()+check_index*4+4);
-      for(int compare_index=check_index-1;compare_index>=0;--compare_index) {
-        //std::vector<int> compare_Genome(genome.begin()+compare_index*4,genome.begin()+compare_index*4+4);
-        if(std::equal(genome.begin()+check_index*4,genome.begin()+check_index*4+4,genome.begin()+compare_index*4)) {
-          genome.erase(genome.begin()+check_index*4,genome.begin()+check_index*4+4);
-          break;
-        }
-      }
-    }
-  }  
-}
 
-void Minimize_Tile_Set(std::vector<int>& genome) {
-  std::vector<int> Minimal_Genome;
-  for(std::vector<int>::iterator genome_iter=genome.begin();genome_iter!=genome.end();genome_iter+=4) {
-    Minimal_Genome.assign(genome_iter,genome_iter+4);
-    if(std::count(Minimal_Genome.begin(),Minimal_Genome.end(),0)==4)
-      continue;
-    for(int rotation=1;rotation<=3;++rotation) {
-      std::rotate(genome_iter,genome_iter+1,genome_iter+4);
-      for(int index=0;index<4;++index) {
-        if(Minimal_Genome[index]<*(genome_iter+index))
-          break;
-        if(Minimal_Genome[index]==*(genome_iter+index))
-          continue;
-        else {
-          Minimal_Genome.assign(genome_iter,genome_iter+4);
-          break;
-        }
-      }
-    }
-    std::vector<int>::iterator Minimal_beginning=Minimal_Genome.begin();
-    for(int swapping=0;swapping<4;++swapping) {
-      *(genome_iter+swapping)=*(Minimal_beginning+swapping);
-    }
-  }
-}
-
-
-bool Disjointed_Check(std::vector<int>& genome) {
-  std::vector<int> Unvisited(genome.size()/4-1);
-  std::map<int, std::vector<int> > Connected_Components;
-  Connected_Components[0].insert(Connected_Components[0].end(),genome.begin(),genome.begin()+4);
-  std::iota(Unvisited.begin(),Unvisited.end(),1);
-  Search_Next_Tile(genome,Unvisited,Connected_Components[0],0);
-  while(!Unvisited.empty()) {
-    int CC_Size=Connected_Components.size();
-    int New_Launch_Point=Unvisited[0];
-    Connected_Components[CC_Size].insert(Connected_Components[CC_Size].end(),genome.begin()+ New_Launch_Point*4,genome.begin()+New_Launch_Point*4+4);
-    Unvisited.erase(Unvisited.begin());
-    Search_Next_Tile(genome,Unvisited,Connected_Components[CC_Size], New_Launch_Point);
-  }
-  
-  if(Connected_Components.size()>1) {
-    genome.clear();
-    for(auto& KV_pair : Connected_Components) {
-      genome.insert(genome.end(),KV_pair.second.begin(),KV_pair.second.end());
-      genome.emplace_back(-1);
-    }
-    return true;
-  }
-  return false;  
-}
-
-void Search_Next_Tile(std::vector<int>& genome, std::vector<int>& Unvisited, std::vector<int>& Connected_Components,int tile) {
-  for(int face=0;face<4;++face) {
-    if(genome[tile*4+face]==0)
-      continue;
-    int conjugate_Face=Interaction_Matrix(genome[tile*4+face]);
-    std::vector<int>::iterator conjugate_iter=std::find(genome.begin(),genome.end(),conjugate_Face);
-    while(conjugate_iter!=genome.end()) {
-      int corresponding_Tile=(conjugate_iter-genome.begin())/4;
-      if(std::find(Unvisited.begin(),Unvisited.end(),corresponding_Tile)!=Unvisited.end()) { //new tile
-        Connected_Components.insert(Connected_Components.end(),genome.begin()+corresponding_Tile*4,genome.begin()+corresponding_Tile*4+4);
-        Unvisited.erase(std::find(Unvisited.begin(),Unvisited.end(),corresponding_Tile));
-        Search_Next_Tile(genome,Unvisited,Connected_Components,corresponding_Tile);
-      } 
-      conjugate_iter=std::find(conjugate_iter+1,genome.end(),conjugate_Face);
-    }
-  }
-}
 
 
 

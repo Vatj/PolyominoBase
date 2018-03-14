@@ -29,33 +29,35 @@ INCDEP      := -I$(INCDIR)
 #---------------------------------------------------------------------------------
 #DO NOT EDIT BELOW THIS LINE
 #---------------------------------------------------------------------------------
-COMMON_SOURCES     := $(shell find $(SRCDIR) -type f -name graph_*.$(SRCEXT)) 
+GRAPH_SOURCES     := $(shell find $(SRCDIR) -type f -name graph_*.$(SRCEXT)) 
 EV_SOURCES   := $(shell find $(SRCDIR) -type f -name evolution_*.$(SRCEXT))
 ST_SOURCES := $(shell find $(SRCDIR) -type f -name stochastic_m*.$(SRCEXT)) 
 PR_SOURCES := $(shell find $(SRCDIR) -type f -name processing_*.$(SRCEXT))
 PE_SOURCES := $(shell find $(SRCDIR) -type f -name interface_*.$(SRCEXT))
 GP_SOURCES := $(shell find $(SRCDIR) -type f -name genotype_*.$(SRCEXT))
-Core_P_SOURCES := $(shell find $(SRCDIR) -type f -name core_*.$(SRCEXT))
+CORE_SOURCES := $(shell find $(SRCDIR) -type f -name core_*.$(SRCEXT))
 
 
-COMMON_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(COMMON_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
+GRAPH_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(GRAPH_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 EV_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(EV_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 ST_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(ST_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 PR_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(PR_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 PE_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(PE_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 GP_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(GP_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
-Core_P_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(Core_P_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
+CORE_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(CORE_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
+
+
 
 
 #Default Make
-all: Ev St Pr Pe GP
+all: Ev St Pr Pe GP SO SOX
 
 #Clean only Objects
 clean:
 	@$(RM) -rf $(BUILDDIR)
 
 #Pull in dependency info for *existing* .o files
--include $(COMMON_OBJECTS:.$(OBJEXT)=.$(DEPEXT))
+-include $(GRAPH_OBJECTS:.$(OBJEXT)=.$(DEPEXT))
 -include $(EV_OBJECTS:.$(OBJEXT)=.$(DEPEXT))
 -include $(ST_OBJECTS:.$(OBJEXT)=.$(DEPEXT))
 -include $(PR_OBJECTS:.$(OBJEXT)=.$(DEPEXT))
@@ -66,29 +68,33 @@ clean:
 #$(TARGET): $(OBJECTS)
 #	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(TARGET) $^
 
-Ev: $(EV_OBJECTS) $(COMMON_OBJECTS) $(ST_OBJECTS)
+Ev: $(EV_OBJECTS) $(GRAPH_OBJECTS) $(ST_OBJECTS) $(CORE_OBJECTS)
 	@mkdir -p $(TARGETDIR)	
 	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(EV_TARGET) $^
 
-St: $(ST_OBJECTS) $(COMMON_OBJECTS) $(Core_P_OBJECTS)
+St: $(ST_OBJECTS) $(GRAPH_OBJECTS) $(CORE_OBJECTS) $(CORE_OBJECTS)
 	@mkdir -p $(TARGETDIR)
 	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(ST_TARGET) $^
 
-Pr: $(PR_OBJECTS) $(COMMON_OBJECTS)
+Pr: $(PR_OBJECTS) $(GRAPH_OBJECTS) $(CORE_OBJECTS)
 	@mkdir -p $(TARGETDIR)
 	$(CXX) $(CXXFLAGS)  -o $(TARGETDIR)/$(PR_TARGET) $^
 
-Pe: $(PE_OBJECTS) $(Core_P_OBJECTS)
+Pe: $(PE_OBJECTS) $(CORE_OBJECTS) 
 	@mkdir -p $(TARGETDIR)
 	$(CXX) $(CXXFLAGS)  -o $(TARGETDIR)/$(PE_TARGET) $^
 
-GP: $(GP_OBJECTS) $(COMMON_OBJECTS) $(ST_OBJECTS) $(Core_P_OBJECTS)
+GP: $(GP_OBJECTS) $(GRAPH_OBJECTS) $(ST_OBJECTS) $(CORE_OBJECTS)
 	@mkdir -p $(TARGETDIR)	
 	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(GP_TARGET) $^
 
-SO: $(GP_OBJECTS) $(COMMON_OBJECTS) $(ST_OBJECTS) $(Core_P_OBJECTS)
+SO: $(GP_OBJECTS) $(ST_OBJECTS) $(CORE_OBJECTS)
 	@mkdir -p $(TARGETDIR)	
 	$(CXX)  -shared $(CXXFLAGS) -o scripts/AGF.so $^
+
+SOX: $(GP_OBJECTS) $(ST_OBJECTS) $(CORE_OBJECTS)
+	@mkdir -p $(TARGETDIR)	
+	$(CXX)   $(CXXFLAGS) -o $(TARGETDIR)/AGF $^
 
 
 #Compile
@@ -102,4 +108,4 @@ $(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 	@rm -f $(BUILDDIR)/$*.$(DEPEXT).tmp
 
 #Non-File Targets
-.PHONY: all clean Ev St Pr Pe GP
+.PHONY: all clean Ev St Pr Pe GP SO SOX
