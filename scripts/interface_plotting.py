@@ -510,11 +510,11 @@ def PlotAnalysis(gz,N_samps=50):
      #return sampled_history_strengths
      plt.figure()
      for i in xrange(N_samps):
-          sampled_history_strengths=RandomHistorySampling(*gz,goback=200)
+          sampled_history_strengths=RandomHistorySampling(*gz,goback=500)
           for key,interface_pairing in sampled_history_strengths.iteritems():
                for sequence in interface_pairing:
-                    #print sequence
-                    plt.plot(range(len(sequence)),sequence,alpha=0.6)
+                    if sequence:
+                         plt.plot(range(len(sequence)),np.array(sequence)/sequence[0],alpha=0.6)
      plt.show(block=False)
 
 from scipy import stats

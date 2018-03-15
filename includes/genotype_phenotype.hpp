@@ -3,12 +3,16 @@
 
 extern "C" void WrappedGetPhenotypesID(const char* a,const char* b,bool file_of_genotypes,uint8_t colours,uint8_t n_genes);
 extern "C" void GGenerator(const char* a,bool file_of_genotypes,uint8_t colours,uint8_t n_genes);
-extern "C" void SampleMinimalGenotypes(uint8_t n_genes, uint8_t colours,const uint32_t N_SAMPLES,bool allow_duplicates);
+extern "C" void SampleMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours,const uint32_t N_SAMPLES,bool allow_duplicates, bool file_of_genotypes);
+extern "C" void GP_MapSampler(const char* file_path_c,uint8_t n_genes, uint8_t rcolours,uint8_t colours,bool file_of_genotypes);
 
 std::vector<Phenotype_ID> GetPhenotypeIDs(Genotype& genotype, uint8_t k_builds, StochasticPhenotypeTable* pt_it);
 
-uint64_t genotype_to_index(uint8_t* genotype, uint8_t colours, uint8_t n_genes);
-void index_to_genotype(uint64_t index, uint8_t* genotype, uint8_t colours, uint8_t n_genes);
+uint64_t genotype_to_index(Genotype& genotype, uint8_t n_genes, uint8_t colours);
+void index_to_genotype(uint64_t index, Genotype& genotype, uint8_t n_genes, uint8_t colours);
+
+
+
 std::vector<Genotype> genotype_neighbourhood(const Genotype& genome, uint8_t ngenes, uint8_t colours);
 void JiggleGenotype(Genotype& genotype, uint8_t max_colour);
 
@@ -25,8 +29,27 @@ struct NecklaceFactory {
   }
   
   bool is_finite_necklace(std::vector<uint8_t>& neck) {
+    //internal infinite loop
     if((neck[1] && Interaction_Matrix(neck[1])==neck[3]) || (neck[2] && Interaction_Matrix(neck[2])==neck[4]))
       return false;
+    bool a_pair=false;
+    for(uint8_t base=1; base<4;++base) {
+      if(neck[base]==0)
+	continue;
+      uint8_t b1=std::count(neck.begin()+1,neck.end(),neck[base]), b2=std::count(neck.begin()+1,neck.end(),Interaction_Matrix(neck[base]));
+      if(b1 && b2) {
+	//internal branching point/degenerate double loop
+	if(b1+b2>2)
+	  return false;
+	else {
+	  //internal unique double loop
+	  if(a_pair)
+	    return false;
+	  else
+	    a_pair=true;
+	}
+      }
+    }
     return true;
   }
   
@@ -92,9 +115,6 @@ struct GenotypeGenerator {
           return false;
       }
     }
-    //std::vector<uint8_t> int_pairs((colours-1)/2);
-    //for(uint8_t g : genotype)
-    //++int_pairs[(g-1)/2]
     
     return true;
   }

@@ -32,7 +32,7 @@ def LoadGenotypeHistory(n_tiles,temperature=0.000001,mu=1,gamma=1,run=0):
           genotypes.append([[int(i) for i in j] for j in [converted[i:i + 4*n_tiles] for i in xrange(0, len(converted), 4*n_tiles)]])
           #print [[int(i) for i in j] for j in [converted[i:i + 4*n_tiles] for i in xrange(0, len(converted), 4*n_tiles)]]
           #break
-     return np.array(genotypes,dtype=np.uint16)
+     return np.array(genotypes,dtype=np.uint32)
 
 def LoadStrengthHistory(temperature=0.000001,mu=1,gamma=1,run=0):
     strengths=[]
@@ -42,9 +42,7 @@ def LoadStrengthHistory(temperature=0.000001,mu=1,gamma=1,run=0):
 
     return strengths
 
-def LoadT():
-     mu=1
-     t=0.35
+def LoadT(mu=1,t=0.35):
      g=LoadGenotypeHistory(2,mu=mu,temperature=t)
      st=LoadStrengthHistory(mu=mu,temperature=t)
      p,s=LoadEvolutionHistory(mu=mu,temperature=t)
@@ -100,7 +98,10 @@ def RandomHistorySampling(genotypes,selections,phenotypes,strengths,goback=10):
 
 
         
-interface_length=16
+interface_length=32
+def convint(x):
+     return np.uint32(x)
+
 def SeqDiff(genotype1,genotype2):
      return [i for i in xrange(len(genotype1)) if genotype1[i] != genotype2[i]]
 
@@ -112,8 +113,7 @@ def BindingStrength(base1,base2):
 def revbits(x):
      return int(bin(~convint(x))[2:].zfill(interface_length)[::-1], 2)
 
-def convint(x):
-     return np.uint16(x)
+
 
 def SampleStrengths():
      return 2

@@ -5,16 +5,16 @@
 
 std::mt19937 RNG_Engine(std::random_device{}());
 
-extern "C" void SampleMinimalGenotypes(uint8_t n_genes, uint8_t colours,const uint32_t N_SAMPLES,bool allow_duplicates) {
-  uint32_t good_genotypes=0;
- 
 
-  std::ofstream fout("temp_wri.txt");
+void SampleMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours,const uint32_t N_SAMPLES,bool allow_duplicates, bool file_of_genotypes) {
+  uint32_t good_genotypes=0;
+  std::string file_path(file_path_c),file_details="_N"+std::to_string(n_genes)+"_C"+std::to_string(colours)+".txt";
+  std::ofstream fout(file_path+"SampledGenotypes"+file_details);
   
   GenotypeGenerator ggenerator = GenotypeGenerator(n_genes,colours);
   ggenerator.init();
   StochasticPhenotypeTable pt;
-  uint8_t k_builds=3;
+  uint8_t k_builds=5;
 
 
 #pragma omp parallel
@@ -57,99 +57,48 @@ extern "C" void SampleMinimalGenotypes(uint8_t n_genes, uint8_t colours,const ui
     ++good_genotypes;
 #pragma omp critical
     {
-    for(auto g : genotype)
-      fout<<+g<<" ";
-    fout<<"\n";
-    }
-  }
-}
-
-extern "C" void GGenerator(const char* a,bool file_of_genotypes,uint8_t colours,uint8_t n_genes) {
-  
-  std::string filename(a);
-  std::ofstream fout(filename);
-   
-  Genotype geno,nullg;
-  GenotypeGenerator ggenerator(n_genes,colours);
-  ggenerator.init();
-  while((geno=ggenerator())!=nullg) {
-    if(file_of_genotypes) {
-      for(auto x : geno)
-        fout<<+x<<" ";
+      if(file_of_genotypes) {
+	for(auto g : genotype)
+	  fout<<+g<<" ";
+      }
+      else
+	fout<<genotype_to_index(genotype,n_genes,colours)<<" ";
       fout<<"\n";
     }
-    else {
-      fout<<genotype_to_index(geno.data(),colours,n_genes)<<"\n";
-    }
   }
 }
 
 
-extern "C" void WrappedGetPhenotypesID(const char* a,const char* b,bool file_of_genotypes,uint8_t colours,uint8_t n_genes) {
-  std::string file_path(b),filename(a),str,details="_N"+std::to_string(n_genes)+"_C"+std::to_string(colours)+".txt";
-  std::ifstream file(filename);
-  std::ofstream fout(file_path+"Genotype_Codes"+details, std::ios_base::out);
-  std::ofstream fout2(file_path+"Phenotype_Table_N"+details, std::ios_base::out);
 
-  StochasticPhenotypeTable pt;
-  uint8_t k_builds=10;
-  Genotype genotype(n_genes*4);
+
+
+
+void GP_MapSampler(const char* file_path_c,uint8_t n_genes, uint8_t rcolours,uint8_t colours, bool file_of_genotypes) {
   
-  while (std::getline(file, str)) {
-    if(file_of_genotypes) {
-      std::istringstream is( str );
-      genotype.assign( std::istream_iterator<uint8_t>( is ), std::istream_iterator<uint8_t>() );
-    }
-    else {
-      index_to_genotype(std::stoull(str,nullptr),genotype.data(),colours,n_genes);
-    }
-    Clean_Genome(genotype,0,false);
-    std::map<uint8_t,uint8_t> dups=DuplicateGenes(genotype);
-    std::map<uint8_t,Phenotype_ID> seed_m;
-    for(uint8_t seed=0;seed<n_genes;++seed)
-      seed_m[seed]=Stochastic::Analyse_Genotype_Outcome(genotype,k_builds,&pt,seed);
-    uint8_t index=0;
-    Phenotype_ID phen_id;
-  
-    for(uint8_t gene=0;gene<n_genes;++gene) {
-      phen_id = dups.count(gene) ? seed_m[dups[gene]] : phen_id=seed_m[index++];
-      fout<<+phen_id.first<<" "<<+phen_id.second<<" ";
-    }
-    fout<<"\n";
-  }
-  pt.PrintTable(fout2);
-
-}
-
-void GP_MapSampler(std::string filename,uint8_t n_genes, uint8_t colours) {
-  bool file_of_genotypes=true;
-  StochasticPhenotypeTable pt;
-  uint8_t k_builds=10;
-  Genotype genotype(n_genes*4), genotype_raw;
-  std::ifstream file(filename);
-
+  const uint8_t k_builds=10;
   const uint32_t N_JIGGLE=100;
-  std::ofstream fout("GP_map.txt", std::ios_base::out);
-  std::string str;
+  StochasticPhenotypeTable pt;
+  Genotype genotype(n_genes*4);//, genotype_raw;
 
-  while (std::getline(file, str)) {
+  std::string file_path(file_path_c),str,file_details="_N"+std::to_string(n_genes)+"_C"+std::to_string(rcolours)+".txt";
+  std::ifstream file_in(file_path+"SampledGenotypes"+file_details);
+  std::ofstream fout(file_path+"GP_Map_Cx"+std::to_string(colours)+file_details, std::ios_base::out);
+ 
+  while (std::getline(file_in, str)) {
     if(file_of_genotypes) {
       std::istringstream is( str );
       genotype.assign( std::istream_iterator<int>( is ), std::istream_iterator<int>() );
     }
-    else {
-      index_to_genotype(std::stoull(str,nullptr),genotype.data(),colours,n_genes);
-    }
-
-    genotype_raw=genotype;
-    std::vector<Phenotype_ID> genotype_pIDs=GetPhenotypeIDs(genotype,k_builds,&pt);
-
+    else 
+      index_to_genotype(std::stoull(str,nullptr),genotype,n_genes,colours);
     
-    //parallelise
+    //genotype_raw=genotype;
+    std::vector<Phenotype_ID> genotype_pIDs=GetPhenotypeIDs(genotype,k_builds,&pt);
+    
+#pragma omp parallel for schedule(dynamic) firstprivate(genotype)
     for(uint32_t nth_jiggle=0; nth_jiggle<N_JIGGLE;++nth_jiggle) {
       Clean_Genome(genotype,0,false);
       JiggleGenotype(genotype,colours);
-
       uint32_t robust=0,evolve=0;
       for(Genotype neighbour : genotype_neighbourhood(genotype,n_genes,colours)) {
 	std::vector<Phenotype_ID> neighbour_pIDs=GetPhenotypeIDs(neighbour,k_builds,&pt);
@@ -160,8 +109,12 @@ void GP_MapSampler(std::string filename,uint8_t n_genes, uint8_t colours) {
       }
 #pragma omp critical(file_writing)
       {
-	for(auto g : genotype_raw)
-	  fout<<+g<<" ";
+	if(file_of_genotypes) {
+	  for(auto g : genotype)
+	    fout<<+g<<" ";
+	}
+	else
+	  fout<<genotype_to_index(genotype,n_genes,colours)<<" ";
 	fout<<": R "<<robust<<" E "<<evolve<<"\n";
       }
     }
@@ -185,16 +138,13 @@ std::vector<Phenotype_ID> GetPhenotypeIDs(Genotype& genotype, uint8_t k_builds, 
   return pIDs;
 }
 
+/****************/
+/***** MAIN *****/
+/****************/
 int main(int argc, char* argv[]) {
   if(argc>2) {
     std::cout<<argv[1][0]<<std::endl;
-    if(argv[1][0]=='1') {
-      std::cout<<"1"<<std::endl;
-      SampleMinimalGenotypes(3,7,std::stoi(argv[2]),true);
-    }
-    else {
-      GP_MapSampler("temp_wri.txt",3,10);
-    }
+
   }
   else {
     Genotype g{0,0,0,1,0,0,0,2};
@@ -210,6 +160,7 @@ int main(int argc, char* argv[]) {
     }
 
   }
+
   /*
   auto nf =NecklaceFactory();
   nf.GenNecklaces(std::stoi(argv[2]));
@@ -236,14 +187,14 @@ int main(int argc, char* argv[]) {
 
 }
 
-uint64_t genotype_to_index(uint8_t* genotype, uint8_t colours, uint8_t n_genes) {
+uint64_t genotype_to_index(Genotype& genotype, uint8_t n_genes, uint8_t colours) {
   uint64_t count=0;
   for(uint8_t index=0;index<n_genes*4;++index)
     count+= genotype[index] * pow(colours,n_genes*4-index-1);
   return count;
 }
 
-void index_to_genotype(uint64_t index, uint8_t* genotype, uint8_t colours, uint8_t n_genes) {
+void index_to_genotype(uint64_t index, Genotype& genotype, uint8_t n_genes, uint8_t colours) {
   for(uint8_t count=0;count<n_genes*4;++count) {
     uint64_t value=index/pow(colours,n_genes*4-count-1);
     genotype[count]=value;
@@ -276,4 +227,61 @@ std::vector<Genotype> genotype_neighbourhood(const Genotype& genome, uint8_t nge
     }
   }
   return neighbours;
+}
+
+
+extern "C" void WrappedGetPhenotypesID(const char* a,const char* b,bool file_of_genotypes,uint8_t colours,uint8_t n_genes) {
+  std::string file_path(b),filename(a),str,details="_N"+std::to_string(n_genes)+"_C"+std::to_string(colours)+".txt";
+  std::ifstream file(filename);
+  std::ofstream fout(file_path+"Genotype_Codes"+details, std::ios_base::out);
+  std::ofstream fout2(file_path+"Phenotype_Table_N"+details, std::ios_base::out);
+
+  StochasticPhenotypeTable pt;
+  uint8_t k_builds=10;
+  Genotype genotype(n_genes*4);
+  
+  while (std::getline(file, str)) {
+    if(file_of_genotypes) {
+      std::istringstream is( str );
+      genotype.assign( std::istream_iterator<uint8_t>( is ), std::istream_iterator<uint8_t>() );
+    }
+    else {
+      index_to_genotype(std::stoull(str,nullptr),genotype,n_genes,colours);
+    }
+    Clean_Genome(genotype,0,false);
+    std::map<uint8_t,uint8_t> dups=DuplicateGenes(genotype);
+    std::map<uint8_t,Phenotype_ID> seed_m;
+    for(uint8_t seed=0;seed<n_genes;++seed)
+      seed_m[seed]=Stochastic::Analyse_Genotype_Outcome(genotype,k_builds,&pt,seed);
+    uint8_t index=0;
+    Phenotype_ID phen_id;
+  
+    for(uint8_t gene=0;gene<n_genes;++gene) {
+      phen_id = dups.count(gene) ? seed_m[dups[gene]] : phen_id=seed_m[index++];
+      fout<<+phen_id.first<<" "<<+phen_id.second<<" ";
+    }
+    fout<<"\n";
+  }
+  pt.PrintTable(fout2);
+
+}
+
+void GGenerator(const char* a,bool file_of_genotypes,uint8_t colours,uint8_t n_genes) {
+  
+  std::string filename(a);
+  std::ofstream fout(filename);
+   
+  Genotype geno,nullg;
+  GenotypeGenerator ggenerator(n_genes,colours);
+  ggenerator.init();
+  while((geno=ggenerator())!=nullg) {
+    if(file_of_genotypes) {
+      for(auto x : geno)
+        fout<<+x<<" ";
+      fout<<"\n";
+    }
+    else {
+      fout<<genotype_to_index(geno,colours,n_genes)<<"\n";
+    }
+  }
 }
