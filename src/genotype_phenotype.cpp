@@ -3,6 +3,7 @@
 #include <iterator>
 #include <functional>
 
+std::mt19937 RNG_Engine(std::random_device{}());
 
 extern "C" void SampleMinimalGenotypes(uint8_t n_genes, uint8_t colours,const uint32_t N_SAMPLES,bool allow_duplicates) {
   uint32_t good_genotypes=0;
@@ -15,20 +16,17 @@ extern "C" void SampleMinimalGenotypes(uint8_t n_genes, uint8_t colours,const ui
   StochasticPhenotypeTable pt;
   uint8_t k_builds=3;
 
-  std::mt19937 RNG_Engine(std::random_device{}());
-  //#pragma omp threadprivate(RNG_Engine)
 
-#pragma omp parallel //firstprivate(RNG_Engine)
+#pragma omp parallel
   while(true) {
     uint32_t local_counter;
-     std::vector<uint8_t> genotype;
+     Genotype genotype;
      std::vector<uint32_t> states;
 #pragma omp atomic read
     local_counter = good_genotypes;
     if(local_counter >= N_SAMPLES)
       break;
     
-    //std::cout<<"samplign"<<std::endl;
     uint32_t lbound_neck=0;
     for(uint8_t neck_ind=0;neck_ind<n_genes;++neck_ind) {
       lbound_neck=std::uniform_int_distribution<uint32_t>{lbound_neck,ggenerator.n_necklaces-1}(RNG_Engine);
@@ -57,58 +55,7 @@ extern "C" void SampleMinimalGenotypes(uint8_t n_genes, uint8_t colours,const ui
       continue;
 #pragma omp atomic update
     ++good_genotypes;
-    #pragma omp critical
-    {
-    for(auto g : genotype)
-      fout<<+g<<" ";
-    fout<<"\n";
-    }
-  }
-}
-
-extern "C" void SampleMinimalGenotypes2(uint8_t n_genes, uint8_t colours,const uint32_t N_SAMPLES,bool allow_duplicates) {
-  uint32_t good_genotypes=0;
- 
-
-  std::ofstream fout("temp_wri2.txt");
-
-  StochasticPhenotypeTable pt;
-  uint8_t k_builds=3;
-  GenotypeGenerator ggenerator = GenotypeGenerator(n_genes,colours);
-
-  std::mt19937 RNG_Engine(std::random_device{}());
-
-  std::uniform_int_distribution<int> dist(0, colours-1);
-  auto gen = std::bind(dist, std::ref(RNG_Engine));
-
-#pragma omp parallel //firstprivate(RNG_Engine)
-  while(true) {
-    uint32_t local_counter;
-    std::vector<uint8_t> genotype(n_genes*4);
-     std::generate(genotype.begin(), genotype.end(), gen);
-     std::vector<uint32_t> states;
-#pragma omp atomic read
-    local_counter = good_genotypes;
-    if(local_counter >= N_SAMPLES)
-      break;
-    
-       
-    if(!ggenerator.valid_genotype(genotype))
-      continue;
-
-    bool all_zero_phen=true;
-    for(uint8_t seed=0;seed<n_genes;++seed) {
-      uint8_t phen_size = Stochastic::Analyse_Genotype_Outcome(genotype,k_builds,&pt,seed).first;
-      if(phen_size==255) 
-        continue;
-      if(phen_size>0)
-        all_zero_phen=false;
-    }
-    if(all_zero_phen)
-      continue;
-#pragma omp atomic update
-    ++good_genotypes;
-    #pragma omp critical
+#pragma omp critical
     {
     for(auto g : genotype)
       fout<<+g<<" ";
@@ -122,7 +69,7 @@ extern "C" void GGenerator(const char* a,bool file_of_genotypes,uint8_t colours,
   std::string filename(a);
   std::ofstream fout(filename);
    
-  std::vector<uint8_t> geno,nullg;
+  Genotype geno,nullg;
   GenotypeGenerator ggenerator(n_genes,colours);
   ggenerator.init();
   while((geno=ggenerator())!=nullg) {
@@ -146,7 +93,7 @@ extern "C" void WrappedGetPhenotypesID(const char* a,const char* b,bool file_of_
 
   StochasticPhenotypeTable pt;
   uint8_t k_builds=10;
-  std::vector<uint8_t> genotype(n_genes*4);
+  Genotype genotype(n_genes*4);
   
   while (std::getline(file, str)) {
     if(file_of_genotypes) {
@@ -174,6 +121,70 @@ extern "C" void WrappedGetPhenotypesID(const char* a,const char* b,bool file_of_
 
 }
 
+void GP_MapSampler(std::string filename,uint8_t n_genes, uint8_t colours) {
+  bool file_of_genotypes=true;
+  StochasticPhenotypeTable pt;
+  uint8_t k_builds=10;
+  Genotype genotype(n_genes*4), genotype_raw;
+  std::ifstream file(filename);
+
+  const uint32_t N_JIGGLE=100;
+  std::ofstream fout("GP_map.txt", std::ios_base::out);
+  std::string str;
+
+  while (std::getline(file, str)) {
+    if(file_of_genotypes) {
+      std::istringstream is( str );
+      genotype.assign( std::istream_iterator<int>( is ), std::istream_iterator<int>() );
+    }
+    else {
+      index_to_genotype(std::stoull(str,nullptr),genotype.data(),colours,n_genes);
+    }
+
+    genotype_raw=genotype;
+    std::vector<Phenotype_ID> genotype_pIDs=GetPhenotypeIDs(genotype,k_builds,&pt);
+
+    
+    //parallelise
+    for(uint32_t nth_jiggle=0; nth_jiggle<N_JIGGLE;++nth_jiggle) {
+      Clean_Genome(genotype,0,false);
+      JiggleGenotype(genotype,colours);
+
+      uint32_t robust=0,evolve=0;
+      for(Genotype neighbour : genotype_neighbourhood(genotype,n_genes,colours)) {
+	std::vector<Phenotype_ID> neighbour_pIDs=GetPhenotypeIDs(neighbour,k_builds,&pt);
+	if(neighbour_pIDs!=genotype_pIDs)
+	  ++evolve;
+	else
+	  ++robust;
+      }
+#pragma omp critical(file_writing)
+      {
+	for(auto g : genotype_raw)
+	  fout<<+g<<" ";
+	fout<<": R "<<robust<<" E "<<evolve<<"\n";
+      }
+    }
+  }  
+    
+}
+
+std::vector<Phenotype_ID> GetPhenotypeIDs(Genotype& genotype, uint8_t k_builds, StochasticPhenotypeTable* pt_it) {
+  std::vector<Phenotype_ID> pIDs;
+  Clean_Genome(genotype,0,false);
+  std::map<uint8_t,uint8_t> dups=DuplicateGenes(genotype);
+  std::map<uint8_t,Phenotype_ID> seed_m;
+  for(uint8_t seed=0;seed<genotype.size()/4;++seed)
+    seed_m[seed]=Stochastic::Analyse_Genotype_Outcome(genotype,k_builds,pt_it,seed);
+  uint8_t index=0;
+  Phenotype_ID phen_id;
+  for(uint8_t gene=0;gene<genotype.size()/4;++gene) {
+    pIDs.emplace_back(dups.count(gene) ? seed_m[dups[gene]] : phen_id=seed_m[index++]);
+  }
+  std::sort(pIDs.begin(),pIDs.end());
+  return pIDs;
+}
+
 int main(int argc, char* argv[]) {
   if(argc>2) {
     std::cout<<argv[1][0]<<std::endl;
@@ -182,9 +193,22 @@ int main(int argc, char* argv[]) {
       SampleMinimalGenotypes(3,7,std::stoi(argv[2]),true);
     }
     else {
-      std::cout<<"2"<<std::endl;
-      SampleMinimalGenotypes2(3,7,std::stoi(argv[2]),true);
+      GP_MapSampler("temp_wri.txt",3,10);
     }
+  }
+  else {
+    Genotype g{0,0,0,1,0,0,0,2};
+    JiggleGenotype(g,10);
+    for(auto x: g)
+      std::cout<<+x<<" ";
+    std::cout<<std::endl;
+    return 0;
+    for(auto x : genotype_neighbourhood(g,2,4)) {
+      for(auto y : x)
+	std::cout<<+y<<" ";
+      std::cout<<std::endl;
+    }
+
   }
   /*
   auto nf =NecklaceFactory();
@@ -196,7 +220,7 @@ int main(int argc, char* argv[]) {
     std::cout<<std::endl;
   }
   
-  std::vector<uint8_t> geno,nullg;
+  Genotype geno,nullg;
   GenotypeGenerator ggenerator(std::stoi(argv[1]),std::stoi(argv[2]));
   ggenerator.init();
   while((geno=ggenerator())!=nullg) {
@@ -225,4 +249,31 @@ void index_to_genotype(uint64_t index, uint8_t* genotype, uint8_t colours, uint8
     genotype[count]=value;
     index-= value * pow(colours,n_genes*4-count-1);
   }
+}
+
+void JiggleGenotype(Genotype& genotype, uint8_t max_colour) {
+  uint8_t min_colour=*std::max_element(genotype.begin(),genotype.end());
+  if(min_colour+1==max_colour)
+    return;
+  std::vector<uint8_t> neutral_colours(1+(max_colour-min_colour)/2);
+  std::generate(neutral_colours.begin()+1, neutral_colours.end(), [n = min_colour-1] () mutable { return n+=2; });
+  std::uniform_int_distribution<size_t> jiggle_index(0,neutral_colours.size()-1);
+
+  for(auto& base : genotype)
+    base= (base==0) ? neutral_colours[jiggle_index(RNG_Engine)] : base;
+}
+std::vector<Genotype> genotype_neighbourhood(const Genotype& genome, uint8_t ngenes, uint8_t colours) {
+  std::vector<Genotype> neighbours(1,genome);
+  Genotype neighbour;
+  std::vector<uint8_t> mutants(colours);
+  std::iota(mutants.begin(), mutants.end(), 0);
+  for(uint8_t index=0; index<ngenes*4; ++index) {
+    std::swap(*std::find(mutants.begin(), mutants.end(),genome[index]), mutants.back());
+    neighbour = genome;
+    for(int j=0; j<colours-1; ++j) {
+      neighbour[index] = mutants[j];
+      neighbours.emplace_back(neighbour);
+    }
+  }
+  return neighbours;
 }

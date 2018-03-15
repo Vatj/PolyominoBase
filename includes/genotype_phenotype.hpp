@@ -5,9 +5,12 @@ extern "C" void WrappedGetPhenotypesID(const char* a,const char* b,bool file_of_
 extern "C" void GGenerator(const char* a,bool file_of_genotypes,uint8_t colours,uint8_t n_genes);
 extern "C" void SampleMinimalGenotypes(uint8_t n_genes, uint8_t colours,const uint32_t N_SAMPLES,bool allow_duplicates);
 
+std::vector<Phenotype_ID> GetPhenotypeIDs(Genotype& genotype, uint8_t k_builds, StochasticPhenotypeTable* pt_it);
+
 uint64_t genotype_to_index(uint8_t* genotype, uint8_t colours, uint8_t n_genes);
 void index_to_genotype(uint64_t index, uint8_t* genotype, uint8_t colours, uint8_t n_genes);
-
+std::vector<Genotype> genotype_neighbourhood(const Genotype& genome, uint8_t ngenes, uint8_t colours);
+void JiggleGenotype(Genotype& genotype, uint8_t max_colour);
 
 struct NecklaceFactory {
   uint8_t colours=1;
@@ -63,11 +66,11 @@ struct GenotypeGenerator {
   
   GenotypeGenerator(uint8_t a,uint8_t b) {n_genes=a;colours=b; necklace_states.assign(a,0);}
 
-  std::vector<uint8_t> operator() () {
-    return !is_done ? next_genotype() : std::vector<uint8_t>{};
+  Genotype operator() () {
+    return !is_done ? next_genotype() : Genotype{};
   }
 
-  bool valid_growing_faces(std::vector<uint8_t>& genotype) {
+  bool valid_growing_faces(Genotype& genotype) {
     uint8_t max_face=1;
     for(auto face : genotype) {
       if(face>max_face)
@@ -78,7 +81,7 @@ struct GenotypeGenerator {
     return true;
   }
 
-  bool valid_bindings(std::vector<uint8_t>& genotype) {
+  bool valid_bindings(Genotype& genotype) {
     for(uint8_t interface=1;interface<=*std::max_element(genotype.begin(),genotype.end());interface+=2) {
       if(std::find(genotype.begin(),genotype.end(),interface)!=genotype.end()) { //is present
         if(std::find(genotype.begin(),genotype.end(),interface+1)==genotype.end()) //is not present
@@ -95,7 +98,7 @@ struct GenotypeGenerator {
     
     return true;
   }
-  bool valid_genotype(std::vector<uint8_t>& genotype) {
+  bool valid_genotype(Genotype& genotype) {
     if(!valid_growing_faces(genotype))
       return false;
     if(!valid_bindings(genotype))
@@ -121,8 +124,8 @@ struct GenotypeGenerator {
     std::replace(max_iter,states.end(),static_cast<uint32_t>(0),*max_iter);
   }
 
-  std::vector<uint8_t> next_genotype() {
-    std::vector<uint8_t> genotype;
+  Genotype next_genotype() {
+    Genotype genotype;
     while(!is_done) {
       genotype.clear();
       genotype.reserve(n_genes*4);

@@ -1,10 +1,10 @@
-#include "core_methods.hpp"
+#include "core_genotype.hpp"
 
 uint8_t Interaction_Matrix(uint8_t input_face) {
   return input_face>0 ?  (1-input_face%2)*(input_face-1)+(input_face%2)*(input_face+1) : input_face;
 }
 
-void Clean_Genome(std::vector<uint8_t>& genome,int secondNonInteracting=0,bool Remove_Duplicates=true) {
+void Clean_Genome(Genotype& genome,int secondNonInteracting=0,bool Remove_Duplicates=true) {
   //defaults set to -1 and true//
   //Removes any non-bonding interfaces and reduces additional non-interacting faces to 0s
   //Note, no need to check for negatives, as either present and able to self-interact, or absent and no need to act
@@ -23,9 +23,9 @@ void Clean_Genome(std::vector<uint8_t>& genome,int secondNonInteracting=0,bool R
     DuplicateGenes(genome);
 }
 
-void Minimize_Tile_Set(std::vector<uint8_t>& genome) {
-  std::vector<uint8_t> Minimal_Genome;
-  for(std::vector<uint8_t>::iterator genome_iter=genome.begin();genome_iter!=genome.end();genome_iter+=4) {
+void Minimize_Tile_Set(Genotype& genome) {
+  Genotype Minimal_Genome;
+  for(Genotype::iterator genome_iter=genome.begin();genome_iter!=genome.end();genome_iter+=4) {
     Minimal_Genome.assign(genome_iter,genome_iter+4);
     if(std::count(Minimal_Genome.begin(),Minimal_Genome.end(),0)==4)
       continue;
@@ -42,14 +42,14 @@ void Minimize_Tile_Set(std::vector<uint8_t>& genome) {
         }
       }
     }
-    std::vector<uint8_t>::iterator Minimal_beginning=Minimal_Genome.begin();
+    Genotype::iterator Minimal_beginning=Minimal_Genome.begin();
     for(uint8_t swapping=0;swapping<4;++swapping) {
       *(genome_iter+swapping)=*(Minimal_beginning+swapping);
     }
   }
 }
 
-std::map<uint8_t,uint8_t> DuplicateGenes(std::vector<uint8_t>& genome) {
+std::map<uint8_t,uint8_t> DuplicateGenes(Genotype& genome) {
   std::map<uint8_t,uint8_t> dups;
   for(int check_index=genome.size()/4-1;check_index>0;--check_index)
     for(int compare_index=0;compare_index<check_index;++compare_index)
@@ -61,7 +61,7 @@ std::map<uint8_t,uint8_t> DuplicateGenes(std::vector<uint8_t>& genome) {
   return dups;
 }
 
-bool Disjointed_Check(std::vector<uint8_t>& genome) {
+bool Disjointed_Check(Genotype& genome) {
   std::vector<uint8_t> Unvisited(genome.size()/4-1);
   std::map<uint8_t, std::vector<uint8_t> > Connected_Components;
   Connected_Components[0].insert(Connected_Components[0].end(),genome.begin(),genome.begin()+4);
@@ -86,12 +86,12 @@ bool Disjointed_Check(std::vector<uint8_t>& genome) {
   return false;  
 }
 
-void Search_Next_Tile(std::vector<uint8_t>& genome, std::vector<uint8_t>& Unvisited, std::vector<uint8_t>& Connected_Components,uint8_t tile) {
+void Search_Next_Tile(Genotype& genome, std::vector<uint8_t>& Unvisited, std::vector<uint8_t>& Connected_Components,uint8_t tile) {
   for(uint8_t face=0;face<4;++face) {
     if(genome[tile*4+face]==0)
       continue;
     uint8_t conjugate_Face=Interaction_Matrix(genome[tile*4+face]);
-    std::vector<uint8_t>::iterator conjugate_iter=std::find(genome.begin(),genome.end(),conjugate_Face);
+    Genotype::iterator conjugate_iter=std::find(genome.begin(),genome.end(),conjugate_Face);
     while(conjugate_iter!=genome.end()) {
       uint8_t corresponding_Tile=(conjugate_iter-genome.begin())/4;
       if(std::find(Unvisited.begin(),Unvisited.end(),corresponding_Tile)!=Unvisited.end()) { //new tile

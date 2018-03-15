@@ -11,7 +11,8 @@
 #include <iostream>
 
 
-typedef uint16_t interface_type;
+typedef uint32_t interface_type;
+typedef std::vector<interface_type> BGenotype;
 
 namespace simulation_params
 {
@@ -24,29 +25,15 @@ namespace simulation_params
 
 namespace model_params
 {
+  constexpr uint8_t interface_size=CHAR_BIT*sizeof(interface_type);
+  
   extern double temperature,mu_prob,misbinding_rate,fitness_factor,unbound_factor,UND_threshold,interface_threshold;
-  const uint8_t interface_size=CHAR_BIT*sizeof(interface_type);
-
+  
   extern std::binomial_distribution<uint8_t> b_dist;
   extern std::uniform_real_distribution<double> real_dist;
   extern std::array<double,model_params::interface_size+1> binding_probabilities;
 }
 
-
-
-
-/*
-struct BindingProbabilities {
-  double values[model_params::interface_size+1];
-  BindingProbabilities() : values() {
-    //double lower_bound=0.5 * erfc(0.5/model_params::temperature * M_SQRT1_2);
-    //double upper_bound=0.5 * erfc(-0.5/model_params::temperature * M_SQRT1_2);
-    for(uint8_t i = 0; i <=model_params::interface_size; ++i)
-      values[i] = std::exp(-1*static_cast<double>(i)/(model_params::interface_size*model_params::temperature));//(0.5 * erfc((static_cast<double>(i)/model_params::interface_size-0.5)/model_params::temperature * M_SQRT1_2)-lower_bound)/(upper_bound-lower_bound);//*pow(static_cast<double>(i)/model_params::interface_size,3.);
-  }
-  
-};
-*/
 std::array<double,model_params::interface_size+1> GenBindingProbsLUP();
 
 
@@ -61,27 +48,22 @@ void PrintShape(Phenotype phen);
 void MinimalTilingRepresentation(std::vector<uint8_t>& tiling);
 uint8_t PhenotypeSymmetryFactor(std::vector<uint8_t>& original_shape, uint8_t dx, uint8_t dy);
 void DistributionStatistics(std::vector<double>& intf, double& mean, double& variance);
-void InterfaceStrengths(std::vector<interface_type>& interfaces, std::vector<uint32_t>& strengths);
+void InterfaceStrengths(BGenotype& interfaces, std::vector<uint32_t>& strengths);
 
 
 namespace interface_model
-{
-
-
-  
-  
+{  
   struct InterfacePhenotypeTable;
 
-  //extern std::random_device rd;
   extern std::mt19937 RNG_Engine;
   interface_type reverse_bits(interface_type v);
   uint8_t ArbitraryPopcount(interface_type face1);
   uint8_t SammingDistance(interface_type face1,interface_type face2);
-  void MutateInterfaces(std::vector<interface_type>& binary_genome);
+  void MutateInterfaces(BGenotype& binary_genome);
 
   /* ASSEMBLY */
-  double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome, InterfacePhenotypeTable* pt,Phenotype_ID& pid,std::vector<std::pair<interface_type,interface_type> >& pid_interactions);
-  std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome,std::set< std::pair<interface_type,interface_type> >& interacting_indices);
+  double ProteinAssemblyOutcome(BGenotype binary_genome, InterfacePhenotypeTable* pt,Phenotype_ID& pid,std::vector<std::pair<interface_type,interface_type> >& pid_interactions);
+  std::vector<int8_t> AssembleProtein(const BGenotype& binary_genome,std::set< std::pair<interface_type,interface_type> >& interacting_indices);
   void PerimeterGrowth(int8_t x,int8_t y,int8_t theta,int8_t direction, int8_t tile_type,std::vector<int8_t>& growing_perimeter,std::vector<int8_t>& placed_tiles);
 
 

@@ -22,8 +22,7 @@ namespace model_params
 
 namespace interface_model
 {
-  //std::random_device rd;
-  //std::mt19937 RNG_Engine(std::random_device{}());  
+ 
   std::mt19937 RNG_Engine(128417);
   
   inline interface_type reverse_bits(interface_type v) {
@@ -47,7 +46,7 @@ namespace interface_model
 
   
 
-  void MutateInterfaces(std::vector<interface_type>& binary_genome) {
+  void MutateInterfaces(BGenotype& binary_genome) {
     std::vector<uint8_t> interface_indices(model_params::interface_size);
     std::iota(interface_indices.begin(),interface_indices.end(),0);
     for(interface_type& base : binary_genome) {
@@ -57,7 +56,7 @@ namespace interface_model
     }
   }
 
-  double ProteinAssemblyOutcome(std::vector<interface_type> binary_genome,InterfacePhenotypeTable* pt,Phenotype_ID& pid,std::vector<std::pair<interface_type,interface_type> >& pid_interactions) {
+  double ProteinAssemblyOutcome(BGenotype binary_genome,InterfacePhenotypeTable* pt,Phenotype_ID& pid,std::vector<std::pair<interface_type,interface_type> >& pid_interactions) {
     std::vector<int8_t> assembly_information;
     Phenotype phen;
     std::vector<Phenotype_ID> Phenotype_IDs;Phenotype_IDs.reserve(simulation_params::phenotype_builds);
@@ -86,7 +85,7 @@ namespace interface_model
   }
 
 
-  std::vector<int8_t> AssembleProtein(const std::vector<interface_type>& binary_genome,std::set< std::pair<interface_type,interface_type> >& interacting_indices) {
+  std::vector<int8_t> AssembleProtein(const BGenotype& binary_genome,std::set< std::pair<interface_type,interface_type> >& interacting_indices) {
     std::vector<int8_t> placed_tiles{0,0,1},growing_perimeter;
     PerimeterGrowth(0,0,0,-1,0,growing_perimeter,placed_tiles);
     int8_t current_orientation, current_tile, current_direction, current_x, current_y;
@@ -214,10 +213,10 @@ void DistributionStatistics(std::vector<double>& intf, double& mean, double& var
   variance /=(N-1);
 }
 
-void InterfaceStrengths(std::vector<interface_type>& interfaces, std::vector<uint32_t>& strengths) {
-  for(std::vector<interface_type>::const_iterator outer_face=interfaces.begin(); outer_face!=interfaces.end(); ++outer_face) {
+void InterfaceStrengths(BGenotype& interfaces, std::vector<uint32_t>& strengths) {
+  for(BGenotype::const_iterator outer_face=interfaces.begin(); outer_face!=interfaces.end(); ++outer_face) {
     ++strengths[static_cast<uint8_t>(1.5*model_params::interface_size)+1-interface_model::SammingDistance(*outer_face,*outer_face)/2];
-    for(std::vector<interface_type>::const_iterator inner_face=outer_face+1; inner_face!=interfaces.end(); ++inner_face) 
+    for(BGenotype::const_iterator inner_face=outer_face+1; inner_face!=interfaces.end(); ++inner_face) 
       ++strengths[model_params::interface_size-interface_model::SammingDistance(*outer_face,*inner_face)];
   }
 }
