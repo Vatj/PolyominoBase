@@ -9,23 +9,23 @@ import numpy as np
 
 Poly_Lib=ctypes.cdll.LoadLibrary('./AGF.so')
 
-def NewMethod(fileName,out_path='/',file_of_genotypes=True,cols=0,ngenes=0):
-    Poly_Lib.WrappedGetPhenotypesID.restype=None
-    Poly_Lib.WrappedGetPhenotypesID.argtypes=[ctypes.POINTER(ctypes.c_char),ctypes.POINTER(ctypes.c_char),ctypes.c_bool,ctypes.c_uint8,ctypes.c_uint8]
-    c_=ctypes.c_buffer(fileName+".txt")
-    o_=ctypes.c_buffer(out_path)
-    assert os.path.isfile(fileName+".txt"), "not a valid file"
+def GetPhenotypeIDs_wrapper(file_path,file_name,ngenes,cols,g_or_i): 
+    Poly_Lib.GetPhenotypeIDs.restype=None
+    Poly_Lib.GetPhenotypeIDs.argtypes=[ctypes.POINTER(ctypes.c_char),ctypes.POINTER(ctypes.c_char),ctypes.c_uint8,ctypes.c_uint8,ctypes.c_bool]
+    c_=ctypes.c_buffer(file_path)
+    o_=ctypes.c_buffer(file_name)
+    assert os.path.isfile(file_path+file_name), "not a valid file"
     
-    Poly_Lib.WrappedGetPhenotypesID(c_,o_,file_of_genotypes,cols,ngenes)
+    Poly_Lib.GetPhenotypeIDs(c_,o_,ngenes,cols,g_or_i)
 
-def WriteMethod(fileName,file_of_genotypes=True,cols=0,ngenes=0):
-    Poly_Lib.GGenerator.restype=None
-    Poly_Lib.GGenerator.argtypes=[ctypes.POINTER(ctypes.c_char),ctypes.c_bool,ctypes.c_uint8,ctypes.c_uint8]
-    c_=ctypes.c_buffer(fileName+".txt")
-
-    Poly_Lib.GGenerator(c_,file_of_genotypes,cols,ngenes)
+def ExhaustiveMinimalMethod_wrapper(file_path,ngenes,cols,g_or_i):
+    Poly_Lib.ExhaustiveMinimalGenotypes.restype=None
+    Poly_Lib.ExhaustiveMinimalGenotypes.argtypes=[ctypes.POINTER(ctypes.c_char),ctypes.c_uint8,ctypes.c_uint8,ctypes.c_bool]
+    c_=ctypes.c_buffer(file_path)
+    Poly_Lib.ExhaustiveMinimalGenotypes(c_,ngenes,cols,g_or_i)
 
 def SampleMinimalMethod_wrapper(file_path,ngenes,cols,samples,dups,g_or_i):
+    #file path is *ONLY* the path of the directory to output the file in, the file name is fixed with suffic _ngenes_colous
     Poly_Lib.SampleMinimalGenotypes.restype=None
     Poly_Lib.SampleMinimalGenotypes.argtypes=[ctypes.POINTER(ctypes.c_char),ctypes.c_uint8,ctypes.c_uint8,ctypes.c_uint32,ctypes.c_bool,ctypes.c_bool]
     c_=ctypes.c_buffer(file_path)

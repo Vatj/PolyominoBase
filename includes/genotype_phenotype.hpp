@@ -1,11 +1,13 @@
 #include "stochastic_model.hpp"
 #include <iostream>
 
-extern "C" void WrappedGetPhenotypesID(const char* a,const char* b,bool file_of_genotypes,uint8_t colours,uint8_t n_genes);
-extern "C" void GGenerator(const char* a,bool file_of_genotypes,uint8_t colours,uint8_t n_genes);
-extern "C" void SampleMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours,const uint32_t N_SAMPLES,bool allow_duplicates, bool file_of_genotypes);
-extern "C" void GP_MapSampler(const char* file_path_c,uint8_t n_genes, uint8_t rcolours,uint8_t colours,bool file_of_genotypes);
-
+extern "C"
+{
+void GetPhenotypeIDs(const char* file_path_c,const char* file_name_c, uint8_t n_genes, uint8_t colours, bool file_of_genotypes);
+void ExhaustiveMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours, bool file_of_genotypes);
+void SampleMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours,const uint32_t N_SAMPLES,bool allow_duplicates, bool file_of_genotypes);
+void GP_MapSampler(const char* file_path_c,uint8_t n_genes, uint8_t rcolours,uint8_t colours,bool file_of_genotypes);
+}
 std::vector<Phenotype_ID> GetPhenotypeIDs(Genotype& genotype, uint8_t k_builds, StochasticPhenotypeTable* pt_it);
 
 uint64_t genotype_to_index(Genotype& genotype, uint8_t n_genes, uint8_t colours);
@@ -85,6 +87,9 @@ struct GenotypeGenerator {
     necks.GenNecklaces(colours);
     necklaces=necks.necklaces;
     n_necklaces=necklaces.size();
+    //TEMPORARY TESTING
+    necklace_states[0]=1;
+    //TEMPORARY TESTING
   }
   
   GenotypeGenerator(uint8_t a,uint8_t b) {n_genes=a;colours=b; necklace_states.assign(a,0);}
@@ -128,6 +133,9 @@ struct GenotypeGenerator {
   
   void increment_states(std::vector<uint32_t>& states) {
     ++states.back();
+    //TEMPORARY TESTING
+    uint32_t zero_state_init=states[0];
+    //TEMPORARY TESTING
     for(uint32_t rind=states.size();rind>0;--rind) {
       if(states[rind-1]>=n_necklaces) {
         if(rind==1) {
@@ -140,6 +148,14 @@ struct GenotypeGenerator {
         }
       }
     }
+    //TEMPORARY TESTING
+    if(zero_state_init==1 && states[0]!=1)
+      states[1]=colours+2;
+    if(zero_state_init==static_cast<uint32_t>(colours+2) && states[0]!=static_cast<uint32_t>(colours+2)) {
+      is_done=true;
+      return;
+    }
+    //TEMPORARY TESTING
     auto max_iter=std::max_element(states.begin(),states.end());
     std::replace(max_iter,states.end(),static_cast<uint32_t>(0),*max_iter);
   }
