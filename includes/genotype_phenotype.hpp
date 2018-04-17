@@ -98,8 +98,7 @@ struct GenotypeGenerator {
     return !is_done ? next_genotype() : Genotype{};
   }
 
-  bool valid_growing_faces(Genotype& genotype) {
-    uint8_t max_face=1;
+  bool valid_growing_faces(Genotype& genotype,uint8_t max_face) {
     for(auto face : genotype) {
       if(face>max_face)
         return false;
@@ -108,6 +107,8 @@ struct GenotypeGenerator {
     }
     return true;
   }
+
+
 
   bool valid_bindings(Genotype& genotype) {
     for(uint8_t interface=1;interface<=*std::max_element(genotype.begin(),genotype.end());interface+=2) {
@@ -124,7 +125,7 @@ struct GenotypeGenerator {
     return true;
   }
   bool valid_genotype(Genotype& genotype) {
-    if(!valid_growing_faces(genotype))
+    if(!valid_growing_faces(genotype,1))
       return false;
     if(!valid_bindings(genotype))
       return false;
@@ -163,13 +164,33 @@ struct GenotypeGenerator {
   Genotype next_genotype() {
     Genotype genotype;
     while(!is_done) {
+      inc_lab:
       genotype.clear();
       genotype.reserve(n_genes*4);
-      for(auto index : necklace_states)
-        genotype.insert(genotype.end(),necklaces[index].begin(),necklaces[index].end());
+      for(uint8_t index=0; index!= n_genes;++index) {
+	uint8_t input_face=*std::max_element(genotype.begin(),genotype.end());
+	uint8_t next_max_face= input_face>0 ? ((input_face-1)/2)*2+3 : 1;
+	
+	
+	while(!valid_growing_faces(necklaces[necklace_states[index]],next_max_face)) {
+	  const uint32_t post_inc = necklace_states[index]+1;
+	  if(post_inc==necklaces.size()) {
+	    increment_states(necklace_states);
+	    goto inc_lab;
+	  }
+	  std::fill(necklace_states.begin()+index,necklace_states.end(),post_inc);
+	}
+	
+        genotype.insert(genotype.end(),necklaces[necklace_states[index]].begin(),necklaces[necklace_states[index]].end());
+      }
+      
+      
+      
       increment_states(necklace_states);
+      
       if(valid_genotype(genotype)) 
         return genotype;
+      
     }   
     genotype.clear();
     return genotype;

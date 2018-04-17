@@ -137,9 +137,18 @@ int main(int argc, char* argv[]) {
     std::cout<<argv[1][0]<<std::endl;
 
   }
+  Genotype genotype{0,0,0,1,0,0,0,2};
+  int x=0;
+  for(Genotype neighbour : genotype_neighbourhood(genotype,2,std::stoi(argv[1]))) {
+    ++x;
+    for(auto q:neighbour)
+      std::cout<<+q<<" ";
+    std::cout<<std::endl;
+  }
+  std::cout<<x<<std::endl;
+  return 0;
 
-
- 
+  /*
   auto nf =NecklaceFactory();
   nf.GenNecklaces(std::stoi(argv[2]));
   std::cout<<"necklaces"<<std::endl;
@@ -148,7 +157,8 @@ int main(int argc, char* argv[]) {
       std::cout<<+y<<" ";
     std::cout<<std::endl;
   }
-  /*
+  */
+  
   
   Genotype geno,nullg;
   GenotypeGenerator ggenerator(std::stoi(argv[1]),std::stoi(argv[2]));
@@ -158,7 +168,7 @@ int main(int argc, char* argv[]) {
       std::cout<<+x<<" ";
     std::cout<<std::endl;
   }
-  */
+  
   
 
   return 0;
@@ -193,7 +203,7 @@ void JiggleGenotype(Genotype& genotype, uint8_t max_colour) {
     base= (base==0) ? neutral_colours[jiggle_index(RNG_Engine)] : base;
 }
 std::vector<Genotype> genotype_neighbourhood(const Genotype& genome, uint8_t ngenes, uint8_t colours) {
-  std::vector<Genotype> neighbours(1,genome);
+  std::vector<Genotype> neighbours;//(1,genome); 
   Genotype neighbour;
   std::vector<uint8_t> mutants(colours);
   std::iota(mutants.begin(), mutants.end(), 0);
