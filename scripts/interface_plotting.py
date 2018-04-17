@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import icy;icy.Use_Seaborn()
+import seaborn as sns
 
 from scipy.stats import binom,sem,chi2
 from operator import itemgetter
@@ -462,8 +463,10 @@ def HistoryDiagram(IDs,selections,low=-1,high=-1):
                phen_col[phen]=icy.generate_new_color(phen_col.values(),0)
           
      for g,(ID,sel) in enumerate(zip(IDs[low:high],selections[low:high])):
+          
           for gen,idp in enumerate(ID):
-               continue
+               #print "hi"
+               
                plt.scatter(gen,g,marker='o',c=phen_col[idp],lw=0.5,edgecolor='k',zorder=10)
           if g==0:
                for i,s in enumerate(sel):
@@ -474,28 +477,28 @@ def HistoryDiagram(IDs,selections,low=-1,high=-1):
                plt.plot([s,i],[g,g+1],'k--',lw=0.5,zorder=10)
 
      for idpx,c in phen_col.iteritems():
-          continue
           plt.scatter(-10,0,c=c,label=idpx)
      
 
 
      ##attempt
-     rev_sel=selections[::-1]
-     fixation=0#rev_sel[0].index(max(set(rev_sel[0]), key=rev_sel[0].count))
-     
-     printed_paths=set()
-     for init in xrange(len(rev_sel[0])):
-          fixation=init
-          tm=len(selections)-1
-          for nex in rev_sel[1:]:
-               next_fix=nex[fixation]
-               path=(fixation,next_fix,tm,tm-1)
-               if path not in printed_paths:
-                    printed_paths.add(path)
-                    plt.plot([fixation,next_fix],[tm,tm-1],'k-',lw=1.5)
-               fixation=next_fix
+     if False:
+          rev_sel=selections[::-1]
+          fixation=0#rev_sel[0].index(max(set(rev_sel[0]), key=rev_sel[0].count))
           
-               tm-=1          
+          printed_paths=set()
+          for init in xrange(len(rev_sel[0])):
+               fixation=init
+               tm=len(selections)-1
+               for nex in rev_sel[1:]:
+                    next_fix=nex[fixation]
+                    path=(fixation,next_fix,tm,tm-1)
+                    if path not in printed_paths:
+                         printed_paths.add(path)
+                         plt.plot([fixation,next_fix],[tm,tm-1],'k-',lw=1.5)
+                         fixation=next_fix
+                         
+                         tm-=1          
           
      plt.legend()
      plt.axis('off')
@@ -504,17 +507,33 @@ def HistoryDiagram(IDs,selections,low=-1,high=-1):
      plt.show(block=False)
 
 from interface_analysis import LoadT,RandomHistorySampling
-
-def PlotAnalysis(gz,N_samps=50):
+from itertools import groupby
+def PlotAnalysis(gz,N_samps=50,normed=False):
      
      #return sampled_history_strengths
-     plt.figure()
+     #plt.figure()
      for i in xrange(N_samps):
-          sampled_history_strengths=RandomHistorySampling(*gz,goback=500)
+          sampled_history_strengths=RandomHistorySampling(*gz,goback=1999)
           for key,interface_pairing in sampled_history_strengths.iteritems():
                for sequence in interface_pairing:
+                    norm_factor=sequence[0] if normed else 1
                     if sequence:
-                         plt.plot(range(len(sequence)),np.array(sequence)/sequence[0],alpha=0.6)
+                         plt.plot(range(len(sequence)),np.array(sequence)/norm_factor-1,alpha=0.4)
+                         return
+                         uniq=[L[0] for L in groupby(sequence)]
+                         ups=0
+                         downs=0
+                         #for (a,b) in zip(uniq,uniq[1:]):
+                         #     if b>a:
+                         #          ups+=1
+                         #     else:
+                         #          downs+=1
+                         #print ups,downs
+
+     plt.plot([0,2000],[0,0],'k--')
+     plt.xlabel('t')
+     plt.ylabel(r'$\Delta \hat{S}$')
+     sns.despine()
      plt.show(block=False)
 
 from scipy import stats
@@ -527,3 +546,17 @@ def FF(xs,t):
      scal=1./(ma-mi)
      #print scal,mi
      return stats.norm.cdf((xs-q)/t)#-mi)*scal#*xs**2
+
+def pl_f(L):
+     binom_pair=binom(L,0.5)
+     binom_self=binom(L/2.,0.5)
+
+     plt.figure()
+     plt.plot(np.linspace(0,1,L+1),66./78*binom_pair.pmf(np.linspace(0,L,L+1)),'o')
+     plt.plot(np.linspace(0,1,L/2+1),12./78*binom_self.pmf(np.linspace(0,L/2,L/2+1)),'^')
+     plt.yscale('log')
+     plt.xlabel(r'$\hat{S}$')
+     plt.ylabel(r'$Pr$')
+     plt.title('Strength Distribution')
+     sns.despine()
+     plt.show(block=False)
