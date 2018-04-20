@@ -8,10 +8,40 @@ from seaborn import despine
 from colorsys import hsv_to_rgb
 from random import uniform,choice
 from interface_analysis import qBFS, loadManyResults, concatenateResults
-from scipy.stats import linregress
+from scipy.stats import linregress,binom
 
+"""RANDOM THEORY SECTION """
+def plotRandomTheory(I_size,g_len):
+     
+     b_asym=binom(I_size,.5)
+     b_sym=binom(I_size/2,.5)
 
-""" PHYLOGENCY SECTION """
+     s_hats=np.linspace(0,1,33)
+
+     plt.figure()
+     plt.plot(s_hats,float(g_len-1)/(g_len+1)*b_asym.pmf(s_hats*I_size),c='firebrick',ls='-')
+     plt.plot(s_hats[::2],2/float(g_len+1)*b_sym.pmf(s_hats[::2]*I_size/2),c='royalblue',ls='-')
+
+     T_star=0.65
+     valid_syms=s_hats[::2][np.where(s_hats[::2]>=T_star)]
+     valid_asyms=s_hats[np.where(s_hats>=T_star)]
+
+     prob0_syms=b_sym.cdf(s_hats[::2][np.where(s_hats[::2]<T_star)][-1]*I_size/2)
+     prob0_asyms=b_asym.cdf(s_hats[np.where(s_hats<T_star)][-1]*I_size)
+
+     plt.plot(valid_asyms,(b_asym.cdf(valid_asyms*I_size)-prob0_asyms)/(1-prob0_asyms),c='firebrick',ls='-')
+     plt.plot(valid_syms,(b_sym.cdf(valid_syms*I_size/2)-prob0_syms)/(1-prob0_syms),c='royalblue',ls='-')
+
+     plt.text(.5,2/float(g_len+1)*b_sym.pmf(I_size/4.)*.9,'sym',ha='center',va='top')
+
+     plt.text(.5,float(g_len-1)/(g_len+1)*b_asym.pmf(I_size/2.)*.9,'asym',ha='center',va='bottom')
+     
+     plt.yscale('log')
+     plt.show(block=False)
+     
+     
+
+"""PHYLOGENCY SECTION """
 def plotBulkPhylogeny(data_struct,use_offset=False):
      plt.figure()
      for data in data_struct:

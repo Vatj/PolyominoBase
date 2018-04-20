@@ -7,13 +7,14 @@ import pickle
 from multiprocessing import Pool
 from functools import partial
 from collections import defaultdict
+from itertools import combinations
 
 
 #BASE_FILE_PATH='/scratch/asl47/Data_Runs/Interface_Cron/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
 BASE_FILE_PATH='/rscratch/asl47/Bulk_Run/Interfaces/{0}_I{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
 #BASE_FILE_PATH='../output/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
 
-interface_length=32
+interface_length=16
 def LoadEvolutionHistory(temperature=0.000001,mu=1,gamma=1,run=0):
      phen_line=True
      phenotype_IDs=[]
@@ -59,7 +60,7 @@ def LoadT(mu=1,t=0.35,run=0):
         
 
 def convint(x):
-     return np.uint32(x)
+     return np.uint16(x)
 
 def SeqDiff(genotype1,genotype2):
      return [i for i in xrange(len(genotype1)) if genotype1[i] != genotype2[i]]
@@ -176,6 +177,10 @@ def qBFS(genotypes,selections,strengths):
      MSE_ae=[]
      MSE_ai=[]
      MSE_s=[]
+
+     W_a=[]
+     W_s=[]
+     
      for generation in xrange(gen_limit-1):
           for index in xrange(pop_size):
                diff= set(strengths[generation][index])-set(strengths[generation-1][selections[generation][index]]) if generation else strengths[generation][index] 
@@ -188,8 +193,23 @@ def qBFS(genotypes,selections,strengths):
                          elif new_bond[0]/4==new_bond[1]/4:
                               MSE_ai.append(stren_tree)
                          else:
-                              MSE_ae.append(stren_tree) 
-     return filter(None,MSE_ae),filter(None,MSE_ai),filter(None,MSE_s)
+                              MSE_ae.append(stren_tree)
+               weak_a,weak_s=qWeak(strengths[generation][index],genotypes[generation][index])
+               W_a.extend(weak_a)
+               W_s.extend(weak_s)
+     return filter(None,MSE_ae),filter(None,MSE_ai),filter(None,MSE_s),W_a,W_s
+
+def qWeak(strength,genotype):
+     weaknesses_asym=[]
+     weaknesses_sym=[]
+     g_length=12
+     used_interfaces=set([item for sublist in strength for item in sublist])
+     non_interactings=set(xrange(g_length))-used_interfaces
+     for pair in combinations(non_interactings,2):
+          weaknesses_asym.append(BindingStrength(*genotype[[i for i in pair]]))
+     for face in non_interactings:
+          weaknesses_sym.append(BindingStrength(*genotype[[face]*2]))
+     return weaknesses_asym,weaknesses_sym
 
 def qDFS(index,new_bond,genotypes,selections,strengths):
      #ANALYSIS PARAMETERS
