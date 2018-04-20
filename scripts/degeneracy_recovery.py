@@ -23,6 +23,7 @@ def product_of(list_iterable):
     return reduce(mul, list_iterable, 1L)
 
 def Find_Neutral_Degeneracy(F,N,P):
+    print [[choose(F,U)*N**(F-U)]+[[product_of([P-2*Upp for Upp in xrange(0,Up-1+1)])]+[sum(product_of(factors) for factors in combinations_with_replacement(xrange(1,Up+1),U-Up))] for Up in xrange(0,U+1)] for U in xrange(0,F+1)]
     return sum([choose(F,U)*N**(F-U)*sum([product_of([P-2*Upp for Upp in xrange(0,Up-1+1)])*sum(product_of(factors) for factors in combinations_with_replacement(xrange(1,Up+1),U-Up)) for Up in xrange(0,U+1)]) for U in xrange(0,F+1)])
    
 def Find_Interacting_Degeneracy(N_Interacting_Colours,N_Interacting_Tuples):
@@ -288,3 +289,4 @@ def Relabel_Tile(Tile):
         if face==0:
             continue
         Tile[i]=Base_Replacements[face]
+

@@ -25,7 +25,7 @@ def ExhaustiveMinimalMethod_wrapper(file_path,ngenes,cols,g_or_i):
     Poly_Lib.ExhaustiveMinimalGenotypes(c_,ngenes,cols,g_or_i)
 
 def SampleMinimalMethod_wrapper(file_path,ngenes,cols,samples,dups,g_or_i):
-    #file path is *ONLY* the path of the directory to output the file in, the file name is fixed with suffic _ngenes_colous
+    #file path is *ONLY* the path of the directory to output the file in, the file name is fixed with suffix _ngenes_colous
     Poly_Lib.SampleMinimalGenotypes.restype=None
     Poly_Lib.SampleMinimalGenotypes.argtypes=[ctypes.POINTER(ctypes.c_char),ctypes.c_uint8,ctypes.c_uint8,ctypes.c_uint32,ctypes.c_bool,ctypes.c_bool]
     c_=ctypes.c_buffer(file_path)
