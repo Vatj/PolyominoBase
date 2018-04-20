@@ -20,14 +20,14 @@ namespace simulation_params
   extern uint16_t population_size;
   extern uint32_t generation_limit,independent_trials,run_offset;
 
-  extern bool fitness_selection,random_initilisation;
+  extern bool random_initilisation;
 }
 
 namespace model_params
 {
   constexpr uint8_t interface_size=CHAR_BIT*sizeof(interface_type);
   
-  extern double temperature,mu_prob,misbinding_rate,fitness_factor,unbound_factor,UND_threshold,interface_threshold;
+  extern double temperature,mu_prob,fitness_factor,UND_threshold,interface_threshold;
   
   extern std::binomial_distribution<uint8_t> b_dist;
   extern std::uniform_real_distribution<double> real_dist;
@@ -89,9 +89,9 @@ namespace interface_model
             new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
             known_phenotypes[phenotype_size].push_back(phen);
             //std::gamma_distribution<double> fitness_dist(sqrt(static_cast<double>(phenotype_size)),1);
-            std::gamma_distribution<double> fitness_dist(pow(static_cast<double>(phenotype_size),2),1);
+            std::gamma_distribution<double> fitness_dist(pow(static_cast<double>(phenotype_size),.5),1);
             phenotype_fitnesses[phenotype_size].emplace_back(fitness_dist(RNG_Engine));
-            std::cout<<"fitness of "<<+phenotype_size<<" "<<phenotype_fitnesses[phenotype_size].size()-1<<" is "<<phenotype_fitnesses[phenotype_size].back()<<std::endl;
+            //std::cout<<"fitness of "<<+phenotype_size<<" "<<phenotype_fitnesses[phenotype_size].size()-1<<" is "<<phenotype_fitnesses[phenotype_size].back()<<std::endl;
             new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()-1);
             
             return phenotype_fitnesses[phenotype_size].size()-1;

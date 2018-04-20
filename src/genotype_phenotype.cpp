@@ -2,7 +2,7 @@
 #include <sstream>
 #include <iterator>
 #include <functional>
-
+#include <set>
 std::mt19937 RNG_Engine(std::random_device{}());
 
 void SampleMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours,const uint32_t N_SAMPLES,bool allow_duplicates, bool file_of_genotypes) {
@@ -129,10 +129,17 @@ std::vector<Phenotype_ID> GetPhenotypeIDs(Genotype& genotype, uint8_t k_builds, 
   return pIDs;
 }
 
+
+  
 /****************/
 /***** MAIN *****/
 /****************/
 int main(int argc, char* argv[]) {
+
+  std::cout<<NeutralSize({0,0,3,1, 0,0,4,2},2,10)<<std::endl;
+  //std::cout<<nChoosek(std::stoi(argv[1]),std::stoi(argv[2]))<<std::endl;
+  return 0;
+  
   if(argc>2) {
     std::cout<<argv[1][0]<<std::endl;
 
@@ -148,17 +155,6 @@ int main(int argc, char* argv[]) {
   std::cout<<x<<std::endl;
   return 0;
 
-  /*
-  auto nf =NecklaceFactory();
-  nf.GenNecklaces(std::stoi(argv[2]));
-  std::cout<<"necklaces"<<std::endl;
-  for(auto x: nf.necklaces) {
-    for(auto y: x)
-      std::cout<<+y<<" ";
-    std::cout<<std::endl;
-  }
-  */
-  
   
   Genotype geno,nullg;
   GenotypeGenerator ggenerator(std::stoi(argv[1]),std::stoi(argv[2]));
@@ -278,4 +274,72 @@ void ExhaustiveMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_
   }
 }
 
+
+
+
  
+
+
+
+uint64_t nChoosek(uint8_t n, uint8_t k ) {
+    if (k > n) return 0;
+    if (k * 2 > n) k = n-k;
+    if (k == 0) return 1;
+    uint64_t result = n;
+    for(uint8_t i = 2; i <= k; ++i ) {
+        result *= (n-i+1);
+        result /= i;
+    }
+    return result;
+}
+uint64_t combination_with_repetiton(uint8_t space_size , uint8_t sample_size) {
+  if(sample_size==0)
+    return 1;
+  std::vector<uint8_t> v(sample_size,1); 
+  uint64_t comb_sum=0;
+  while (true){ 
+    for (uint8_t i = 0; i < sample_size; ++i){               
+      if (v[i] > space_size){ 
+        v[i + 1] += 1; 
+        for (int16_t k = i; k >= 0; --k)
+          v[k] = v[i + 1]; 
+        v[i] = v[i + 1]; 
+      } 
+    } 
+    if (v[sample_size] > 0) 
+      break;
+    uint64_t comb_prod=1;
+    for(auto x: v)
+      comb_prod*=x;
+    comb_sum+=comb_prod;
+    v[0] += 1; 
+  } 
+  return comb_sum; 
+}
+
+
+uint64_t NeutralSize(Genotype genotype,uint32_t N_neutral_colours,uint32_t N_possible_interacting_colours) {
+  uint8_t total_faces=genotype.size(),neutral_faces=std::count(genotype.begin(),genotype.end(),0);
+  Clean_Genome(genotype,0,false);
+  std::set<uint8_t> unique_cols(genotype.begin(),genotype.end());
+  uint32_t N_interacting_colours=N_possible_interacting_colours,N_interacting_pairs=(unique_cols.size()-1)/2;
+  uint64_t neutral_interacting=1;
+  for(uint8_t n=0;n<N_interacting_pairs;++n)
+    neutral_interacting*=(N_interacting_colours-2*n);
+  
+  uint32_t N_noninteracting_colours=N_possible_interacting_colours-(unique_cols.size()-1);
+  uint64_t neutral_noninteracting=0;
+  for(uint8_t f=0;f<=neutral_faces;++f) {
+    uint64_t pre_sum=nChoosek(neutral_faces,f)*pow(N_neutral_colours,neutral_faces-f);
+
+    uint64_t sum_term=0;
+    for(uint8_t U=0;U<=f;++U) {
+      uint64_t pre_prod=1;
+      for(uint8_t Un=0;Un<U;++Un)
+        pre_prod*=(N_noninteracting_colours-2*Un);
+      sum_term+=pre_prod*combination_with_repetiton(U,f-U);
+    }
+    neutral_noninteracting+=pre_sum*sum_term;   
+  }
+  return neutral_noninteracting*neutral_interacting;
+}

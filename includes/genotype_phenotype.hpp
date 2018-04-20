@@ -1,6 +1,7 @@
 #include "stochastic_model.hpp"
 #include <iostream>
 
+/*External wrappers for python integration */
 extern "C"
 {
 void GetPhenotypeIDs(const char* file_path_c,const char* file_name_c, uint8_t n_genes, uint8_t colours, bool file_of_genotypes);
@@ -8,16 +9,22 @@ void ExhaustiveMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_
 void SampleMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours,const uint32_t N_SAMPLES,bool allow_duplicates, bool file_of_genotypes);
 void GP_MapSampler(const char* file_path_c,uint8_t n_genes, uint8_t rcolours,uint8_t colours,bool file_of_genotypes);
 }
-std::vector<Phenotype_ID> GetPhenotypeIDs(Genotype& genotype, uint8_t k_builds, StochasticPhenotypeTable* pt_it);
-
+/*Converting methods*/
 uint64_t genotype_to_index(Genotype& genotype, uint8_t n_genes, uint8_t colours);
 void index_to_genotype(uint64_t index, Genotype& genotype, uint8_t n_genes, uint8_t colours);
 
-
-
+/*GP map calculations*/
+std::vector<Phenotype_ID> GetPhenotypeIDs(Genotype& genotype, uint8_t k_builds, StochasticPhenotypeTable* pt_it);
 std::vector<Genotype> genotype_neighbourhood(const Genotype& genome, uint8_t ngenes, uint8_t colours);
 void JiggleGenotype(Genotype& genotype, uint8_t max_colour);
 
+
+/*Neutral size calculations*/
+uint64_t NeutralSize(Genotype genotype,uint32_t N_neutral_colours,uint32_t N_possible_interacting_colours);
+uint64_t combination_with_repetiton(uint8_t space_size , uint8_t sample_size);
+uint64_t nChoosek(uint8_t n, uint8_t k);
+
+/*Minimal genotype methods*/  
 struct NecklaceFactory {
   uint8_t colours=1;
   std::vector<std::vector<uint8_t> > necklaces;
@@ -87,9 +94,7 @@ struct GenotypeGenerator {
     necks.GenNecklaces(colours);
     necklaces=necks.necklaces;
     n_necklaces=necklaces.size();
-    //TEMPORARY TESTING
     necklace_states[0]=1;
-    //TEMPORARY TESTING
   }
   
   GenotypeGenerator(uint8_t a,uint8_t b) {n_genes=a;colours=b; necklace_states.assign(a,0);}
@@ -107,8 +112,6 @@ struct GenotypeGenerator {
     }
     return true;
   }
-
-
 
   bool valid_bindings(Genotype& genotype) {
     for(uint8_t interface=1;interface<=*std::max_element(genotype.begin(),genotype.end());interface+=2) {
@@ -134,9 +137,7 @@ struct GenotypeGenerator {
   
   void increment_states(std::vector<uint32_t>& states) {
     ++states.back();
-    //TEMPORARY TESTING
     uint32_t zero_state_init=states[0];
-    //TEMPORARY TESTING
     for(uint32_t rind=states.size();rind>0;--rind) {
       if(states[rind-1]>=n_necklaces) {
         if(rind==1) {
@@ -149,14 +150,12 @@ struct GenotypeGenerator {
         }
       }
     }
-    //TEMPORARY TESTING
     if(zero_state_init==1 && states[0]!=1)
       states[1]=colours+2;
     if(zero_state_init==static_cast<uint32_t>(colours+2) && states[0]!=static_cast<uint32_t>(colours+2)) {
       is_done=true;
       return;
     }
-    //TEMPORARY TESTING
     auto max_iter=std::max_element(states.begin(),states.end());
     std::replace(max_iter,states.end(),static_cast<uint32_t>(0),*max_iter);
   }
@@ -171,7 +170,6 @@ struct GenotypeGenerator {
 	uint8_t input_face=*std::max_element(genotype.begin(),genotype.end());
 	uint8_t next_max_face= input_face>0 ? ((input_face-1)/2)*2+3 : 1;
 	
-	
 	while(!valid_growing_faces(necklaces[necklace_states[index]],next_max_face)) {
 	  const uint32_t post_inc = necklace_states[index]+1;
 	  if(post_inc==necklaces.size()) {
@@ -182,15 +180,11 @@ struct GenotypeGenerator {
 	}
 	
         genotype.insert(genotype.end(),necklaces[necklace_states[index]].begin(),necklaces[necklace_states[index]].end());
-      }
-      
-      
-      
+      }      
       increment_states(necklace_states);
       
       if(valid_genotype(genotype)) 
         return genotype;
-      
     }   
     genotype.clear();
     return genotype;

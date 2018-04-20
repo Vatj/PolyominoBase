@@ -7,8 +7,8 @@ const uint16_t printing_resolution=100; /* NOTE RESOLUTION IS 1 */
 
 void EvolvePopulation(std::string run_details) {
   /* Output files */
-  std::string file_base_path="";//"//rscratch//asl47//Bulk_Run//Interfaces//";
-  std::string file_simulation_details=std::string(simulation_params::fitness_selection? "S":"R")+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
+  std::string file_base_path="//rscratch//asl47//Bulk_Run//Interfaces//";
+  std::string file_simulation_details="I"+std::to_string(model_params::interface_size)+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
     
   std::ofstream fout_strength(file_base_path+"Strengths_"+file_simulation_details, std::ios_base::out);
   std::ofstream fout_fitness(file_base_path+"Fitness_"+file_simulation_details, std::ios_base::out);
@@ -100,18 +100,13 @@ void EvolvePopulation(std::string run_details) {
     }
 
     /* Start selection */
-    if(simulation_params::fitness_selection) {
-      std::vector<uint16_t> selection_indices=RouletteWheelSelection(population_fitnesses);
-      for(uint16_t nth_reproduction = 0; nth_reproduction<simulation_params::population_size;++nth_reproduction) {
-        reproduced_population[nth_reproduction]=evolving_population[selection_indices[nth_reproduction]];
-      }
-      evolving_population.assign(reproduced_population.begin(),reproduced_population.end());
-      for(uint16_t selection_index : selection_indices)
-        fout_phenotype_history << +selection_index << " ";
-      fout_phenotype_history<<"\n";
-     
-    }
-    
+    std::vector<uint16_t> selection_indices=RouletteWheelSelection(population_fitnesses);
+    for(uint16_t nth_reproduction = 0; nth_reproduction<simulation_params::population_size;++nth_reproduction)
+      reproduced_population[nth_reproduction]=evolving_population[selection_indices[nth_reproduction]];
+    evolving_population.assign(reproduced_population.begin(),reproduced_population.end());
+    for(uint16_t selection_index : selection_indices)
+      fout_phenotype_history << +selection_index << " ";
+    fout_phenotype_history<<"\n";    
     /* End selection */
     
   } /* End main evolution loop */
@@ -223,7 +218,6 @@ void SetRuntimeConfigurations(int argc, char* argv[]) {
       case 'K': simulation_params::generation_limit=std::stoi(argv[arg+1]);break;
       case 'B': simulation_params::phenotype_builds=std::stoi(argv[arg+1]);break;
 	
-      case 'S': simulation_params::fitness_selection=std::stoi(argv[arg+1])>0;break;
       case 'D': simulation_params::independent_trials=std::stoi(argv[arg+1]);break;
       case 'V': simulation_params::run_offset=std::stoi(argv[arg+1]);break;
       case 'R': simulation_params::random_initilisation=std::stoi(argv[arg+1])>0;break; 
@@ -235,9 +229,6 @@ void SetRuntimeConfigurations(int argc, char* argv[]) {
       case 'X': model_params::UND_threshold=std::stod(argv[arg+1]);break;
       case 'I': model_params::interface_threshold=std::stod(argv[arg+1]);break;
 	
-      case 'A': model_params::misbinding_rate=std::stod(argv[arg+1]);break;
-      case 'U': model_params::unbound_factor=std::stod(argv[arg+1]);break;
-      
         
       default: std::cout<<"Unknown Parameter Flag: "<<argv[arg][1]<<std::endl;
       }

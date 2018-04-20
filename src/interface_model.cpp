@@ -5,13 +5,13 @@ namespace simulation_params
   uint16_t population_size=10;
   uint8_t phenotype_builds=10,n_tiles=2;
   uint32_t generation_limit=5,independent_trials=1,run_offset=0;
-  bool fitness_selection=true,random_initilisation=false;
+  bool random_initilisation=false;
 }
 
 namespace model_params
 {
   
-  double temperature=1,mu_prob=0.2,unbound_factor=1,misbinding_rate=0,fitness_factor=1,UND_threshold=0.2,interface_threshold=0.2;
+  double temperature=1,mu_prob=0.2,fitness_factor=1,UND_threshold=0.2,interface_threshold=0.2;
   std::binomial_distribution<uint8_t> b_dist(interface_size,mu_prob);
   std::uniform_real_distribution<double> real_dist(0, 1);
   std::array<double,model_params::interface_size+1> binding_probabilities;
@@ -109,7 +109,7 @@ namespace interface_model
 	  break;
 	}
       }    
-      if(placed_tiles.size()>(static_cast<uint8_t>(model_params::unbound_factor*0.75*binary_genome.size()*binary_genome.size())))
+      if(placed_tiles.size()>(static_cast<uint8_t>(0.75*binary_genome.size()*binary_genome.size())))
         return {};
     }
     
