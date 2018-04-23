@@ -7,7 +7,7 @@ const uint16_t printing_resolution=100; /* NOTE RESOLUTION IS 1 */
 
 void EvolvePopulation(std::string run_details) {
   /* Output files */
-  std::string file_base_path="//rscratch//asl47//Bulk_Run//Interfaces//";
+  std::string file_base_path="//scratch//asl47//Data_Runs//Bulk_Data//";    //"//rscratch//asl47//Bulk_Run//Interfaces//";
   std::string file_simulation_details="I"+std::to_string(model_params::interface_size)+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
     
   std::ofstream fout_strength(file_base_path+"Strengths_"+file_simulation_details, std::ios_base::out);
@@ -17,10 +17,10 @@ void EvolvePopulation(std::string run_details) {
   std::ofstream fout_phenotype_history(file_base_path+"PhenotypeHistory_"+file_simulation_details, std::ios_base::out);
 
   interface_model::InterfacePhenotypeTable pt = interface_model::InterfacePhenotypeTable();
-  //static auto binding_probabilities = BindingProbabilities();
+
   std::vector<double> population_fitnesses(simulation_params::population_size);
   std::vector<uint32_t> interface_counter(1.5*model_params::interface_size+2);
-  //std::vector<phenotype_ID> population_phenotypes(simulation_params::population_size),reproduced_phenotypes(simulation_params::population_size);
+
 
   bool record_strengths=false;
 
@@ -55,21 +55,12 @@ void EvolvePopulation(std::string run_details) {
       
 
       interface_model::MutateInterfaces(evolving_genotype.genotype);
-      //evolving_genotype.genotype={10,81,115,10, 10,10,46,117, 139,0,0,88, 49,229,10,10};
-      //evolving_genotype.genotype={10,10,10,0, 65535,10,10,10};
+
       std::vector<std::pair<interface_type,interface_type> > pid_interactions;
       population_fitnesses[nth_genotype]=interface_model::ProteinAssemblyOutcome(evolving_genotype.genotype,&pt,evolving_genotype.pid,pid_interactions);
-      if(!pid_interactions.empty()) {
-	
-	//for(auto x: evolving_genotype.genotype)
-	//  std::cout<<+x<<" ";
-	//std::cout<<" and ints ";
-      for(auto x : pid_interactions)
-	fout_strength<<+x.first<<" "<<+x.second<<",";
-      
-	  
-      
-      }
+      if(evolving_genotype.pid.first>0)
+        for(auto x : pid_interactions)
+          fout_strength<<+x.first<<" "<<+x.second<<",";  
       fout_strength<<".";
 
       if(record_strengths)
@@ -147,11 +138,6 @@ std::vector<uint16_t> RouletteWheelSelection(std::vector<double>& fitnesses) {
   std::sort(selected_indices.begin(),selected_indices.end());
   return selected_indices;
 }
-
-
-
-
-
 
 
 /********************/

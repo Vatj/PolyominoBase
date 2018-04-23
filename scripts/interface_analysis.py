@@ -6,15 +6,19 @@ import sys
 import pickle
 from multiprocessing import Pool
 from functools import partial
-from collections import defaultdict
+from collections import defaultdict,Counter
 from itertools import combinations
 
 
-#BASE_FILE_PATH='/scratch/asl47/Data_Runs/Interface_Cron/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
-BASE_FILE_PATH='/rscratch/asl47/Bulk_Run/Interfaces/{0}_I{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+BASE_FILE_PATH='/scratch/asl47/Data_Runs/Bulk_Data/{0}_I{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+#BASE_FILE_PATH='/rscratch/asl47/Bulk_Run/Interfaces/{0}_I{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
 #BASE_FILE_PATH='../output/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
 
-interface_length=16
+interface_length=64
+interface_type={8:np.uint8,16:np.uint16,32:np.uint32,64:np.uint64}[interface_length]
+def convint(x):
+     return interface_type(x)
+
 def LoadEvolutionHistory(temperature=0.000001,mu=1,gamma=1,run=0):
      phen_line=True
      phenotype_IDs=[]
@@ -40,7 +44,7 @@ def LoadGenotypeHistory(n_tiles,temperature=0.000001,mu=1,gamma=1,run=0):
           converted=[int(i) for i in line.split()]
           genotypes.append([[int(i) for i in j] for j in [converted[i:i + 4*n_tiles] for i in xrange(0, len(converted), 4*n_tiles)]])
 
-     return np.array(genotypes,dtype=np.uint32)
+     return np.array(genotypes,dtype=interface_type)
 
 def LoadStrengthHistory(temperature=0.000001,mu=1,gamma=1,run=0):
     strengths=[]
@@ -59,19 +63,14 @@ def LoadT(mu=1,t=0.35,run=0):
 
         
 
-def convint(x):
-     return np.uint16(x)
 
-def SeqDiff(genotype1,genotype2):
-     return [i for i in xrange(len(genotype1)) if genotype1[i] != genotype2[i]]
+
 
 def BindingStrength(base1,base2):
-     
-     #assert type(base1)==np.uint8 and type(base2)==np.uint8 , "wrong type"
      return 1-bin(np.bitwise_xor(convint(base1),revbits(base2))).count("1")/float(interface_length)
 
 def revbits(x):
-     return int(bin(~convint(x))[2:].zfill(interface_length)[::-1], 2)
+     return interface_type(int(bin(~convint(x))[2:].zfill(interface_length)[::-1], 2))
 
 
 
@@ -134,7 +133,12 @@ def getSteadyStates(matrix):
 
 """ PHYLOGENCY SECTION """     
 
-def writeResults(I,M,t,runs,offset=0):    
+def writeResults(I,M,t,runs,offset=0):
+     global interface_length
+     interface_length=I
+     global interface_type
+     interface_type={8:np.uint8,16:np.uint16,32:np.uint32,64:np.uint64}[interface_length]
+     
      pool = Pool()
      data_struct=pool.map(partial(AnalysePhylogeneticStrengths, mu=M,t=t), xrange(offset,offset+runs)) 
      pool.close()
@@ -142,7 +146,7 @@ def writeResults(I,M,t,runs,offset=0):
           pickle.dump(data_struct, f)
 
 def loadResults(I,M,t,offset=0):
-     with open('/rscratch/asl47/Bulk_Run/I{}Mu{}T{}O{}.pkl'.format(I,M,t,offset), 'rb') as f:
+     with open('/scratch/asl47/Data_Runs/Bulk_Data/I{}Mu{}T{}O{}.pkl'.format(I,M,t,offset), 'rb') as f:
           return pickle.load(f)
 
 def loadManyResults(I,M,t,runs):
@@ -153,24 +157,35 @@ def loadManyResults(I,M,t,runs):
 
 def concatenateResults(data_struct,trim_gen=True):
      conc_data=defaultdict(list)
+     Wa=Counter()
+     Ws=Counter()
      slice_start=1 if trim_gen else 0
      for data in data_struct:
           for k,v in data.iteritems():
-               conc_data[k].extend([i[slice_start:] for i in v])
+               if k=='Wa':
+                    Wa+=Counter(v)
+               elif k=='Ws':
+                    Ws+=Counter(v)
+               else:
+                    conc_data[k].extend([i[slice_start:] for i in v])
+
 
      for k,v in conc_data.iteritems():
-          length = len(sorted(v,key=len, reverse=True)[0])
-          conc_data[k]=np.array([xi+[np.nan]*(length-len(xi)) for xi in v])
+          if len(v) and 'W' not in k:
+               length = len(sorted(v,key=len, reverse=True)[0])
+               conc_data[k]=np.array([xi+[np.nan]*(length-len(xi)) for xi in v])
           
-     return conc_data
+     return conc_data,(Wa,Ws)
           
 def AnalysePhylogeneticStrengths(r,mu,t):
      g,s,p,st=LoadT(mu=mu,t=t,run=r)
-     mae,mai,ms=qBFS(g,s,st)
-     return {'AsymE':mae,'AsymI':mai,'Sym':ms}
+     mae,mai,ms,wa,ws=qBFS(g,s,st)
+     return {'AsymE':mae,'AsymI':mai,'Sym':ms,'Wa':wa,'Ws':ws}
      
      
 def qBFS(genotypes,selections,strengths):
+     #ANALYSIS PARAMETERS
+     WEAKNESS_GOBACK=50
      #RUNTIME PARAMETERS
      gen_limit=len(genotypes)
      pop_size=len(genotypes[0])
@@ -178,8 +193,8 @@ def qBFS(genotypes,selections,strengths):
      MSE_ai=[]
      MSE_s=[]
 
-     W_a=[]
-     W_s=[]
+     W_a=Counter({K:0 for K in np.linspace(0,1,interface_length+1)})
+     W_s=Counter({K:0 for K in np.linspace(0,1,interface_length/2+1)})
      
      for generation in xrange(gen_limit-1):
           for index in xrange(pop_size):
@@ -194,21 +209,22 @@ def qBFS(genotypes,selections,strengths):
                               MSE_ai.append(stren_tree)
                          else:
                               MSE_ae.append(stren_tree)
-               weak_a,weak_s=qWeak(strengths[generation][index],genotypes[generation][index])
-               W_a.extend(weak_a)
-               W_s.extend(weak_s)
-     return filter(None,MSE_ae),filter(None,MSE_ai),filter(None,MSE_s),W_a,W_s
+               if generation>gen_limit-WEAKNESS_GOBACK:
+                    weak_a,weak_s=qWeak(strengths[generation][index],genotypes[generation][index])
+                    W_a+=weak_a
+                    W_s+=weak_s
+     return filter(None,MSE_ae),filter(None,MSE_ai),filter(None,MSE_s),dict(W_a),dict(W_s)
 
 def qWeak(strength,genotype):
-     weaknesses_asym=[]
-     weaknesses_sym=[]
+     weaknesses_asym=Counter({K:0 for K in np.linspace(0,1,interface_length+1)})
+     weaknesses_sym=Counter({K:0 for K in np.linspace(0,1,interface_length/2+1)})
      g_length=12
      used_interfaces=set([item for sublist in strength for item in sublist])
      non_interactings=set(xrange(g_length))-used_interfaces
      for pair in combinations(non_interactings,2):
-          weaknesses_asym.append(BindingStrength(*genotype[[i for i in pair]]))
+          weaknesses_asym[BindingStrength(*genotype[[i for i in pair]])]+=1
      for face in non_interactings:
-          weaknesses_sym.append(BindingStrength(*genotype[[face]*2]))
+          weaknesses_sym[BindingStrength(*genotype[[face]*2])]+=1
      return weaknesses_asym,weaknesses_sym
 
 def qDFS(index,new_bond,genotypes,selections,strengths):

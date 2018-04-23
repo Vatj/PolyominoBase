@@ -23,7 +23,7 @@ namespace model_params
 namespace interface_model
 {
  
-  std::mt19937 RNG_Engine(128417);
+  std::mt19937 RNG_Engine;
   
   inline interface_type reverse_bits(interface_type v) {
     interface_type s(model_params::interface_size);
