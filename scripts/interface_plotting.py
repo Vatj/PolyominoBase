@@ -43,7 +43,7 @@ def plotRandomTheory(I_size,g_len,T_star=0.65):
 def plotInterfaceActivation(I_size):
      b_asym=binom(I_size,.5)
      b_sym=binom(I_size/2,.5)
-     N_interactions=(2**(2*I_size-1))-(2**(I_size-1))
+     N_interactions=(2**(2*I_size-1))+(2**(I_size-1))
 
      def sym(T_stars):
           return (2**I_size)*b_sym.sf(np.ceil(I_size/2*T_stars-1))

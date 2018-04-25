@@ -74,38 +74,71 @@ void GP_MapSampler(const char* file_path_c,uint8_t n_genes, uint8_t rcolours,uin
   StochasticPhenotypeTable pt;
   Genotype genotype(n_genes*4);
 
-  std::string file_path(file_path_c),str,file_details="_N"+std::to_string(n_genes)+"_C"+std::to_string(rcolours)+".txt";
-  std::ifstream file_in(file_path+"SampledGenotypes"+file_details);
-  std::ofstream fout(file_path+"GP_Map_Cx"+std::to_string(colours)+file_details, std::ios_base::out);
- 
+  std::string file_path(file_path_c),str,file_details="_N"+std::to_string(n_genes)+"_C"+std::to_string(rcolours);
+  std::ifstream file_in(file_path+"SampledGenotypes"+file_details+"_Processed.txt");
+  std::ofstream fout(file_path+"GP_Map_Cx"+std::to_string(colours)+file_details+".txt", std::ios_base::out);
+  std::set<Phenotype_ID> evolvable_union;
+  std::vector<double> robustnesses,deaths;
+  std::vector<uint64_t> neutral_weightings;
+  Phenotype_ID pid_section;
+  
   while (std::getline(file_in, str)) {
+    if(str=="x") {
+      //next phenotype, dump everything
+
+      double total_neutral_size=std::accumulate(neutral_weightings.begin(),neutral_weightings.end(),uint64_t(0));
+      double avg_R=0,avg_D=0;
+      for(size_t ind=0;ind<robustnesses.size();++ind) {
+	avg_R+=robustnesses[ind]*neutral_weightings[ind]/total_neutral_size;
+	avg_D+=deaths[ind]*neutral_weightings[ind]/total_neutral_size;
+      }
+      
+      
+      fout<<+pid_section.first<<" "<<pid_section.second<<": ";
+      fout<<avg_R<<" "<<avg_D<<" "<<evolvable_union.size()<<"\n";
+
+
+      //clear everything
+      evolvable_union.clear();
+      robustnesses.clear();
+      deaths.clear();
+      neutral_weightings.clear();
+      continue;
+    }
     if(file_of_genotypes) {
       std::istringstream is( str );
       genotype.assign( std::istream_iterator<int>( is ), std::istream_iterator<int>() );
     }
     else 
       index_to_genotype(std::stoull(str,nullptr),genotype,n_genes,colours);
+    
     std::vector<Phenotype_ID> genotype_pIDs=GetPhenotypeIDs(genotype,k_builds,&pt);
+    pid_section=genotype_pIDs.front();
 #pragma omp parallel for schedule(dynamic) firstprivate(genotype)
     for(uint32_t nth_jiggle=0; nth_jiggle<N_JIGGLE;++nth_jiggle) {
       Clean_Genome(genotype,0,false);
       JiggleGenotype(genotype,colours);
-      uint32_t robust=0,evolve=0;
+      uint32_t robust=0,death=0;//,evolve=0;
       for(Genotype neighbour : genotype_neighbourhood(genotype,n_genes,colours)) {
 	std::vector<Phenotype_ID> neighbour_pIDs=GetPhenotypeIDs(neighbour,k_builds,&pt);
-	if(neighbour_pIDs!=genotype_pIDs)
-	  ++evolve;
+	if(neighbour_pIDs.front()!=genotype_pIDs.front()) {
+	  if(neighbour_pIDs.front().first < 255 && neighbour_pIDs.front().first > 0) {
+#pragma omp critical(set_insertion)
+	    {
+	      evolvable_union.insert(neighbour_pIDs.front());
+	    }
+	  }
+	  else
+	    ++death;  
+	}
 	else
 	  ++robust;
       }
-#pragma omp critical(file_writing)
+#pragma omp critical(vector_emplacing)
       {
-	if(file_of_genotypes) 
-	  for(auto g : genotype)
-	    fout<<+g<<" ";
-        else
-	  fout<<genotype_to_index(genotype,n_genes,colours)<<" ";
-	fout<<": R "<<robust<<" E "<<evolve<<"\n";
+      robustnesses.emplace_back(static_cast<double>(robust)/N_JIGGLE);
+      deaths.emplace_back(static_cast<double>(death)/N_JIGGLE);
+      neutral_weightings.emplace_back(NeutralSize(genotype,1,colours-1)); //DEFAULT SET TO 1 NEUTRAL
       }
     }
   }  
@@ -135,9 +168,8 @@ std::vector<Phenotype_ID> GetPhenotypeIDs(Genotype& genotype, uint8_t k_builds, 
 /***** MAIN *****/
 /****************/
 int main(int argc, char* argv[]) {
-
-  std::cout<<NeutralSize({0,0,3,1, 0,0,4,2},2,10)<<std::endl;
-  //std::cout<<nChoosek(std::stoi(argv[1]),std::stoi(argv[2]))<<std::endl;
+	std::cout<<"here"<<std::endl;
+	GP_MapSampler("",2,7,9,true);
   return 0;
   
   if(argc>2) {
@@ -194,12 +226,12 @@ void JiggleGenotype(Genotype& genotype, uint8_t max_colour) {
   std::vector<uint8_t> neutral_colours(1+(max_colour-min_colour)/2);
   std::generate(neutral_colours.begin()+1, neutral_colours.end(), [n = min_colour-1] () mutable { return n+=2; });
   std::uniform_int_distribution<size_t> jiggle_index(0,neutral_colours.size()-1);
-
   for(auto& base : genotype)
     base= (base==0) ? neutral_colours[jiggle_index(RNG_Engine)] : base;
 }
+
 std::vector<Genotype> genotype_neighbourhood(const Genotype& genome, uint8_t ngenes, uint8_t colours) {
-  std::vector<Genotype> neighbours;//(1,genome); 
+  std::vector<Genotype> neighbours;
   Genotype neighbour;
   std::vector<uint8_t> mutants(colours);
   std::iota(mutants.begin(), mutants.end(), 0);
@@ -214,8 +246,7 @@ std::vector<Genotype> genotype_neighbourhood(const Genotype& genome, uint8_t nge
   return neighbours;
 }
 
-void GetPhenotypeIDs(const char* file_path_c,const char* file_name_c, uint8_t n_genes, uint8_t colours, bool file_of_genotypes) {
-
+void GetPhenotypesIDs(const char* file_path_c,const char* file_name_c, uint8_t n_genes, uint8_t colours, bool file_of_genotypes) {
   std::string file_path(file_path_c),file_name(file_name_c),str,details="_N"+std::to_string(n_genes)+"_C"+std::to_string(colours)+".txt";
   std::ifstream file_in(file_path+file_name);
   std::ofstream gfout(file_path+"Genotype_Codes"+details, std::ios_base::out);
@@ -232,9 +263,6 @@ void GetPhenotypeIDs(const char* file_path_c,const char* file_name_c, uint8_t n_
     }
     else 
       index_to_genotype(std::stoull(str,nullptr),genotype,n_genes,colours);
-    for(auto x: genotype)
-      std::cout<<+x<<" ";
-    std::cout<<std::endl;
     for(auto phen_id : GetPhenotypeIDs(genotype,k_builds,&pt)) 
       gfout<<+phen_id.first<<" "<<+phen_id.second<<" ";
     gfout<<"\n";
@@ -274,13 +302,6 @@ void ExhaustiveMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_
   }
 }
 
-
-
-
- 
-
-
-
 uint64_t nChoosek(uint8_t n, uint8_t k ) {
     if (k > n) return 0;
     if (k * 2 > n) k = n-k;
@@ -319,7 +340,7 @@ uint64_t combination_with_repetiton(uint8_t space_size , uint8_t sample_size) {
 
 
 uint64_t NeutralSize(Genotype genotype,uint32_t N_neutral_colours,uint32_t N_possible_interacting_colours) {
-  uint8_t total_faces=genotype.size(),neutral_faces=std::count(genotype.begin(),genotype.end(),0);
+  uint8_t neutral_faces=std::count(genotype.begin(),genotype.end(),0);
   Clean_Genome(genotype,0,false);
   std::set<uint8_t> unique_cols(genotype.begin(),genotype.end());
   uint32_t N_interacting_colours=N_possible_interacting_colours,N_interacting_pairs=(unique_cols.size()-1)/2;
@@ -342,4 +363,35 @@ uint64_t NeutralSize(Genotype genotype,uint32_t N_neutral_colours,uint32_t N_pos
     neutral_noninteracting+=pre_sum*sum_term;   
   }
   return neutral_noninteracting*neutral_interacting;
+}
+
+void PreProcessGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours,bool file_of_genotypes) {
+  std::string str,file_path(file_path_c),file_details="_N"+std::to_string(n_genes)+"_C"+std::to_string(colours);
+  std::ifstream fin(file_path+"SampledGenotypes"+file_details+"_Iso.txt");
+  std::ofstream fout(file_path+"SampledGenotypes"+file_details+"_Processed.txt");
+  
+  StochasticPhenotypeTable pt;
+  uint8_t k_builds=5;
+  std::map<Phenotype_ID,std::vector<Genotype> > phen_sets;
+  Genotype genotype;
+  
+  while (std::getline(fin, str)) {
+    if(file_of_genotypes) {
+      std::istringstream is( str );
+      genotype.assign( std::istream_iterator<int>( is ), std::istream_iterator<int>() );
+    }
+    const Genotype g_write(genotype);
+    phen_sets[GetPhenotypeIDs(genotype, k_builds, &pt).front()].emplace_back(g_write);
+    
+  }
+
+  for(auto kv : phen_sets) {
+    for(Genotype& gen : kv.second) {
+      for(uint8_t base : gen) {
+	fout<<+base<<" ";
+      }
+      fout<<"\n";
+    }
+    fout<<"x\n";
+  }
 }

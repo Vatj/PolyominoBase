@@ -68,7 +68,7 @@ def StripInParallel(runs):
 
 
 def Load_Tiles(fileN):
-    Raw_Topologies_Input = [line.rstrip('\n') for line in open('/rscratch/asl47/{}.txt'.format(fileN))]
+    Raw_Topologies_Input = [line.rstrip('\n') for line in open(fileN)]
     Raw_Topologies = [[int(face) for face in line.split()] for line in Raw_Topologies_Input]
     topology_dict=defaultdict(list)
     
@@ -78,21 +78,9 @@ def Load_Tiles(fileN):
         
     return topology_dict
 
-def temp(kit):
-    n=0
-    newk=[]
-    while(n<20):
-        if kit[n]==0:
-            n+=5
-        else:
-            for i in xrange(1,5):
-                newk.append(kit[n+i])
-            n+=5
-    return [0 if kk==5 else kk for kk in newk]
 
-
-def Trim_Topologies():
-    TD=Load_Tiles('Randomized_Topologies')
+def Trim_Topologies(fin):
+    TD=Load_Tiles(fin)
     unique_C=0
     for key in reversed(sorted(TD.keys())):
         del_count=0
@@ -108,6 +96,11 @@ def Trim_Topologies():
                     del_count+=1
             unique_C+=1
     print unique_C
+    with open(fin.rstrip('.txt')+'_Iso.txt', 'w') as outfile:
+        for zero_set in TD.values():
+            for genotype in zero_set:
+                genotype_str= ' '.join(map(str,genotype))+'\n'
+                outfile.write(genotype_str)
 
     
         
