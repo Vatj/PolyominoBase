@@ -8,12 +8,21 @@ from multiprocessing import Pool
 from functools import partial
 from collections import defaultdict,Counter
 from itertools import combinations
-
+from numpy import linalg as LA
 
 BASE_FILE_PATH='/scratch/asl47/Data_Runs/Bulk_Data/{0}_I{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
 #BASE_FILE_PATH='/rscratch/asl47/Bulk_Run/Interfaces/{0}_I{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
 #BASE_FILE_PATH='../output/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
 
+def setBasePath(path):
+     global BASE_FILE_PATH
+     if path=='scratch':
+          BASE_FILE_PATH='/scratch/asl47/Data_Runs/Bulk_Data/{0}_I{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+     elif path=='rscratch':
+          BASE_FILE_PATH='/rscratch/asl47/Bulk_Run/Interfaces/{0}_I{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+     else:
+          BASE_FILE_PATH='../output/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+          
 interface_length=64
 interface_type={8:np.uint8,16:np.uint16,32:np.uint32,64:np.uint64}[interface_length]
 def convint(x):
@@ -75,7 +84,7 @@ def revbits(x):
 
 
 """ DRIFT SECTION """
-def RandomWalk(I_size=32,n_steps=1000,phi=0.5,T_star=0.6,renorm=False):
+def RandomWalk(I_size=32,n_steps=1000,phi=0.5,T_star=0.6,renorm=False,return_prog=False):
      s_hats=np.linspace(0,1,I_size+1)
      N=int(I_size*(1-T_star))+1
      states=np.zeros(N)
@@ -90,6 +99,10 @@ def RandomWalk(I_size=32,n_steps=1000,phi=0.5,T_star=0.6,renorm=False):
      analytic_states=getSteadyStates(mmatrix(N,phi,s_hats[I_size-N+1:]))[1]
      #print analytic_states
      
+     if return_prog:
+          progressive_states.append(np.sum(s_hats[I_size-N+1:]*analytic_states))
+          return progressive_states
+     
      fig, ax1 = plt.subplots()
      msize=12
      ax1.plot(np.linspace(T_star,1,N),states,marker='x',ls='',mew=1,ms=14,mec='orangered',mfc='None')
@@ -103,7 +116,7 @@ def RandomWalk(I_size=32,n_steps=1000,phi=0.5,T_star=0.6,renorm=False):
      sns.despine(left=1,top=1,right=1)
      ax1.set_xlim((.3,1.05))
      plt.show(block=False)
-     return progressive_states
+     
 
 
 def UpdateStates(states,val,phi=0.25,renorm=False):
