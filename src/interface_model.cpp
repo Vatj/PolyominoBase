@@ -10,13 +10,10 @@ namespace simulation_params
 
 namespace model_params
 {
-  
   double temperature=1,mu_prob=0.2,fitness_factor=1,UND_threshold=0.2,interface_threshold=0.2;
   std::binomial_distribution<uint8_t> b_dist(interface_size,mu_prob);
   std::uniform_real_distribution<double> real_dist(0, 1);
   std::array<double,model_params::interface_size+1> binding_probabilities;
-  
-
 }
 
 
@@ -44,7 +41,6 @@ namespace interface_model
     return static_cast<uint8_t>(ArbitraryPopcount(face1 ^ reverse_bits(~face2)));
   }
 
-  
 
   void MutateInterfaces(BGenotype& binary_genome) {
     std::vector<uint8_t> interface_indices(model_params::interface_size);
@@ -88,24 +84,24 @@ namespace interface_model
   std::vector<int8_t> AssembleProtein(const BGenotype& binary_genome,std::set< std::pair<interface_type,interface_type> >& interacting_indices) {
     std::vector<int8_t> placed_tiles{0,0,1},growing_perimeter;
     PerimeterGrowth(0,0,0,-1,0,growing_perimeter,placed_tiles);
-    int8_t current_orientation, current_tile, current_direction, current_x, current_y;
+    int8_t orientation, tile, direction, x, y;
     std::vector<uint8_t> genome_bases(binary_genome.size());
     std::iota(genome_bases.begin(), genome_bases.end(), 0);
     
     while(!growing_perimeter.empty()) {
-      current_orientation=growing_perimeter.back();growing_perimeter.pop_back();
-      current_tile=growing_perimeter.back();growing_perimeter.pop_back();
-      current_direction=growing_perimeter.back();growing_perimeter.pop_back();
-      current_y=growing_perimeter.back();growing_perimeter.pop_back();
-      current_x=growing_perimeter.back();growing_perimeter.pop_back();
+      orientation=growing_perimeter.back();growing_perimeter.pop_back();
+      tile=growing_perimeter.back();growing_perimeter.pop_back();
+      direction=growing_perimeter.back();growing_perimeter.pop_back();
+      y=growing_perimeter.back();growing_perimeter.pop_back();
+      x=growing_perimeter.back();growing_perimeter.pop_back();
       
       std::shuffle(genome_bases.begin(), genome_bases.end(), RNG_Engine);
       
       for(uint8_t base : genome_bases) {
-        if(model_params::real_dist(RNG_Engine)<model_params::binding_probabilities[SammingDistance(binary_genome[current_tile*4+current_orientation],binary_genome[base])]) {
-	  interacting_indices.insert(std::minmax(static_cast<uint8_t>(current_tile*4+current_orientation),base));
-          placed_tiles.insert(placed_tiles.end(),{current_x,current_y,static_cast<int8_t>(base-base%4+(current_direction-base%4+4)%4+1)});
-	  PerimeterGrowth(current_x,current_y,(4+current_direction-(base%4))%4,current_direction,base/4,growing_perimeter,placed_tiles);
+        if(model_params::real_dist(RNG_Engine)<model_params::binding_probabilities[SammingDistance(binary_genome[tile*4+orientation],binary_genome[base])]) {
+	  interacting_indices.insert(std::minmax(static_cast<uint8_t>(tile*4+orientation),base));
+          placed_tiles.insert(placed_tiles.end(),{x,y,static_cast<int8_t>(base-base%4+(direction-base%4+4)%4+1)});
+	  PerimeterGrowth(x,y,(4+direction-(base%4))%4,direction,base/4,growing_perimeter,placed_tiles);
 	  break;
 	}
       }    
@@ -178,7 +174,6 @@ Phenotype SpatialGrid(std::vector<int8_t>& placed_tiles) {
 }
 
 
-
 void PrintShape(Phenotype phen) {
   for(uint8_t y=0;y<phen.dy;++y) {
     for(uint8_t x=0;x<phen.dx;++x)
@@ -222,14 +217,8 @@ void InterfaceStrengths(BGenotype& interfaces, std::vector<uint32_t>& strengths)
 }
 
 std::array<double,model_params::interface_size+1> GenBindingProbsLUP() {
-  //const double TEMP_OFFSET=0.05;
   std::array<double,model_params::interface_size+1> probs;
-
-  //for(uint8_t i = 1; i <model_params::interface_size; ++i)
-  //  probs[i]=0.5 * erfc((static_cast<double>(i)/model_params::interface_size-model_params::temperature)/TEMP_OFFSET * M_SQRT1_2);
-  //probs[0]=1;
-  //probs[model_params::interface_size]=0;
-  std::fill(probs.begin(),probs.begin()+static_cast<int>(ceil(model_params::temperature*model_params::interface_size)),1);
+  std::fill(probs.begin(),probs.begin()+static_cast<int>(floor(model_params::temperature*model_params::interface_size)+1),1);
   return probs;
 }
 

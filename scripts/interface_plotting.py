@@ -7,11 +7,11 @@ from seaborn import despine
 
 from colorsys import hsv_to_rgb
 from random import uniform,choice
-from interface_analysis import qBFS, loadManyResults, concatenateResults
+from interface_analysis import qBFS, loadManyResults, concatenateResults,RandomWalk
 from scipy.stats import linregress,binom,scoreatpercentile
 
 """RANDOM THEORY SECTION """
-def plotRandomTheory(I_size,g_len,T_star=0.65):
+def plotRandomTheory(I_size,g_len):
      
      b_asym=binom(I_size,.5)
      b_sym=binom(I_size/2,.5)
@@ -22,16 +22,6 @@ def plotRandomTheory(I_size,g_len,T_star=0.65):
      plt.plot(s_hats,float(g_len-1)/(g_len+1)*b_asym.pmf(s_hats*I_size),c='firebrick',ls='-')
      plt.plot(s_hats[::2],2/float(g_len+1)*b_sym.pmf(s_hats[::2]*I_size/2),c='royalblue',ls='-')
 
-     
-     valid_syms=s_hats[::2][np.where(s_hats[::2]>=T_star)]
-     valid_asyms=s_hats[np.where(s_hats>=T_star)]
-
-     prob0_syms=b_sym.cdf(s_hats[::2][np.where(s_hats[::2]<T_star)][-1]*I_size/2)
-     prob0_asyms=b_asym.cdf(s_hats[np.where(s_hats<T_star)][-1]*I_size)
-
-     plt.plot(valid_asyms,(b_asym.cdf(valid_asyms*I_size)-prob0_asyms)/(1-prob0_asyms),c='firebrick',ls='-')
-     plt.plot(valid_syms,(b_sym.cdf(valid_syms*I_size/2)-prob0_syms)/(1-prob0_syms),c='royalblue',ls='-')
-
      plt.text(.5,2/float(g_len+1)*b_sym.pmf(I_size/4.)*.9,'sym',ha='center',va='top')
 
      plt.text(.5,float(g_len-1)/(g_len+1)*b_asym.pmf(I_size/2.)*.9,'asym',ha='center',va='bottom')
@@ -40,15 +30,15 @@ def plotRandomTheory(I_size,g_len,T_star=0.65):
      plt.yscale('log')
      plt.show(block=False)
 
-def plotInterfaceActivation(I_size):
+def plotInterfaceActivation(I_size,L_size):
      b_asym=binom(I_size,.5)
      b_sym=binom(I_size/2,.5)
      N_interactions=(2**(2*I_size-1))+(2**(I_size-1))
 
      def sym(T_stars):
-          return (2**I_size)*b_sym.sf(np.ceil(I_size/2*T_stars-1))
+          return (2**I_size)*b_sym.sf(np.ceil(I_size/2*T_stars-1))*(1./(L_size+1))
      def asym(T_stars):
-          return ((2**(2*I_size))*b_asym.sf(np.ceil(I_size*T_stars-1))-sym(T_stars))/2
+          return ((2**(2*I_size))*b_asym.sf(np.ceil(I_size*T_stars-1))-sym(T_stars))/2*((L_size-1.)/(L_size+1))
 
      s_hats=np.linspace(0,1,I_size*5+1)
      plt.figure()
@@ -108,32 +98,60 @@ def bootstrap(data, n_boot=10000, ci=68):
      s2 = np.apply_along_axis(scoreatpercentile, 0, b, 50.+ci/2.)
      return (s1,s2)
     
-def tsplotboot(data,title='',**kw):
-    fig,ax = plt.subplots()
+def tsplotboot(ax,data,title='',**kw):
     x = np.arange(data.shape[1])
     est = np.nanmean(data, axis=0)
-    cis = bootstrap(data)
-    ax.fill_between(x,cis[0],cis[1],alpha=0.3, **kw)
+    cis = bootstrap(data,10)
+    ax.fill_between(x,cis[0],cis[1],alpha=0.3,color='dimgray', **kw)
     
     ax.plot(x,est,c='dimgray',lw=2)
     for i in data:
-         plt.plot(x,i,alpha=0.2)
+         ax.plot(x,i,alpha=0.05)
     ax.margins(x=0)
+    
+    ax.set_ylabel(r'$\langle \hat{S} \rangle$')
     if title!='':
-         plt.title(title)
+         ax.set_title(title)
     plt.show(block=False)
 
 
-def plotData(cc):
-     for k,v in cc.iteritems():
-          tsplotboot(v,k)
+def plotData(cc,I_size,t_star):
+     fig,axs = plt.subplots(3)
+     for (k,v),ax in zip(cc.iteritems(),axs):
+          print k,len(v)
+          if len(v)==0:
+               continue
+          tsplotboot(ax,v,k+' {}'.format(len(v)))
+          if 'A' in k:
+               #print k, "plotting here"
+               pgs=RandomWalk(64,100,.5,t_star,1,1)
+               ax.plot(range(0,1200,12),pgs[:-1],'r--')
+               
+               ax.plot([1100,1500],[pgs[-1]]*2,'k--')
+          else:
+               #print k, "plotting there"
+               pgs=RandomWalk(32,50,.5,t_star,1,1)
+               
+               ax.plot(range(0,1200,24),pgs[:-1],'r--')
+               ax.plot([1100,1500],[pgs[-1]]*2,'k--')
+     plt.xlabel('elapsed generations')
+     plt.tight_layout(pad=0)
+     fig.suptitle(r'$l_I = %i , S^* = %.2f$' % (I_size,t_star))
+     plt.show(block=False)
 
-def plotW(W):
+def plotWs(Ws,I_size,t_star):
      plt.figure()
-     lists = sorted(W.items()) # sorted by key, return a list of tuples
+     for W in Ws:
+          lists = sorted(W.items()) # sorted by key, return a list of tuples
+          x, y = zip(*lists)
+          plt.plot(x,[float(i)/sum(y) for i in y],ls='',marker='o',label=len(W))
+     plt.plot(np.linspace(0,1,I_size/2+1),binom(I_size/2,.5).pmf(np.linspace(0,I_size/2,I_size/2+1)),'k--')
+     plt.plot(np.linspace(0,1,I_size+1),binom(I_size,.5).pmf(np.linspace(0,I_size,I_size+1)),'k--')
+     plt.axvline(t_star,0,1,c='r')
 
-     x, y = zip(*lists)
-
-     plt.plot(x,y)
+     plt.legend()
      plt.yscale('log')
+     plt.ylabel('Prob')
+     plt.xlabel(r'$ \hat{S} $')
+     plt.title(r'$l_I = %i , S^* = %.2f$' % (I_size,t_star))
      plt.show(block=False)
