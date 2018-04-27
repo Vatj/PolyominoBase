@@ -22,16 +22,16 @@ DEPEXT      := d
 OBJEXT      := o
 
 #Flags, Libraries and Includes
-CXXFLAGS    := -std=gnu++14 -Wall -Wextra -pedantic -pipe -O3 -fopenmp -march=ivybridge -flto-partition=none $(cmdflag)  #-fprofile-use -fprofile-correction -fprofile-dir=$(PROFDIR)/
+CXXFLAGS    := -std=gnu++14 -Wall -Wextra -pipe -O3 -fopenmp -march=ivybridge -flto-partition=none $(cmdflag)  #-fprofile-use -fprofile-correction -fprofile-dir=$(PROFDIR)/
 INC         := -I$(INCDIR)
 INCDEP      := -I$(INCDIR)
 
 #---------------------------------------------------------------------------------
 #DO NOT EDIT BELOW THIS LINE
 #---------------------------------------------------------------------------------
-GRAPH_SOURCES     := $(shell find $(SRCDIR) -type f -name graph_*.$(SRCEXT)) 
+GRAPH_SOURCES     := $(shell find $(SRCDIR) -type f -name graph_*.$(SRCEXT))
 EV_SOURCES   := $(shell find $(SRCDIR) -type f -name evolution_*.$(SRCEXT))
-ST_SOURCES := $(shell find $(SRCDIR) -type f -name stochastic_m*.$(SRCEXT)) 
+ST_SOURCES := $(shell find $(SRCDIR) -type f -name stochastic_m*.$(SRCEXT))
 PR_SOURCES := $(shell find $(SRCDIR) -type f -name processing_*.$(SRCEXT))
 PE_SOURCES := $(shell find $(SRCDIR) -type f -name interface_*.$(SRCEXT))
 GP_SOURCES := $(shell find $(SRCDIR) -type f -name genotype_*.$(SRCEXT))
@@ -69,7 +69,7 @@ clean:
 #	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(TARGET) $^
 
 Ev: $(EV_OBJECTS) $(GRAPH_OBJECTS) $(ST_OBJECTS) $(CORE_OBJECTS)
-	@mkdir -p $(TARGETDIR)	
+	@mkdir -p $(TARGETDIR)
 	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(EV_TARGET) $^
 
 St: $(ST_OBJECTS) $(GRAPH_OBJECTS) $(CORE_OBJECTS) $(CORE_OBJECTS)
@@ -80,20 +80,20 @@ Pr: $(PR_OBJECTS) $(GRAPH_OBJECTS) $(CORE_OBJECTS)
 	@mkdir -p $(TARGETDIR)
 	$(CXX) $(CXXFLAGS)  -o $(TARGETDIR)/$(PR_TARGET) $^
 
-Pe: $(PE_OBJECTS) $(CORE_OBJECTS) 
+Pe: $(PE_OBJECTS) $(CORE_OBJECTS)
 	@mkdir -p $(TARGETDIR)
 	$(CXX) $(CXXFLAGS)  -o $(TARGETDIR)/$(PE_TARGET) $^
 
 GP: $(GP_OBJECTS)  $(ST_OBJECTS) $(CORE_OBJECTS)
-	@mkdir -p $(TARGETDIR)	
+	@mkdir -p $(TARGETDIR)
 	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(GP_TARGET) $^
 
 SO: $(GP_OBJECTS) $(ST_OBJECTS) $(CORE_OBJECTS)
-	@mkdir -p $(TARGETDIR)	
+	@mkdir -p $(TARGETDIR)
 	$(CXX)  -shared $(CXXFLAGS) -o scripts/AGF.so $^
 
 SOX: $(GP_OBJECTS) $(ST_OBJECTS) $(CORE_OBJECTS)
-	@mkdir -p $(TARGETDIR)	
+	@mkdir -p $(TARGETDIR)
 	$(CXX)   $(CXXFLAGS) -o $(TARGETDIR)/AGF $^
 
 
