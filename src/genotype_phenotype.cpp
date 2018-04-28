@@ -152,12 +152,6 @@ void GP_MapSampler(const char* file_path_c,uint8_t n_genes, uint8_t rcolours,uin
       }
 
       gmetrics.clear();
-// #pragma omp critical(vector_emplacing)
-//       {
-//       robustnesses.emplace_back(static_cast<double>(robust)/N_JIGGLE);
-//       deaths.emplace_back(static_cast<double>(death) / N_JIGGLE);
-//       neutral_weightings.emplace_back(NeutralSize(genotype,1,colours-1)); //DEFAULT SET TO 1 NEUTRAL
-//       }
     }
   }
 }
