@@ -1,8 +1,43 @@
 #include <stochastic_model.hpp>
+#include <iostream>
 
 namespace Stochastic
 {
   std::mt19937 RNG_Generator(std::random_device{}());
+
+  std::vector<Phenotype_ID> AssemblePlasticGenotype(Genotype genotype, uint8_t k_builds_per_seed, StochasticPhenotypeTable* pt,double UND_frac) {
+    std::map<Phenotype_ID,uint8_t> phenotype_counter;
+    const uint8_t THRESHOLD_SIZE=(genotype.size()*genotype.size())/4;
+    for(uint8_t kth=0;kth<k_builds_per_seed;++kth) {
+      for(uint8_t seed=0;seed<genotype.size()/4;++seed) {
+	
+	std::vector<int8_t> placed_tiles=Stochastic_Polyomino_Builder(genotype,THRESHOLD_SIZE,seed);
+	if(placed_tiles.size()==0) {
+	  ++phenotype_counter[std::make_pair(0,0)];
+	  continue;
+	}
+	else {
+	  if(placed_tiles.size()/4 > THRESHOLD_SIZE) {
+	    ++phenotype_counter[std::make_pair(255,0)];
+	    continue;
+	  }
+	  else {
+	    Phenotype phen=Generate_Spatial_Occupancy(placed_tiles,3);
+#pragma omp critical(phenotype_lookup)
+	    {
+	      ++phenotype_counter[pt->GetPhenotypeID(phen)];
+	    }
+	  }
+	}
+      }
+    }
+    std::vector<Phenotype_ID> plastic_phenotypes;
+    for(auto kv : phenotype_counter) {
+      if(kv.second>=(UND_frac*k_builds_per_seed*genotype.size()/4))
+	plastic_phenotypes.emplace_back(kv.first);
+    }
+    return plastic_phenotypes;
+  }
   
   Phenotype_ID Analyse_Genotype_Outcome(Genotype genome, uint8_t N_Repeated_Checks, StochasticPhenotypeTable* pt,uint8_t seed) {
     const uint8_t THRESHOLD_SIZE=(genome.size()*genome.size())/4;

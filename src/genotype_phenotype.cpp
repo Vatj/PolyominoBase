@@ -179,8 +179,16 @@ std::vector<Phenotype_ID> GetPhenotypeIDs(Genotype& genotype, uint8_t k_builds, 
 /***** MAIN *****/
 /****************/
 int main(int argc, char* argv[]) {
-	std::cout<<"here"<<std::endl;
-	GP_MapSampler("",2,7,9,true);
+
+
+
+  StochasticPhenotypeTable pt;
+  uint8_t k_builds=5;
+  double UND_frac=.1
+  for(auto g: Stochastic::AssemblePlasticGenotype({0,0,0,1, 2,1,0,0, 0,0,2,2, 2,2,2,2}, k_builds, &pt,UND_frac)) {
+      std::cout<<+g.first<<" "<<g.second<<std::endl;
+    }
+ 
   return 0;
 
   if(argc>2) {
