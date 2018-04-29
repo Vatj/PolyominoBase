@@ -1,6 +1,5 @@
 #include "core_genotype.hpp"
 
-
 #include <fstream>
 #include <unordered_map>
 
@@ -16,11 +15,13 @@ void ClockwisePiRotation(Phenotype& phen);
 bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2);
 void MinimalTilingRepresentation(std::vector<uint8_t>& tiling);
 
-typedef std::pair<uint8_t,uint16_t> Phenotype_ID;
+typedef std::pair<uint8_t, uint16_t> Phenotype_ID;
+
+typedef std::vector<Phenotype_ID> Phenotype_Set;
 
 struct PhenotypeTable {
   std::unordered_map<uint8_t,std::vector<Phenotype> > known_phenotypes;
-        
+
   void PrintTable(std::ofstream& fout) {
     for(auto known_phens : known_phenotypes) {
       uint16_t n_phen=0;
