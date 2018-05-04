@@ -30,6 +30,35 @@ def plotRandomTheory(I_size,g_len):
      plt.yscale('log')
      plt.show(block=False)
 
+def plotRR(l_I,l_g):
+
+     def SF_sym(T_stars):
+          return binom(l_I/2,.5).sf(np.ceil(l_I/2*T_stars-1))#*(1./(l_g+1))
+     def SF_asym(T_stars):
+          return binom(l_I,.5).sf(np.ceil(l_I*T_stars-1))#-sym(T_stars))/2*((l_g-1.)/(l_g+1))
+
+     def sym_factor(A):
+          return float(2)/(A+1)
+     def asym_factor(A):
+          return float(A-1)/(A+1)
+
+     s_hats=np.linspace(0,1,l_I*5+1)
+
+
+     plt.figure()
+     plt.plot(s_hats,sym_factor(l_g)*SF_sym(s_hats))
+     plt.plot(s_hats,asym_factor(l_g)*SF_asym(s_hats))
+
+     plt.show(block=False)
+
+     
+
+
+     
+     
+
+     
+
 def plotInterfaceActivation(I_size,L_size):
      b_asym=binom(I_size,.5)
      b_sym=binom(I_size/2,.5)

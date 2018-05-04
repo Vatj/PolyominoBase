@@ -107,14 +107,13 @@ def RandomWalk(I_size=32,n_steps=1000,phi=0.5,T_star=0.6,renorm=False,return_pro
      msize=12
      ax1.plot(np.linspace(T_star,1,N),states,marker='x',ls='',mew=1,ms=14,mec='orangered',mfc='None')
      ax1.plot(np.linspace(T_star,1,N),analytic_states,marker='o',ls='',ms=14,mew=1,mfc='None',mec='royalblue')
-     ax1.plot([s_hats[int(T_star*I_size)-1]]+[s_hats[int(T_star*I_size)]]*2,[0,0,1],c='royalblue',mec='royalblue',mfc='None',mew=1,ls='--',lw=0.75,marker='s',ms=msize)
+     #ax1.plot([s_hats[int(T_star*I_size)-1]]+[s_hats[int(T_star*I_size)]]*2,[0,0,1],c='royalblue',mec='royalblue',mfc='None',mew=1,ls='--',lw=0.75,marker='s',ms=msize)
 
      plt.xlabel(r'$\hat{S}$')
-     ax1.text(0.4,0.05,r'$Pr_{\textrm{binding}}$')
-     ax1.text(0.8,0.1,r'genetic drift')
-     ax1.axes.get_yaxis().set_visible(False)
-     sns.despine(left=1,top=1,right=1)
-     ax1.set_xlim((.3,1.05))
+     #ax1.text(0.4,0.05,r'$Pr_{\mathrm{binding}}$')
+     #ax1.text(0.8,0.1,r'genetic drift')
+     #ax1.axes.get_yaxis().set_visible(False)
+     #ax1.set_xlim((.3,1.05))
      plt.show(block=False)
      
 
