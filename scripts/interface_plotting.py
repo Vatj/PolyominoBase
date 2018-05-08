@@ -7,8 +7,10 @@ from seaborn import despine
 
 from colorsys import hsv_to_rgb
 from random import uniform,choice
-from interface_analysis import qBFS, loadManyResults, concatenateResults,RandomWalk
+from interface_analysis import qBFS, loadManyResults, concatenateResults,RandomWalk,BindingStrength, set_length
 from scipy.stats import linregress,binom,scoreatpercentile
+from itertools import combinations_with_replacement as cwr
+from random import choice
 
 """RANDOM THEORY SECTION """
 def plotRandomTheory(I_size,g_len):
@@ -26,35 +28,73 @@ def plotRandomTheory(I_size,g_len):
 
      plt.text(.5,float(g_len-1)/(g_len+1)*b_asym.pmf(I_size/2.)*.9,'asym',ha='center',va='bottom')
      
-     
      plt.yscale('log')
      plt.show(block=False)
+     
 
-def plotRR(l_I,l_g):
+def plotInterfaceProbaility(l_I,l_g,Nsamps=False):
 
      def SF_sym(T_stars):
-          return binom(l_I/2,.5).sf(np.ceil(l_I/2*T_stars-1))#*(1./(l_g+1))
+          return binom(l_I/2,.5).sf(np.ceil(l_I/2*T_stars)-1)#*(1./(l_g+1))
      def SF_asym(T_stars):
-          return binom(l_I,.5).sf(np.ceil(l_I*T_stars-1))#-sym(T_stars))/2*((l_g-1.)/(l_g+1))
+          return binom(l_I,.5).sf(np.ceil(l_I*T_stars)-1)#-sym(T_stars))/2*((l_g-1.)/(l_g+1))
 
      def sym_factor(A):
           return float(2)/(A+1)
      def asym_factor(A):
           return float(A-1)/(A+1)
 
-     s_hats=np.linspace(0,1,l_I*5+1)
+     s_hats=np.linspace(0,1,l_I+1)
 
 
-     plt.figure()
-     plt.plot(s_hats,sym_factor(l_g)*SF_sym(s_hats))
-     plt.plot(s_hats,asym_factor(l_g)*SF_asym(s_hats))
+     fig, ax1 = plt.subplots()
+     ax1.plot(s_hats,np.log10(sym_factor(l_g)*SF_sym(s_hats)),ls='',marker='^',c='royalblue')
+     ax1.plot(s_hats,np.log10(asym_factor(l_g)*SF_asym(s_hats)),ls='',marker='o',c='firebrick')
 
-     plt.show(block=False)
-
+    
+     ax2 = ax1.twinx()
+     
+     ratios=np.log10((sym_factor(l_g)*SF_sym(s_hats))/(asym_factor(l_g)*SF_asym(s_hats)))
+     ax2.plot(s_hats,ratios,c='darkseagreen')
+     crossover=np.where(ratios>0)[0][0]
+     ax2.axvline(s_hats[crossover],color='k',ls='--')
+     ax2.axhline(color='k',ls='-',lw=0.2)
+     Is={8:np.uint8,16:np.uint16,32:np.uint32,64:np.uint64}
+     if Nsamps:
+          set_length(l_I)
+          s_m=np.zeros(l_I+1)
+          a_m=np.zeros(l_I+1)
+          for _ in xrange(Nsamps):
+               indices=choice(list(cwr(range(l_g),2)))
+               if indices[0]!=indices[1]:
+                    bases=np.random.randint(0,np.iinfo(Is[l_I]).max,dtype=Is[l_I],shape=2)
+                    
+                    a_m[np.where(BindingStrength(*bases)>=s_hats)]+=1
+               else:
+                    base=np.random.randint(0,np.iinfo(Is[l_I]).max,dtype=Is[l_I])
+                    s_m[np.where(BindingStrength(base,base)>=s_hats)]+=1
+          s_m2=np.ma.log10(s_m/Nsamps)
+          a_m2=np.ma.log10(a_m/Nsamps)
+          ax1.plot(s_hats,s_m2,ls='--',c='royalblue')
+          ax1.plot(s_hats,a_m2,ls='--',c='firebrick')
      
 
-
+     crossover_height=np.log10(asym_factor(l_g)*SF_asym(1))/2.
+     ax1.text(crossover/float(l_I),crossover_height,'crossover',ha='right',va='center',rotation=90)
+     scale_factor=np.log10(asym_factor(l_g)*SF_asym(s_hats))[0]-np.log10(asym_factor(l_g)*SF_asym(s_hats))[-1]
+     ax1.text(.2,np.log10(sym_factor(l_g)*SF_sym(.2))-scale_factor*0.05,'sym',va='top')
+     ax1.text(.2,np.log10(asym_factor(l_g)*SF_asym(.2)+scale_factor*0.05),'asym',va='bottom')
      
+     ax2.text(.1,(ratios[-1]-ratios[0])*.05+ratios[0],'ratio',ha='center',va='bottom')
+
+     ax1.set_ylabel('Interface Probability')
+     ax2.set_ylabel('Ratio')
+     ax1.set_xlabel(r'$S^*$')
+
+     ax1.spines['top'].set_visible(False)
+     ax2.spines['top'].set_visible(False)
+     
+     plt.show(block=False)     
      
 
      

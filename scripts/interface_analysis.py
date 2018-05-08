@@ -23,8 +23,14 @@ def setBasePath(path):
      else:
           BASE_FILE_PATH='../output/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
           
-interface_length=64
+interface_length=32
 interface_type={8:np.uint8,16:np.uint16,32:np.uint32,64:np.uint64}[interface_length]
+
+def set_length(length):
+     global interface_length
+     interface_length=length
+     global interface_type
+     interface_type={8:np.uint8,16:np.uint16,32:np.uint32,64:np.uint64}[interface_length]
 def convint(x):
      return interface_type(x)
 
