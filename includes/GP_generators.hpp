@@ -1,30 +1,17 @@
 #include "stochastic_model.hpp"
-#include <iostream>
 
-/*External wrappers for python integration */
+extern std::mt19937 RNG_Engine;
+
 extern "C"
 {
-  void GetPhenotypesIDs(const char* file_path_c,const char* file_name_c, uint8_t n_genes, uint8_t colours, bool file_of_genotypes);
-  void ExhaustiveMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours, bool file_of_genotypes);
+void ExhaustiveMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours, bool file_of_genotypes);
   void SampleMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours,const uint32_t N_SAMPLES,bool allow_duplicates, bool file_of_genotypes);
-  void GP_MapSampler(const char* file_path_c,uint8_t n_genes, uint8_t rcolours,uint8_t colours,bool file_of_genotypes);
-  void PreProcessGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours,bool file_of_genotypes);
 }
 
 /*Converting methods*/
 uint64_t genotype_to_index(Genotype& genotype, uint8_t n_genes, uint8_t colours);
 void index_to_genotype(uint64_t index, Genotype& genotype, uint8_t n_genes, uint8_t colours);
 
-/*GP map calculations*/
-std::vector<Phenotype_ID> GetPhenotypeIDs(Genotype& genotype, uint8_t k_builds, StochasticPhenotypeTable* pt_it);
-std::vector<Genotype> genotype_neighbourhood(const Genotype& genome, uint8_t ngenes, uint8_t colours);
-void JiggleGenotype(Genotype& genotype, uint8_t max_colour);
-
-
-/*Neutral size calculations*/
-uint64_t NeutralSize(Genotype genotype,uint32_t N_neutral_colours,uint32_t N_possible_interacting_colours);
-uint64_t combination_with_repetiton(uint8_t space_size , uint8_t sample_size);
-uint64_t nChoosek(uint8_t n, uint8_t k);
 
 /*Minimal genotype methods*/  
 struct NecklaceFactory {

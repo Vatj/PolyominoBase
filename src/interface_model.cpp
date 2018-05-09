@@ -21,6 +21,7 @@ namespace interface_model
 {
  
   std::mt19937 RNG_Engine(std::random_device{}());
+  uint8_t GAUGE=4;
   
   inline interface_type reverse_bits(interface_type v) {
     interface_type s(model_params::interface_size);
@@ -169,7 +170,7 @@ Phenotype SpatialGrid(std::vector<int8_t>& placed_tiles) {
   if(dy>dx) {
     ClockwiseRotation(phen);
   }
-  MinimalTilingRepresentation(phen.tiling);
+  MinimizePhenRep(phen.tiling,interface_model::GAUGE);
   return phen;
 }
 

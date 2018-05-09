@@ -45,7 +45,6 @@ Phenotype SpatialGrid(std::vector<int8_t>& placed_tiles);
 /* PRINTING */
 void PrintShape(Phenotype phen);
 
-void MinimalTilingRepresentation(std::vector<uint8_t>& tiling);
 uint8_t PhenotypeSymmetryFactor(std::vector<uint8_t>& original_shape, uint8_t dx, uint8_t dy);
 void DistributionStatistics(std::vector<double>& intf, double& mean, double& variance);
 void InterfaceStrengths(BGenotype& interfaces, std::vector<uint32_t>& strengths);
@@ -56,6 +55,7 @@ namespace interface_model
   struct InterfacePhenotypeTable;
 
   extern std::mt19937 RNG_Engine;
+  extern uint8_t GAUGE;
   interface_type reverse_bits(interface_type v);
   uint8_t ArbitraryPopcount(interface_type face1);
   uint8_t SammingDistance(interface_type face1,interface_type face2);
@@ -79,12 +79,12 @@ namespace interface_model
     uint16_t PhenotypeCheck(Phenotype& phen) {
       uint8_t phenotype_size=std::count_if(phen.tiling.begin(),phen.tiling.end(),[](const int c){return c != 0;});
       for(uint16_t phenotype_index=0; phenotype_index != known_phenotypes[phenotype_size].size();++phenotype_index) {
-        if(ComparePolyominoes(phen,known_phenotypes[phenotype_size][phenotype_index])) 
+        if(ComparePolyominoes(phen,known_phenotypes[phenotype_size][phenotype_index],GAUGE)) 
 	  return phenotype_index;
       }
       uint8_t new_phenotype_index=0;
       for(Phenotype phen_p : undiscovered_phenotypes[phenotype_size]) {
-        if(ComparePolyominoes(phen,phen_p)) {
+        if(ComparePolyominoes(phen,phen_p,GAUGE)) {
           if(++undiscovered_phenotype_counts[new_phenotype_index]>=ceil(model_params::UND_threshold*simulation_params::phenotype_builds)) {
             new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
             known_phenotypes[phenotype_size].push_back(phen);
@@ -102,7 +102,7 @@ namespace interface_model
         ++new_phenotype_index;
       }
       
-      MinimalTilingRepresentation(phen.tiling);
+      MinimizePhenRep(phen.tiling,GAUGE);
       undiscovered_phenotypes[phenotype_size].emplace_back(phen);
       undiscovered_phenotype_counts.emplace_back(1);
       return phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds;

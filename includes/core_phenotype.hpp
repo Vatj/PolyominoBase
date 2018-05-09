@@ -13,8 +13,8 @@ struct Phenotype {
 
 void ClockwiseRotation(Phenotype& phen);
 void ClockwisePiRotation(Phenotype& phen);
-bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2);
-void MinimalTilingRepresentation(std::vector<uint8_t>& tiling);
+bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2,uint8_t GAUGE);
+void MinimizePhenRep(std::vector<uint8_t>& tiling,uint8_t GAUGE);
 
 typedef std::pair<uint8_t,uint16_t> Phenotype_ID;
 
