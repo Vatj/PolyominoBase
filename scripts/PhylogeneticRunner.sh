@@ -1,19 +1,27 @@
 #! /bin/bash
-I_size=32
+I_size=64
 Mu=$1
 T=$2
+STEP_SIZE=4
+RUNS=40
+
+let "END = $RUNS - $STEP_SIZE"
 
 if (( $# != 2 ))
 then
   echo "Need Mu and T set"
   exit 1
 fi
+cd /scratch/asl47/Data_Runs/Bulk_Data
 
-for V in 0 8 16 24 32 40
-do
-	./ProteinEvolution -E -N 3 -P 10 -K 10 -B 20 -R 0 -F 1 -M $Mu -T $T -X .51 -I .25 -D 8 -V $V 
-	python ~/Documents/PolyominoDev/scripts/interface_analysis.py $I_size $Mu $T 8
-	XZ_OPT=-9 tar -Jcvf /rsratch/asl47/Bulk_Run/DataV$V.tar.xz /rscratch/asl47/Bulk_Run/Interfaces/*txt --remove-files
+for (( V=0; V<=$END; V+=$STEP_SIZE )); do
+
+	echo "starting evolution set $V"
+	~/Documents/PolyominoDev/bin/ProteinEvolution -E -N 3 -P 500 -K 1500 -B 20 -R 1 -F 1 -M $Mu -T $T -X .51 -I .25 -D $STEP_SIZE -V $V
+	
+	python ~/Documents/PolyominoDev/scripts/interface_analysis.py $I_size $Mu $T $STEP_SIZE $V
+	XZ_OPT=-9 tar -Jcf DataI${I_size}Mu${Mu}T${T}V${V}.tar.xz *txt --remove-files
+
 done
 
 

@@ -73,20 +73,11 @@ def LoadT(mu=1,t=0.35,run=0):
      p,s=LoadEvolutionHistory(mu=mu,temperature=t,run=run)
      return (g,s,p,st)
 
-
-
-
-        
-
-
-
-
 def BindingStrength(base1,base2):
      return 1-bin(np.bitwise_xor(convint(base1),revbits(base2))).count("1")/float(interface_length)
 
 def revbits(x):
      return interface_type(int(bin(~convint(x))[2:].zfill(interface_length)[::-1], 2))
-
 
 
 """ DRIFT SECTION """
@@ -197,11 +188,11 @@ def concatenateResults(data_struct,trim_gen=True):
           
 def AnalysePhylogeneticStrengths(r,mu,t):
      g,s,p,st=LoadT(mu=mu,t=t,run=r)
-     mae,mai,ms,wa,ws=qBFS(g,s,st)
-     return {'AsymE':mae,'AsymI':mai,'Sym':ms,'Wa':wa,'Ws':ws}
+     mae,mai,ms,wa,ws,cnt_ai=qBFS(g,p,s,st)
+     return {'AsymE':mae,'AsymI':mai,'Sym':ms,'Wa':wa,'Ws':ws,'Cnt':cnt_ai}
      
      
-def qBFS(genotypes,selections,strengths):
+def qBFS(genotypes,phenotypes,selections,strengths):
      #ANALYSIS PARAMETERS
      WEAKNESS_GOBACK=50
      #RUNTIME PARAMETERS
@@ -210,14 +201,19 @@ def qBFS(genotypes,selections,strengths):
      MSE_ae=[]
      MSE_ai=[]
      MSE_s=[]
+     active_interfaces=np.empty((gen_limit,pop_size))
 
      W_a=Counter({K:0 for K in np.linspace(0,1,interface_length+1)})
      W_s=Counter({K:0 for K in np.linspace(0,1,interface_length/2+1)})
-     
      for generation in xrange(gen_limit-1):
           for index in xrange(pop_size):
-               diff= set(strengths[generation][index])-set(strengths[generation-1][selections[generation][index]]) if generation else strengths[generation][index] 
-               for new_bond in diff:
+               active_interfaces[generation,index]=len(strengths[generation][index])
+               
+               
+     for generation in xrange(gen_limit-1):
+          for index in xrange(pop_size):
+               #diff= set(strengths[generation][index])-set(strengths[generation-1][selections[generation][index]]) if generation else strengths[generation][index]
+               for new_bond in strengths[generation][index]:
                     stren_tree=qDFS(index,new_bond,genotypes[generation:],selections[generation:],strengths[generation:])
                     if stren_tree:
                          stren_tree.insert(0,generation)
@@ -227,11 +223,11 @@ def qBFS(genotypes,selections,strengths):
                               MSE_ai.append(stren_tree)
                          else:
                               MSE_ae.append(stren_tree)
-               if generation>gen_limit-WEAKNESS_GOBACK:
+               if phenotypes[generation][index][0]!=0 and generation>gen_limit-WEAKNESS_GOBACK:
                     weak_a,weak_s=qWeak(strengths[generation][index],genotypes[generation][index])
                     W_a+=weak_a
                     W_s+=weak_s
-     return filter(None,MSE_ae),filter(None,MSE_ai),filter(None,MSE_s),dict(W_a),dict(W_s)
+     return filter(None,MSE_ae),filter(None,MSE_ai),filter(None,MSE_s),dict(W_a),dict(W_s),active_interfaces
 
 def qWeak(strength,genotype):
      weaknesses_asym=Counter({K:0 for K in np.linspace(0,1,interface_length+1)})

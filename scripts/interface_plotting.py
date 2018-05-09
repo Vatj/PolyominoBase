@@ -32,7 +32,7 @@ def plotRandomTheory(I_size,g_len):
      plt.show(block=False)
      
 
-def plotInterfaceProbaility(l_I,l_g,Nsamps=False):
+def plotInterfaceProbability(l_I,l_g,Nsamps=False):
 
      def SF_sym(T_stars):
           return binom(l_I/2,.5).sf(np.ceil(l_I/2*T_stars)-1)#*(1./(l_g+1))
@@ -48,7 +48,7 @@ def plotInterfaceProbaility(l_I,l_g,Nsamps=False):
 
 
      fig, ax1 = plt.subplots()
-     ax1.plot(s_hats,np.log10(sym_factor(l_g)*SF_sym(s_hats)),ls='',marker='^',c='royalblue')
+     ax1.plot(s_hats[::2],np.log10(sym_factor(l_g)*SF_sym(s_hats[::2])),ls='',marker='^',c='royalblue')
      ax1.plot(s_hats,np.log10(asym_factor(l_g)*SF_asym(s_hats)),ls='',marker='o',c='firebrick')
 
     
@@ -67,7 +67,7 @@ def plotInterfaceProbaility(l_I,l_g,Nsamps=False):
           for _ in xrange(Nsamps):
                indices=choice(list(cwr(range(l_g),2)))
                if indices[0]!=indices[1]:
-                    bases=np.random.randint(0,np.iinfo(Is[l_I]).max,dtype=Is[l_I],shape=2)
+                    bases=np.random.randint(0,np.iinfo(Is[l_I]).max,dtype=Is[l_I],size=2)
                     
                     a_m[np.where(BindingStrength(*bases)>=s_hats)]+=1
                else:
@@ -75,7 +75,7 @@ def plotInterfaceProbaility(l_I,l_g,Nsamps=False):
                     s_m[np.where(BindingStrength(base,base)>=s_hats)]+=1
           s_m2=np.ma.log10(s_m/Nsamps)
           a_m2=np.ma.log10(a_m/Nsamps)
-          ax1.plot(s_hats,s_m2,ls='--',c='royalblue')
+          ax1.plot(s_hats[::2],s_m2[::2],ls='--',c='royalblue')
           ax1.plot(s_hats,a_m2,ls='--',c='firebrick')
      
 
@@ -190,7 +190,9 @@ def plotData(cc,I_size,t_star):
           print k,len(v)
           if len(v)==0:
                continue
-          tsplotboot(ax,v,k+' {}'.format(len(v)))
+          #tsplotboot(ax,v,k+' {}'.format(len(v)))
+          for q in v:
+               ax.plot(q[0]+np.linspace(0,len(q)-2,len(q)-1),q[1:])
           if 'A' in k:
                #print k, "plotting here"
                pgs=RandomWalk(64,100,.5,t_star,1,1)
