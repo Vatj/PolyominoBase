@@ -58,9 +58,8 @@ void EvolvePopulation(std::string run_details) {
 
       std::vector<std::pair<interface_type,interface_type> > pid_interactions;
       population_fitnesses[nth_genotype]=interface_model::ProteinAssemblyOutcome(evolving_genotype.genotype,&pt,evolving_genotype.pid,pid_interactions);
-      if(evolving_genotype.pid.first>0)
-        for(auto x : pid_interactions)
-          fout_strength<<+x.first<<" "<<+x.second<<",";  
+      for(auto x : pid_interactions)
+        fout_strength<<+x.first<<" "<<+x.second<<",";  
       fout_strength<<".";
 
       if(record_strengths)

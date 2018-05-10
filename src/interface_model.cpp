@@ -49,7 +49,7 @@ namespace interface_model
     for(interface_type& base : binary_genome) {
       std::shuffle(interface_indices.begin(), interface_indices.end(), RNG_Engine);
       for(uint8_t nth=0;nth<model_params::b_dist(RNG_Engine);++nth) 
-        base ^= (static_cast<interface_type>(1) << interface_indices[nth]);
+        base ^= (interface_type(1) << interface_indices[nth]);
     }
   }
 
@@ -61,11 +61,13 @@ namespace interface_model
     std::map<Phenotype_ID, std::map<std::pair<interface_type,interface_type>, uint8_t> > phenotype_interactions;
     for(uint8_t nth=0;nth<simulation_params::phenotype_builds;++nth) {
       assembly_information=AssembleProtein(binary_genome,interacting_indices);
+      
       if(assembly_information.size()>0) {
+        for(auto interacting_pair : interacting_indices)
+	  ++phenotype_interactions[Phenotype_IDs.back()][interacting_pair];
         phen=SpatialGrid(assembly_information);
         Phenotype_IDs.emplace_back(std::count_if(phen.tiling.begin(),phen.tiling.end(),[](const int c){return c != 0;}),pt->PhenotypeCheck(phen));
-	for(auto interacting_pair : interacting_indices)
-	  ++phenotype_interactions[Phenotype_IDs.back()][interacting_pair];
+	
       }
       else
         Phenotype_IDs.emplace_back(0,0);
@@ -101,7 +103,10 @@ namespace interface_model
       for(uint8_t base : genome_bases) {
         if(model_params::real_dist(RNG_Engine)<model_params::binding_probabilities[SammingDistance(binary_genome[tile*4+orientation],binary_genome[base])]) {
 	  interacting_indices.insert(std::minmax(static_cast<uint8_t>(tile*4+orientation),base));
-          placed_tiles.insert(placed_tiles.end(),{x,y,static_cast<int8_t>(base-base%4+(direction-base%4+4)%4+1)});
+          if(GAUGE==4)
+            placed_tiles.insert(placed_tiles.end(),{x,y,static_cast<int8_t>(base-base%4+(direction-base%4+4)%4+1)});
+          else
+            placed_tiles.insert(placed_tiles.end(),{x,y,static_cast<int8_t>(base%4)});
 	  PerimeterGrowth(x,y,(4+direction-(base%4))%4,direction,base/4,growing_perimeter,placed_tiles);
 	  break;
 	}
@@ -150,9 +155,8 @@ namespace interface_model
 
 Phenotype SpatialGrid(std::vector<int8_t>& placed_tiles) {
   std::vector<int8_t> x_locs, y_locs,tile_vals;
-  x_locs.reserve(placed_tiles.size()/3);
-  y_locs.reserve(placed_tiles.size()/3);
-  tile_vals.reserve(placed_tiles.size()/3);
+  x_locs.reserve(placed_tiles.size()/3);y_locs.reserve(placed_tiles.size()/3);tile_vals.reserve(placed_tiles.size()/3);
+  
   for(std::vector<int8_t>::iterator check_iter = placed_tiles.begin();check_iter!=placed_tiles.end();check_iter+=3) {
     x_locs.emplace_back(*check_iter);
     y_locs.emplace_back(*(check_iter+1));

@@ -34,7 +34,7 @@ EV_SOURCES   := $(shell find $(SRCDIR) -type f -name evolution_*.$(SRCEXT))
 ST_SOURCES := $(shell find $(SRCDIR) -type f -name stochastic_m*.$(SRCEXT)) 
 PR_SOURCES := $(shell find $(SRCDIR) -type f -name processing_*.$(SRCEXT))
 PE_SOURCES := $(shell find $(SRCDIR) -type f -name interface_*.$(SRCEXT))
-GP_SOURCES := $(shell find $(SRCDIR) -type f -name genotype_*.$(SRCEXT))
+GP_SOURCES := $(shell find $(SRCDIR) -type f -name GP_*.$(SRCEXT))
 CORE_SOURCES := $(shell find $(SRCDIR) -type f -name core_*.$(SRCEXT))
 
 

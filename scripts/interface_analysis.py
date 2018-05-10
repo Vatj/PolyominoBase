@@ -23,7 +23,7 @@ def setBasePath(path):
      else:
           BASE_FILE_PATH='../output/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
           
-interface_length=32
+interface_length=64
 interface_type={8:np.uint8,16:np.uint16,32:np.uint32,64:np.uint64}[interface_length]
 
 def set_length(length):
@@ -34,6 +34,8 @@ def set_length(length):
 def convint(x):
      return interface_type(x)
 
+
+ 
 def LoadEvolutionHistory(temperature=0.000001,mu=1,gamma=1,run=0):
      phen_line=True
      phenotype_IDs=[]
@@ -168,6 +170,7 @@ def concatenateResults(data_struct,trim_gen=True):
      conc_data=defaultdict(list)
      Wa=Counter()
      Ws=Counter()
+     Cnt=[Counter() for _ in xrange(len(data_struct[0]['Cnt'].values()))]
      slice_start=1 if trim_gen else 0
      for data in data_struct:
           for k,v in data.iteritems():
@@ -175,16 +178,18 @@ def concatenateResults(data_struct,trim_gen=True):
                     Wa+=Counter(v)
                elif k=='Ws':
                     Ws+=Counter(v)
+               elif k=='Cnt':
+                    for i,cn in enumerate(v):
+                         Cnt[i]+=cn
                else:
                     conc_data[k].extend([i[slice_start:] for i in v])
-
 
      for k,v in conc_data.iteritems():
           if len(v) and 'W' not in k:
                length = len(sorted(v,key=len, reverse=True)[0])
                conc_data[k]=np.array([xi+[np.nan]*(length-len(xi)) for xi in v])
           
-     return conc_data,(Wa,Ws)
+     return conc_data,(Wa,Ws),Cnt
           
 def AnalysePhylogeneticStrengths(r,mu,t):
      g,s,p,st=LoadT(mu=mu,t=t,run=r)
@@ -201,13 +206,15 @@ def qBFS(genotypes,phenotypes,selections,strengths):
      MSE_ae=[]
      MSE_ai=[]
      MSE_s=[]
-     active_interfaces=np.empty((gen_limit,pop_size))
+     active_interfaces=[]
 
      W_a=Counter({K:0 for K in np.linspace(0,1,interface_length+1)})
      W_s=Counter({K:0 for K in np.linspace(0,1,interface_length/2+1)})
-     for generation in xrange(gen_limit-1):
+     for generation in xrange(gen_limit):
+          temp_count=defaultdict(int)
           for index in xrange(pop_size):
-               active_interfaces[generation,index]=len(strengths[generation][index])
+               temp_count[len(strengths[generation][index])]+=1
+          active_interfaces.append(temp_count)
                
                
      for generation in xrange(gen_limit-1):

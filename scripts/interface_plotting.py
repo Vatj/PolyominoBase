@@ -85,11 +85,11 @@ def plotInterfaceProbability(l_I,l_g,Nsamps=False):
      ax1.text(.2,np.log10(sym_factor(l_g)*SF_sym(.2))-scale_factor*0.05,'sym',va='top')
      ax1.text(.2,np.log10(asym_factor(l_g)*SF_asym(.2)+scale_factor*0.05),'asym',va='bottom')
      
-     ax2.text(.1,(ratios[-1]-ratios[0])*.05+ratios[0],'ratio',ha='center',va='bottom')
+     ax2.text(.1,(ratios[-1]-ratios[0])*.015+ratios[0],'ratio',ha='center',va='bottom')
 
-     ax1.set_ylabel('Interface Probability')
-     ax2.set_ylabel('Ratio')
-     ax1.set_xlabel(r'$S^*$')
+     ax1.set_ylabel(r'$  \log \left( Pr_{\mathrm{interface}} \right) $')
+     ax2.set_ylabel(r'$\log \frac{Pr_{\mathrm{sym}}}{Pr_{\mathrm{asym}}}$')
+     ax1.set_xlabel(r'$\hat{S}^*$')
 
      ax1.spines['top'].set_visible(False)
      ax2.spines['top'].set_visible(False)
