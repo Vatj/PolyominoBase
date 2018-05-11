@@ -192,7 +192,7 @@ def plotData(cc,I_size,t_star):
                continue
           #tsplotboot(ax,v,k+' {}'.format(len(v)))
           for q in v:
-               ax.plot(q[0]+np.linspace(0,len(q)-2,len(q)-1),q[1:])
+               ax.plot(q[0]+np.linspace(0,len(q)-2,len(q)-1),q[1:],alpha=0.5)
           if 'A' in k:
                #print k, "plotting here"
                pgs=RandomWalk(64,100,.5,t_star,1,1)
@@ -225,4 +225,15 @@ def plotWs(Ws,I_size,t_star):
      plt.ylabel('Prob')
      plt.xlabel(r'$ \hat{S} $')
      plt.title(r'$l_I = %i , S^* = %.2f$' % (I_size,t_star))
+     plt.show(block=False)
+
+def plotInterfaceCounts(counts):
+     plt.figure()
+     means=[]
+     for cnt in counts:
+          a=0
+          for i,j in cnt.iteritems():
+               a+=i*j
+          means.append(a/np.sum(cnt.values(),dtype=np.float64))
+     plt.plot(range(len(counts)),means)
      plt.show(block=False)

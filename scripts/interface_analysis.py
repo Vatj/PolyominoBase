@@ -170,7 +170,7 @@ def concatenateResults(data_struct,trim_gen=True):
      conc_data=defaultdict(list)
      Wa=Counter()
      Ws=Counter()
-     Cnt=[Counter() for _ in xrange(len(data_struct[0]['Cnt'].values()))]
+     Cnt=[Counter() for _ in xrange(len(data_struct[0]['Cnt']))]
      slice_start=1 if trim_gen else 0
      for data in data_struct:
           for k,v in data.iteritems():
@@ -180,7 +180,7 @@ def concatenateResults(data_struct,trim_gen=True):
                     Ws+=Counter(v)
                elif k=='Cnt':
                     for i,cn in enumerate(v):
-                         Cnt[i]+=cn
+                         Cnt[i]+=Counter(cn)
                else:
                     conc_data[k].extend([i[slice_start:] for i in v])
 
