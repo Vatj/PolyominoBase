@@ -10,9 +10,8 @@ from collections import defaultdict,Counter
 from itertools import combinations
 from numpy import linalg as LA
 
-BASE_FILE_PATH='/scratch/asl47/Data_Runs/Bulk_Data/{0}_I{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
-#BASE_FILE_PATH='/rscratch/asl47/Bulk_Run/Interfaces/{0}_I{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
-#BASE_FILE_PATH='../output/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+
+
 
 def setBasePath(path):
      global BASE_FILE_PATH
@@ -21,7 +20,9 @@ def setBasePath(path):
      elif path=='rscratch':
           BASE_FILE_PATH='/rscratch/asl47/Bulk_Run/Interfaces/{0}_I{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
      else:
-          BASE_FILE_PATH='../output/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+          BASE_FILE_PATH='/home/icyhawaiian/Documents/Data/{0}_I{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+
+setBasePath('')
           
 interface_length=64
 interface_type={8:np.uint8,16:np.uint16,32:np.uint32,64:np.uint64}[interface_length]
@@ -69,6 +70,16 @@ def LoadStrengthHistory(temperature=0.000001,mu=1,gamma=1,run=0):
          strengths.append([[tuple(np.uint8(i) for i in j.split()) for j in tmp.split(',')[:-1]] for tmp in line.split('.')[:-1]])
     return strengths
 
+def LoadStrengthHistory(temperature=0.000001,mu=1,gamma=1,run=0):
+    strengths=[]
+    for line in open(BASE_FILE_PATH.format('Strengths',interface_length,temperature,mu,gamma,run)):
+         strengths.append([[tuple(np.uint8(i) for i in j.split()) for j in tmp.split(',')[:-1]] for tmp in line.split('.')[:-1]])
+    return strengths
+
+def LoadPhenotypeTable(temperature=0.000001,mu=1,gamma=1,run=0):
+     phenotype_table= sorted([[int(i) for i in line.split()] for line in open(BASE_FILE_PATH.format('Phenotypes',64,temperature,mu,gamma,run))],key=lambda z: z[0])
+     return {tuple(px[:2]): px[2:] for px in phenotype_table}
+
 def LoadT(mu=1,t=0.35,run=0):
      g=LoadGenotypeHistory(3,mu=mu,temperature=t,run=run)
      st=LoadStrengthHistory(mu=mu,temperature=t,run=run)
@@ -97,7 +108,7 @@ def RandomWalk(I_size=32,n_steps=1000,phi=0.5,T_star=0.6,renorm=False,return_pro
           states/=np.sum(states)
      analytic_states=getSteadyStates(mmatrix(N,phi,s_hats[I_size-N+1:]))[1]
      #print analytic_states
-     
+     return analytic_states,s_hats[I_size-N+1:]
      if return_prog:
           progressive_states.append(np.sum(s_hats[I_size-N+1:]*analytic_states))
           return progressive_states
@@ -193,8 +204,11 @@ def concatenateResults(data_struct,trim_gen=True):
           
 def AnalysePhylogeneticStrengths(r,mu,t):
      g,s,p,st=LoadT(mu=mu,t=t,run=r)
-     mae,mai,ms,wa,ws,cnt_ai=qBFS(g,p,s,st)
-     return {'AsymE':mae,'AsymI':mai,'Sym':ms,'Wa':wa,'Ws':ws,'Cnt':cnt_ai}
+     pt=LoadPhenotypeTable(temperature=t,mu=mu,run=r)
+     #print PhenOrder(g,pt,p,s,st)
+
+     mae,mai,ms,wa,ws,cnt_ai,fp=qBFS(g,p,s,st)
+     return {'AsymE':mae,'AsymI':mai,'Sym':ms,'Wa':wa,'Ws':ws,'Cnt':cnt_ai,'Fatal':fp}
      
      
 def qBFS(genotypes,phenotypes,selections,strengths):
@@ -206,6 +220,7 @@ def qBFS(genotypes,phenotypes,selections,strengths):
      MSE_ae=[]
      MSE_ai=[]
      MSE_s=[]
+     fatal_phens=[]
      active_interfaces=[]
 
      W_a=Counter({K:0 for K in np.linspace(0,1,interface_length+1)})
@@ -218,8 +233,8 @@ def qBFS(genotypes,phenotypes,selections,strengths):
                
                
      for generation in xrange(gen_limit-1):
+          fatal_phens.append(0)
           for index in xrange(pop_size):
-               #diff= set(strengths[generation][index])-set(strengths[generation-1][selections[generation][index]]) if generation else strengths[generation][index]
                for new_bond in strengths[generation][index]:
                     stren_tree=qDFS(index,new_bond,genotypes[generation:],selections[generation:],strengths[generation:])
                     if stren_tree:
@@ -230,11 +245,14 @@ def qBFS(genotypes,phenotypes,selections,strengths):
                               MSE_ai.append(stren_tree)
                          else:
                               MSE_ae.append(stren_tree)
-               if phenotypes[generation][index][0]!=0 and generation>gen_limit-WEAKNESS_GOBACK:
+               if phenotypes[generation][index][0]==0:
+                    fatal_phens[-1]+=1
+               elif generation>gen_limit-WEAKNESS_GOBACK:
                     weak_a,weak_s=qWeak(strengths[generation][index],genotypes[generation][index])
                     W_a+=weak_a
                     W_s+=weak_s
-     return filter(None,MSE_ae),filter(None,MSE_ai),filter(None,MSE_s),dict(W_a),dict(W_s),active_interfaces
+          
+     return filter(None,MSE_ae),filter(None,MSE_ai),filter(None,MSE_s),dict(W_a),dict(W_s),active_interfaces,fatal_phens
 
 def qWeak(strength,genotype):
      weaknesses_asym=Counter({K:0 for K in np.linspace(0,1,interface_length+1)})
@@ -255,28 +273,74 @@ def qDFS(index,new_bond,genotypes,selections,strengths):
      gen_limit=len(genotypes)
      pop_size=len(genotypes[0])
 
-     mean_str=[BindingStrength(*genotypes[0][index][[i for i in new_bond]])]
+     mean_str=[{BindingStrength(*genotypes[0][index][[i for i in new_bond]]):1}]
      strengths[0][index].remove(new_bond)
-     descendents=np.where(selections[0]==index)[0]
+     descendents=list(np.where(selections[0]==index)[0])
 
      gen_index=1
-     while True:
-          str_temp=[]
+     while gen_index<gen_limit and descendents:
+          str_temp=defaultdict(float)
           descendents_temp=[]
           for descendent in descendents:
                if new_bond in strengths[gen_index][descendent]:
-                    str_temp.append(BindingStrength(*genotypes[gen_index][descendent][[i for i in new_bond]]))
+                    str_temp[BindingStrength(*genotypes[gen_index][descendent][[i for i in new_bond]])]+=1
                     descendents_temp.extend(np.where(selections[gen_index]==descendent)[0])
                     strengths[gen_index][descendent].remove(new_bond)
           descendents=descendents_temp
           gen_index+=1
-          if len(str_temp)==0 or gen_index==gen_limit:
-               break
-          mean_str.append(np.mean(str_temp))
+
+          mean_str.append(str_temp)
           
      return mean_str if len(mean_str)>MIN_LEN else None
 
 
+""" Phenotype Matching """
+def PhenOrder(genotypes,phen_dict,phenotype_IDs,selections,strengths):
+     gen_limit=len(genotypes)
+     pop_size=len(genotypes[0])
+     
+
+     SEARCH_PHENS=[[4,1,1,5,7,3],[4,4,0,0,1,0,4,5,6,0,0,8,7,2,0,3,0,0]]
+     PHEN_KEYS={}
+
+     transition_probabilities=defaultdict(lambda: defaultdict(int))
+     
+     for key,phen in phen_dict.iteritems():
+          for i,phen_key in enumerate(SEARCH_PHENS):
+               if phen_key == phen:
+                    PHEN_KEYS[tuple(key)]=phen
+ 	            
+                         
+     
+     print "keyed on",PHEN_KEYS
+     for generation in xrange(gen_limit-1):
+          for index in xrange(pop_size):
+               for phen_key,phen_value in PHEN_KEYS.iteritems():
+                    if phen_key==phenotype_IDs[generation][index]:
+                         sel=selections[generation-1][index]
+                         #print generation,index
+                         #print genotypes[generation][index]
+                         #print genotypes[generation-1][sel]
+                         #print phen_dict[phenotype_IDs[generation-1][sel]]
+                         
+                         transition_probabilities[tuple(phen_value)][tuple(phen_dict[phenotype_IDs[generation-1][sel]])]+=1
+                         PurgeDescendents(generation,index,selections,phenotype_IDs)
+     return transition_probabilities
+
+def PurgeDescendents(generation,index,selections,phenotype_IDs):
+     descendents=list(np.where(selections[generation]==index)[0])
+     gen_index=generation+1
+     while gen_index<len(selections) and descendents:
+          descendents_temp=[]
+          
+          for descendent in descendents:
+               phenotype_IDs[gen_index][descendent]=(0,0)
+               descendents_temp.extend(np.where(selections[gen_index]==descendent)[0])
+
+          descendents=descendents_temp
+          gen_index+=1
+
+     
 def main(argv):
      writeResults(int(argv[1]),*(float(i) for i in argv[2:4]),runs=int(argv[4]),offset=int(argv[5]))
      return

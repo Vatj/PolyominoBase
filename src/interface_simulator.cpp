@@ -15,7 +15,7 @@ void EvolvePopulation(std::string run_details) {
   std::ofstream fout_phenotype(file_base_path+"Phenotypes_"+file_simulation_details, std::ios_base::out);
   std::ofstream fout_genotype_history(file_base_path+"GenotypeHistory_"+file_simulation_details, std::ios_base::out);
   std::ofstream fout_phenotype_history(file_base_path+"PhenotypeHistory_"+file_simulation_details, std::ios_base::out);
-
+  
   interface_model::InterfacePhenotypeTable pt = interface_model::InterfacePhenotypeTable();
 
   std::vector<double> population_fitnesses(simulation_params::population_size);
@@ -28,9 +28,15 @@ void EvolvePopulation(std::string run_details) {
 
   if(simulation_params::random_initilisation) {
     std::uniform_int_distribution<interface_type> dist;
-    auto interface_filler = std::bind(dist, interface_model::RNG_Engine);
+    auto interface_filler = std::bind(dist, std::ref(interface_model::RNG_Engine));
     for(auto& species : evolving_population)
       std::generate(species.genotype.begin(),species.genotype.end(),interface_filler);
+
+    for(auto& species : evolving_population) {
+      for(auto x: species.genotype)
+	std::cout<<+x<<" ";
+      std::cout<<std::endl;
+    }
   }
  
 
