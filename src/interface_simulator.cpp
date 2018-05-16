@@ -32,13 +32,8 @@ void EvolvePopulation(std::string run_details) {
     for(auto& species : evolving_population)
       std::generate(species.genotype.begin(),species.genotype.end(),interface_filler);
 
-    for(auto& species : evolving_population) {
-      for(auto x: species.genotype)
-	std::cout<<+x<<" ";
-      std::cout<<std::endl;
-    }
   }
- 
+
 
   /* Median time to complete interface mutation, characteristic time for fitness re-assignment */
   std::poisson_distribution<uint16_t> landscape_changer(log(1-pow(2,-1./model_params::interface_size))/log(1-model_params::mu_prob/(4*simulation_params::n_tiles*model_params::interface_size)));

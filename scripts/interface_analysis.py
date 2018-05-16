@@ -160,7 +160,7 @@ def writeResults(I,M,t,runs,offset=0):
      interface_length=I
      global interface_type
      interface_type={8:np.uint8,16:np.uint16,32:np.uint32,64:np.uint64}[interface_length]
-     
+     setBasePath('scratch')
      pool = Pool()
      data_struct=pool.map(partial(AnalysePhylogeneticStrengths, mu=M,t=t), xrange(offset,offset+runs)) 
      pool.close()
@@ -181,9 +181,11 @@ def concatenateResults(data_struct,trim_gen=True):
      conc_data=defaultdict(list)
      Wa=Counter()
      Ws=Counter()
-     Cnt=[Counter() for _ in xrange(len(data_struct[0]['Cnt']))]
+     active_interface_count=[Counter() for _ in xrange(len(data_struct[0]['Cnt']))]
+     fatal_phens=np.empty((len(data_struct),len(data_struct[0]['Fatal'])))
+     phen_trans=defaultdict(lambda: defaultdict(int))
      slice_start=1 if trim_gen else 0
-     for data in data_struct:
+     for outer_index,data in enumerate(data_struct):
           for k,v in data.iteritems():
                if k=='Wa':
                     Wa+=Counter(v)
@@ -191,7 +193,13 @@ def concatenateResults(data_struct,trim_gen=True):
                     Ws+=Counter(v)
                elif k=='Cnt':
                     for i,cn in enumerate(v):
-                         Cnt[i]+=Counter(cn)
+                         active_interface_count[i]+=Counter(cn)
+               elif k=='Fatal':
+                    fatal_phens[outer_index]=np.array(v)
+               elif k=='PhenTrans':
+                    for sub_k,sub_v in v.iteritems():
+                         for phen in sub_v:
+                              phen_trans[sub_k][phen]+=1
                else:
                     conc_data[k].extend([i[slice_start:] for i in v])
 
@@ -200,15 +208,15 @@ def concatenateResults(data_struct,trim_gen=True):
                length = len(sorted(v,key=len, reverse=True)[0])
                conc_data[k]=np.array([xi+[np.nan]*(length-len(xi)) for xi in v])
           
-     return conc_data,(Wa,Ws),Cnt
+     return conc_data,(Wa,Ws),active_interface_count,fatal_phens,phen_trans
           
 def AnalysePhylogeneticStrengths(r,mu,t):
      g,s,p,st=LoadT(mu=mu,t=t,run=r)
      pt=LoadPhenotypeTable(temperature=t,mu=mu,run=r)
-     #print PhenOrder(g,pt,p,s,st)
+     trans_probs=PhenOrder(g,pt,p,s,st)
 
-     mae,mai,ms,wa,ws,cnt_ai,fp=qBFS(g,p,s,st)
-     return {'AsymE':mae,'AsymI':mai,'Sym':ms,'Wa':wa,'Ws':ws,'Cnt':cnt_ai,'Fatal':fp}
+     mae,mai,ms,wa,ws,cnt_ai,fp=qBFS(deepcopy(g),deepcopy(p),deepcopy(s),deepcopy(st))
+     return {'AsymE':mae,'AsymI':mai,'Sym':ms,'Wa':wa,'Ws':ws,'Cnt':cnt_ai,'Fatal':fp,'PhenTrans':trans_probs}
      
      
 def qBFS(genotypes,phenotypes,selections,strengths):
@@ -228,7 +236,8 @@ def qBFS(genotypes,phenotypes,selections,strengths):
      for generation in xrange(gen_limit):
           temp_count=defaultdict(int)
           for index in xrange(pop_size):
-               temp_count[len(strengths[generation][index])]+=1
+               if phenotypes[generation][index][0]!=0:
+                    temp_count[len(strengths[generation][index])]+=1
           active_interfaces.append(temp_count)
                
                
@@ -310,22 +319,24 @@ def PhenOrder(genotypes,phen_dict,phenotype_IDs,selections,strengths):
                if phen_key == phen:
                     PHEN_KEYS[tuple(key)]=phen
  	            
-                         
-     
-     print "keyed on",PHEN_KEYS
      for generation in xrange(gen_limit-1):
           for index in xrange(pop_size):
                for phen_key,phen_value in PHEN_KEYS.iteritems():
                     if phen_key==phenotype_IDs[generation][index]:
                          sel=selections[generation-1][index]
-                         #print generation,index
-                         #print genotypes[generation][index]
-                         #print genotypes[generation-1][sel]
-                         #print phen_dict[phenotype_IDs[generation-1][sel]]
-                         
-                         transition_probabilities[tuple(phen_value)][tuple(phen_dict[phenotype_IDs[generation-1][sel]])]+=1
-                         PurgeDescendents(generation,index,selections,phenotype_IDs)
-     return transition_probabilities
+                         #if phen_key[0]==8:
+                         #     print generation,index
+                         #     print genotypes[generation][index]
+                         #     print genotypes[generation-1][sel]
+                         #     print phen_dict[phenotype_IDs[generation-1][sel]]
+                         if phenotype_IDs[generation-1][sel]!=phen_key:
+                              transition_probabilities[tuple(phen_value)][tuple(phen_dict[phenotype_IDs[generation-1][sel]])]+=1
+                         #PurgeDescendents(generation,index,selections,phenotype_IDs)
+
+     TP_dict=dict(transition_probabilities)
+     for key in TP_dict:
+          TP_dict[key]=dict(TP_dict[key])
+     return TP_dict
 
 def PurgeDescendents(generation,index,selections,phenotype_IDs):
      descendents=list(np.where(selections[generation]==index)[0])
@@ -340,6 +351,10 @@ def PurgeDescendents(generation,index,selections,phenotype_IDs):
           descendents=descendents_temp
           gen_index+=1
 
+def PhenotypicTransitions(phen_trans):
+     return "hi"
+     
+     
      
 def main(argv):
      writeResults(int(argv[1]),*(float(i) for i in argv[2:4]),runs=int(argv[4]),offset=int(argv[5]))
