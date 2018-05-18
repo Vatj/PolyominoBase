@@ -3,11 +3,11 @@ from matplotlib.patches import Patch
 import numpy as np
 
 import icy;icy.Use_Seaborn()
-from seaborn import despine
+#from seaborn import despine
 
 from colorsys import hsv_to_rgb
 from random import uniform,choice
-from interface_analysis import qBFS, loadManyResults, concatenateResults,RandomWalk,BindingStrength, set_length
+from interface_analysis import qBFS, loadManyResults, concatenateResults,RandomWalk,BindingStrength, set_length,PhenotypicTransitions
 from scipy.stats import linregress,binom,scoreatpercentile
 from itertools import combinations_with_replacement as cwr
 from random import choice
@@ -59,6 +59,7 @@ def plotInterfaceProbability(l_I,l_g,Nsamps=False):
      crossover=np.where(ratios>0)[0][0]
      ax2.axvline(s_hats[crossover],color='k',ls='--')
      ax2.axhline(color='k',ls='-',lw=0.2)
+     
      Is={8:np.uint8,16:np.uint16,32:np.uint32,64:np.uint64}
      if Nsamps:
           set_length(l_I)
@@ -170,12 +171,12 @@ def bootstrap(data, n_boot=10000, ci=68):
 def tsplotboot(ax,data,title='',**kw):
     x = np.arange(data.shape[1])
     est = np.nanmean(data, axis=0)
-    cis = bootstrap(data,10)
-    ax.fill_between(x,cis[0],cis[1],alpha=0.3,color='dimgray', **kw)
+    #cis = bootstrap(data,10)
+    #ax.fill_between(x,cis[0],cis[1],alpha=0.3,color='dimgray', **kw)
     
     ax.plot(x,est,c='dimgray',lw=2)
-    for i in data:
-         ax.plot(x,i,alpha=0.05)
+    #for i in data:
+    #     ax.plot(x,i,alpha=0.05)
     ax.margins(x=0)
     
     ax.set_ylabel(r'$\langle \hat{S} \rangle$')
@@ -190,20 +191,20 @@ def plotData(cc,I_size,t_star):
           print k,len(v)
           if len(v)==0:
                continue
-          #tsplotboot(ax,v,k+' {}'.format(len(v)))
-          for q in v:
-               ax.plot(q[0]+np.linspace(0,len(q)-2,len(q)-1),q[1:],alpha=0.5)
+          tsplotboot(ax,v,k+' {}'.format(len(v)))
+          #for q in v:
+          #     ax.plot(q[0]+np.linspace(0,len(q)-2,len(q)-1),q[1:],alpha=0.5)
           if 'A' in k:
                #print k, "plotting here"
-               pgs=RandomWalk(64,100,.5,t_star,1,1)
-               ax.plot(range(0,1200,12),pgs[:-1],'r--')
+               pgs=RandomWalk(64,200,1,t_star,1,1)
+               ax.plot(range(0,1200,6),pgs[:-1],'r--')
                
                ax.plot([1100,1500],[pgs[-1]]*2,'k--')
           else:
                #print k, "plotting there"
-               pgs=RandomWalk(32,50,.5,t_star,1,1)
+               pgs=RandomWalk(32,100,1,t_star,1,1)
                
-               ax.plot(range(0,1200,24),pgs[:-1],'r--')
+               ax.plot(range(0,1200,12),pgs[:-1],'r--')
                ax.plot([1100,1500],[pgs[-1]]*2,'k--')
      plt.xlabel('elapsed generations')
      plt.tight_layout(pad=0)
@@ -212,10 +213,10 @@ def plotData(cc,I_size,t_star):
 
 def plotWs(Ws,I_size,t_star):
      plt.figure()
-     for W in Ws:
+     for K,W in Ws.iteritems():
           lists = sorted(W.items()) # sorted by key, return a list of tuples
           x, y = zip(*lists)
-          plt.plot(x,[float(i)/sum(y) for i in y],ls='',marker='o',label=len(W))
+          plt.plot(x,[float(i)/sum(y) for i in y],ls='',marker='o',label=K)
      plt.plot(np.linspace(0,1,I_size/2+1),binom(I_size/2,.5).pmf(np.linspace(0,I_size/2,I_size/2+1)),'k--')
      plt.plot(np.linspace(0,1,I_size+1),binom(I_size,.5).pmf(np.linspace(0,I_size,I_size+1)),'k--')
      plt.axvline(t_star,0,1,c='r')
@@ -236,4 +237,9 @@ def plotInterfaceCounts(counts):
                a+=i*j
           means.append(a/np.sum(cnt.values(),dtype=np.float64))
      plt.plot(range(len(counts)),means)
+     plt.show(block=False)
+
+def plotFatals(counts):
+     plt.figure()
+     plt.plot(range(counts.shape[1]),np.mean(counts,axis=0))
      plt.show(block=False)

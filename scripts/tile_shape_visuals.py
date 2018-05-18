@@ -132,6 +132,7 @@ def smooth(y, box_pts):
     y_smooth = np.convolve(y, box, mode='same')
     return y_smooth
 
+
 def VisualiseSingleShape(shape):
     cols=['darkgreen','royalblue','firebrick','goldenrod','mediumorchid']
     ar_offsets={0:(0,-.25,0,.25),1:(-.25,0,.25,0),2:(0,.25,0,-.25),3:(.25,0,-.25,0)}
@@ -140,14 +141,13 @@ def VisualiseSingleShape(shape):
 
     dx=shape[0]
     dy=shape[1]
-    for i in xrange(dx):
-        for j in xrange(dy):
-            if(shape[2+i+j*dx]):
-                ax.add_patch(Rectangle((i-dx/2., dy/2.-j-1), 1, 1, facecolor=cols[(shape[2+i+j*dx]-1)/4],edgecolor='slategrey',fill=True,hatch='////',lw=0))
+    for i,j in product(xrange(dx),xrange(dy)):
+        if(shape[2+i+j*dx]):
+            ax.add_patch(Rectangle((i-dx/2., dy/2.-j-1), 1, 1, facecolor=cols[(shape[2+i+j*dx]-1)/4],edgecolor='slategrey',fill=True,hatch='////',lw=0))
                 
-                ax.add_patch(Rectangle((i-dx/2., dy/2.-j-1), 1, 1,edgecolor='maroon',fill=False,lw=2.5))
-                theta=(shape[2+i+j*dx]-1)%4;
-                ax.arrow(i-dx/2.+.5+ar_offsets[theta][0], dy/2.-j-.5+ar_offsets[theta][1], ar_offsets[theta][2], ar_offsets[theta][3], head_width=0.05, head_length=0.1, fc='k', ec='k')
+            ax.add_patch(Rectangle((i-dx/2., dy/2.-j-1), 1, 1,edgecolor='maroon',fill=False,lw=2.5))
+            theta=(shape[2+i+j*dx]-1)%4;
+            ax.arrow(i-dx/2.+.5+ar_offsets[theta][0], dy/2.-j-.5+ar_offsets[theta][1], ar_offsets[theta][2], ar_offsets[theta][3], head_width=0.05, head_length=0.1, fc='k', ec='k')
 
 
     maxB=max(dx,dy)
