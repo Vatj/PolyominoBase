@@ -150,6 +150,17 @@ namespace interface_model
         growing_perimeter.insert(growing_perimeter.begin()+5*index_randomizer(RNG_Engine),{static_cast<int8_t>(x+dx),static_cast<int8_t>(y+dy),static_cast<int8_t>((f+2)%4),tile_type,static_cast<int8_t>((4+f-theta)%4)});      
     }
   }
+  
+  std::vector<int8_t> AssembleProtein(const BGenotype& binary_genome,std::set< std::pair<interface_type,interface_type> >& interacting_indices) {
+    std::vector<int8_t> placed_tiles{0,0,1},growing_perimeter;
+    PerimeterGrowth(0,0,0,-1,0,growing_perimeter,placed_tiles);
+    int8_t orientation, tile, direction, x, y;
+    std::vector<uint8_t> genome_bases(binary_genome.size());
+    std::iota(genome_bases.begin(), genome_bases.end(), 0);
+
+  }
+
+  
 
 }//end interface_model namespace
 

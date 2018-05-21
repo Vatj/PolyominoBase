@@ -70,12 +70,6 @@ def LoadStrengthHistory(temperature=0.000001,mu=1,gamma=1,run=0):
          strengths.append([[tuple(np.uint8(i) for i in j.split()) for j in tmp.split(',')[:-1]] for tmp in line.split('.')[:-1]])
     return strengths
 
-def LoadStrengthHistory(temperature=0.000001,mu=1,gamma=1,run=0):
-    strengths=[]
-    for line in open(BASE_FILE_PATH.format('Strengths',interface_length,temperature,mu,gamma,run)):
-         strengths.append([[tuple(np.uint8(i) for i in j.split()) for j in tmp.split(',')[:-1]] for tmp in line.split('.')[:-1]])
-    return strengths
-
 def LoadPhenotypeTable(temperature=0.000001,mu=1,gamma=1,run=0):
      phenotype_table= sorted([[int(i) for i in line.split()] for line in open(BASE_FILE_PATH.format('Phenotypes',64,temperature,mu,gamma,run))],key=lambda z: z[0])
      return {tuple(px[:2]): tuple(px[2:]) for px in phenotype_table}
@@ -94,7 +88,7 @@ def revbits(x):
 
 
 """ DRIFT SECTION """
-def RandomWalk(I_size=32,n_steps=1000,phi=0.5,T_star=0.6,renorm=False,return_prog=False):
+def RandomWalk(I_size=64,n_steps=1000,phi=0.5,T_star=0.6,renorm=False,return_prog=False):
      s_hats=np.linspace(0,1,I_size+1)
      N=int(I_size*(1-T_star))+1
      states=np.zeros(N)
@@ -108,10 +102,11 @@ def RandomWalk(I_size=32,n_steps=1000,phi=0.5,T_star=0.6,renorm=False,return_pro
           states/=np.sum(states)
      analytic_states=getSteadyStates(mmatrix(N,phi,s_hats[I_size-N+1:]))[1]
      #print analytic_states
-     #return analytic_states,s_hats[I_size-N+1:]
+     
      if return_prog:
           progressive_states.append(np.sum(s_hats[I_size-N+1:]*analytic_states))
           return progressive_states
+     return analytic_states,s_hats[I_size-N+1:]
      
      fig, ax1 = plt.subplots()
      msize=12
@@ -271,7 +266,7 @@ def qBFS(genotypes,phenotypes,selections,strengths):
      return filter(None,MSE_ae),filter(None,MSE_ai),filter(None,MSE_s),dict(W_a),dict(W_s),active_interfaces,fatal_phens
 
 def qDFS(index,new_bond,genotypes,selections,strengths):
-     detailed_distr=False
+     detailed_distr=True
      #ANALYSIS PARAMETERS
      MIN_LEN=50
      #RUNTIME PARAMETERS
@@ -318,31 +313,6 @@ def qWeak(strength,genotype):
      return weak_asym,weak_sym
 
 """ Phenotype Matching """
-def PhenOrder((phen_key,phen_value),genotypes,phen_dict,phenotype_IDs,selections,strengths):
-     gen_limit=len(genotypes)
-     pop_size=len(genotypes[0])    
-
-     transition_probabilities=defaultdict(int)
-
- 	            
-     for generation in xrange(gen_limit-1):
-          for index in xrange(pop_size):
-                    if phen_key==phenotype_IDs[generation][index]:
-                         sel=selections[generation-1][index]
-                         #if phen_key[0]==8:
-                         #     print generation,index
-                         #     print genotypes[generation][index]
-                         #     print genotypes[generation-1][sel]
-                         #     print phen_dict[phenotype_IDs[generation-1][sel]]
-                         #if phenotype_IDs[generation-1][sel]!=phen_key:
-                         transition_probabilities[tuple(phen_dict[phenotype_IDs[generation-1][sel]])]+=1
-                         PurgeDescendents(generation,index,selections,phenotype_IDs)
-
-     TP_dict=dict(transition_probabilities)
-     #for key in TP_dict:
-     #     TP_dict[key]=dict(TP_dict[key])
-     return TP_dict
-
 def PhenOrderTail(genotypes,phen_table,phenotype_IDs,selections,strengths):
      SEARCH_PHENS=[(4,1,1,5,7,3),(4,4,0,0,1,0,4,5,6,0,0,8,7,2,0,3,0,0),(4,4,0,1,0,0,0,5,6,4,2,8,7,0,0,0,3,0),(3,2,0,1,5,7,3,0),(3,2,1,5,0,0,7,3)]
      
@@ -384,12 +354,18 @@ def PurgeDescendents(generation,index,selections,phenotype_IDs):
           descendents=descendents_temp
           gen_index+=1
 
-def PhenotypicTransitions(phen_trans,N=40):
+def PhenotypicTransitions(phen_trans,N=40,crit_factor=0.5):
+     print "N set for ",N
+     common_transitions=deepcopy(phen_trans)
      for phen_key,trans in phen_trans.iteritems():
           print "max",phen_key,max(trans.iterkeys(), key=(lambda key: trans[key])),max(trans.values())
           for tran,count in trans.iteritems():
-               if count>N*.5:
+               if count>N*crit_factor:
                     print tran,count
+               else:
+                    del common_transitions[phen_key][tran]
+ 
+     return common_transitions
      
      
      

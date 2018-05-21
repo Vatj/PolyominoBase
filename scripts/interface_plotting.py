@@ -162,7 +162,10 @@ def bootstrap(data, n_boot=10000, ci=68):
      for i in range(int(n_boot)):
           resampler = np.random.randint(0, data.shape[0], data.shape[0])
           sample = data.take(resampler, axis=0)
-          boot_dist.append(np.nanmean(sample, axis=0))
+          try:
+               boot_dist.append(np.nanmean(sample, axis=0))
+          except:
+               print sample
      b= np.array(boot_dist)
      s1 = np.apply_along_axis(scoreatpercentile, 0, b, 50.-ci/2.)
      s2 = np.apply_along_axis(scoreatpercentile, 0, b, 50.+ci/2.)
@@ -171,8 +174,8 @@ def bootstrap(data, n_boot=10000, ci=68):
 def tsplotboot(ax,data,title='',**kw):
     x = np.arange(data.shape[1])
     est = np.nanmean(data, axis=0)
-    #cis = bootstrap(data,10)
-    #ax.fill_between(x,cis[0],cis[1],alpha=0.3,color='dimgray', **kw)
+    cis = bootstrap(data,10)
+    ax.fill_between(x,cis[0],cis[1],alpha=0.3,color='dimgray', **kw)
     
     ax.plot(x,est,c='dimgray',lw=2)
     #for i in data:
@@ -192,19 +195,19 @@ def plotData(cc,I_size,t_star):
           if len(v)==0:
                continue
           tsplotboot(ax,v,k+' {}'.format(len(v)))
-          #for q in v:
-          #     ax.plot(q[0]+np.linspace(0,len(q)-2,len(q)-1),q[1:],alpha=0.5)
+          for q in v:
+               ax.plot(q[0]+np.linspace(0,len(q)-2,len(q)-1),q[1:],alpha=0.25)
           if 'A' in k:
                #print k, "plotting here"
-               pgs=RandomWalk(64,200,1,t_star,1,1)
-               ax.plot(range(0,1200,6),pgs[:-1],'r--')
+               pgs=RandomWalk(64,100,.5,t_star,1,1)
+               ax.plot(range(0,1200,12),pgs[:-1],'r--')
                
                ax.plot([1100,1500],[pgs[-1]]*2,'k--')
           else:
                #print k, "plotting there"
-               pgs=RandomWalk(32,100,1,t_star,1,1)
+               pgs=RandomWalk(32,50,.5,t_star,1,1)
                
-               ax.plot(range(0,1200,12),pgs[:-1],'r--')
+               ax.plot(range(0,1200,24),pgs[:-1],'r--')
                ax.plot([1100,1500],[pgs[-1]]*2,'k--')
      plt.xlabel('elapsed generations')
      plt.tight_layout(pad=0)
@@ -242,4 +245,28 @@ def plotInterfaceCounts(counts):
 def plotFatals(counts):
      plt.figure()
      plt.plot(range(counts.shape[1]),np.mean(counts,axis=0))
+     plt.show(block=False)
+
+from math import ceil
+def plotTransitions(phen_trans):
+     
+     fig =plt.figure()
+     ncols=int(ceil(np.sqrt(len(phen_trans))))
+     nrows=int(ceil(len(phen_trans)/float(ncols)))
+     cdict={None:(0,0,0)}
+     
+     for i,(key,trans) in enumerate(phen_trans.iteritems(),1):
+          if len(trans)==0:
+               continue
+          ax = fig.add_subplot(nrows, ncols, i)
+          ax.set_title(r', '.join(map(str,key)),fontsize=22)
+          for phen in trans.keys():
+               if phen not in cdict:
+                    cdict[phen]=icy.generate_new_color(cdict.values(),0.5)
+                    
+          cols=[cdict[p] if p!=key else 'k' for p in sorted(trans.keys())]
+          ax.pie([trans[k] for k in sorted(trans.keys())],labels=sorted(trans.keys()),colors=cols,startangle=90,counterclock=False)
+          centre_circle = plt.Circle((0,0),0.75,color='black', fc='white',linewidth=0)
+          fig = plt.gcf()
+          fig.gca().add_artist(centre_circle)
      plt.show(block=False)
