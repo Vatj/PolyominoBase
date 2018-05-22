@@ -10,7 +10,7 @@ namespace simulation_params
 
 namespace model_params
 {
-  double temperature=1,mu_prob=0.2,fitness_factor=1,UND_threshold=0.2,interface_threshold=0.2;
+  double temperature=1,binding_threshold=1,mu_prob=0.2,fitness_factor=1,UND_threshold=0.2,interface_threshold=0.2;
   std::binomial_distribution<uint8_t> b_dist(interface_size,mu_prob);
   std::uniform_real_distribution<double> real_dist(0, 1);
   std::array<double,model_params::interface_size+1> binding_probabilities;
@@ -18,8 +18,7 @@ namespace model_params
 
 
 namespace interface_model
-{
-  
+{  
  
   std::mt19937 RNG_Engine(std::random_device{}());
   uint8_t GAUGE=4;
@@ -54,12 +53,12 @@ namespace interface_model
     }
   }
 
-  double ProteinAssemblyOutcome(BGenotype binary_genome,InterfacePhenotypeTable* pt,Phenotype_ID& pid,std::vector<std::pair<interface_type,interface_type> >& pid_interactions) {
+  double ProteinAssemblyOutcome(BGenotype binary_genome,InterfacePhenotypeTable* pt,Phenotype_ID& pid,std::vector<interaction_pair>& pid_interactions) {
     std::vector<int8_t> assembly_information;
     Phenotype phen;
     std::vector<Phenotype_ID> Phenotype_IDs;Phenotype_IDs.reserve(simulation_params::phenotype_builds);
-    std::set<std::pair<interface_type,interface_type> > interacting_indices;
-    std::map<Phenotype_ID, std::map<std::pair<interface_type,interface_type>, uint8_t> > phenotype_interactions;
+    std::set<interaction_pair > interacting_indices;
+    std::map<Phenotype_ID, std::map<interaction_pair, uint8_t> > phenotype_interactions;
     for(uint8_t nth=0;nth<simulation_params::phenotype_builds;++nth) {
       assembly_information=AssembleProtein(binary_genome,interacting_indices);
       
@@ -85,7 +84,7 @@ namespace interface_model
   }
 
 
-  std::vector<int8_t> AssembleProtein(const BGenotype& binary_genome,std::set< std::pair<interface_type,interface_type> >& interacting_indices) {
+  std::vector<int8_t> AssembleProtein(const BGenotype& binary_genome,std::set<interaction_pair>& interacting_indices) {
     
     std::vector<int8_t> placed_tiles{0,0,1},growing_perimeter;
     PerimeterGrowth(0,0,0,-1,0,growing_perimeter,placed_tiles);
@@ -153,10 +152,11 @@ namespace interface_model
     }
   }
   
-  std::vector<int8_t> AssembleProteinNew(const BGenotype& binary_genome) {//},std::set< std::pair<interface_type,interface_type> >& interacting_indices) {
+  std::vector<int8_t> AssembleProteinNew(const BGenotype& binary_genome,std::set<interaction_pair>& interacting_indices) {
     std::vector<int8_t> placed_tiles{0,0,1},growing_perimeter;
     std::vector<double> strengths,strengths_cdf;
-    ExtendPerimeter(binary_genome,1,0,0,placed_tiles,growing_perimeter,strengths);
+    std::vector<interaction_pair> interaction_pairs;
+    ExtendPerimeter(binary_genome,1,0,0,placed_tiles,growing_perimeter,strengths,interaction_pairs);
 
     while(!strengths.empty()) {
       //select new site proportional to binding strength
@@ -164,25 +164,24 @@ namespace interface_model
       std::partial_sum(strengths.begin(), strengths.end(), strengths_cdf.begin());
       std::uniform_real_distribution<double> random_interval(0,strengths_cdf.back());
       size_t selected_choice=static_cast<size_t>(std::lower_bound(strengths_cdf.begin(),strengths_cdf.end(),random_interval(interface_model::RNG_Engine))-strengths_cdf.begin());
-
       //place new tile
       const int8_t f_x=*(growing_perimeter.begin()+selected_choice*3),f_y=*(growing_perimeter.begin()+selected_choice*3+1),f_t=*(growing_perimeter.begin()+selected_choice*3+2);
       placed_tiles.insert(placed_tiles.end(),growing_perimeter.begin()+selected_choice*3,growing_perimeter.begin()+selected_choice*3+3);
-      
-      
+      interacting_indices.insert(interaction_pairs[selected_choice]);
       //remove all further options in same tile location
       for(size_t cut_index=0;cut_index<strengths.size();) {
 	if(f_x==*(growing_perimeter.begin()+cut_index*3) && f_y==*(growing_perimeter.begin()+cut_index*3+1)) {
 	  strengths.erase(strengths.begin()+cut_index);
-	  growing_perimeter.erase(growing_perimeter.begin()+cut_index*3,growing_perimeter.begin()+cut_index*3+3);
+
+          interaction_pairs.erase(interaction_pairs.begin()+cut_index);
+	  growing_perimeter.erase(growing_perimeter.begin()+cut_index*3,growing_perimeter.begin()+(cut_index+1)*3);
 	}
 	else
 	  ++cut_index;
       }
-
+      
       //find new potential sites
-      ExtendPerimeter(binary_genome,f_t,f_x,f_y,placed_tiles,growing_perimeter,strengths);
-
+      ExtendPerimeter(binary_genome,f_t,f_x,f_y,placed_tiles,growing_perimeter,strengths,interaction_pairs);
       //unbound limit reached
       if(placed_tiles.size()>static_cast<size_t>(0.75*binary_genome.size()*binary_genome.size()))
         return {};
@@ -191,7 +190,7 @@ namespace interface_model
   }
 
  
-  void ExtendPerimeter(const BGenotype& binary_genome,uint8_t tile_detail, int8_t x,int8_t y, std::vector<int8_t>& placed_tiles,std::vector<int8_t>& new_sites,std::vector<double>& binding_strengths) {
+  void ExtendPerimeter(const BGenotype& binary_genome,uint8_t tile_detail, int8_t x,int8_t y, std::vector<int8_t>& placed_tiles,std::vector<int8_t>& new_sites,std::vector<double>& binding_strengths,std::vector<interaction_pair>& interaction_pairs) {
     int8_t dx=0,dy=0,tile=(tile_detail-1)/4,theta=(tile_detail-1)%4;
     for(uint8_t f=0;f<4;++f) {
       switch(f) {
@@ -208,9 +207,10 @@ namespace interface_model
       //find all above threshold bindings and add to new sites
       for(uint8_t base=0;base<binary_genome.size();++base) {
 	uint8_t SD=SammingDistance(binary_genome[base],binary_genome[tile*4+(f-theta+4)%4]);
-	if(SD<=static_cast<uint8_t>(floor(model_params::interface_size*model_params::temperature))){
+	if(SD<=static_cast<uint8_t>(model_params::interface_size*(1-model_params::binding_threshold))){
 	  binding_strengths.emplace_back(model_params::binding_probabilities[SD]);
 	  new_sites.insert(new_sites.end(),{static_cast<int8_t>(x+dx),static_cast<int8_t>(y+dy),static_cast<int8_t>(base-base%4+((f+2)%4-base%4+4)%4+1)});
+          interaction_pairs.emplace_back(std::minmax(static_cast<uint8_t>(tile*4+(f-theta+4)%4),base));
 	}
       }
     nextloop: ; //continue if site already occupied
@@ -292,7 +292,7 @@ void InterfaceStrengths(BGenotype& interfaces, std::vector<uint32_t>& strengths)
 
 std::array<double,model_params::interface_size+1> GenBindingProbsLUP() {
   std::array<double,model_params::interface_size+1> probs;
-  std::fill(probs.begin(),probs.begin()+static_cast<int>(floor(model_params::temperature*model_params::interface_size)+1),1);
+  std::fill(probs.begin(),probs.begin()+static_cast<size_t>((1-model_params::binding_threshold)*model_params::interface_size)+1,1);
   return probs;
 }
 

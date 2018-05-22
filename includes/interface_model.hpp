@@ -11,8 +11,9 @@
 #include <iostream>
 
 
-typedef uint8_t interface_type;
+typedef uint64_t interface_type;
 typedef std::vector<interface_type> BGenotype;
+typedef std::pair<uint8_t,uint8_t> interaction_pair;
 
 namespace simulation_params
 {
@@ -27,7 +28,7 @@ namespace model_params
 {
   constexpr uint8_t interface_size=CHAR_BIT*sizeof(interface_type);
   
-  extern double temperature,mu_prob,fitness_factor,UND_threshold,interface_threshold;
+  extern double temperature,binding_threshold,mu_prob,fitness_factor,UND_threshold,interface_threshold;
   
   extern std::binomial_distribution<uint8_t> b_dist;
   extern std::uniform_real_distribution<double> real_dist;
@@ -62,12 +63,12 @@ namespace interface_model
   void MutateInterfaces(BGenotype& binary_genome);
 
   /* ASSEMBLY */
-  double ProteinAssemblyOutcome(BGenotype binary_genome, InterfacePhenotypeTable* pt,Phenotype_ID& pid,std::vector<std::pair<interface_type,interface_type> >& pid_interactions);
-  std::vector<int8_t> AssembleProtein(const BGenotype& binary_genome,std::set< std::pair<interface_type,interface_type> >& interacting_indices);
+  double ProteinAssemblyOutcome(BGenotype binary_genome, InterfacePhenotypeTable* pt,Phenotype_ID& pid,std::vector<interaction_pair>& pid_interactions);
+  std::vector<int8_t> AssembleProtein(const BGenotype& binary_genome,std::set<interaction_pair>& interacting_indices);
   void PerimeterGrowth(int8_t x,int8_t y,int8_t theta,int8_t direction, int8_t tile_type,std::vector<int8_t>& growing_perimeter,std::vector<int8_t>& placed_tiles);
 
-  std::vector<int8_t> AssembleProteinNew(const BGenotype& binary_genome);//,std::set< std::pair<interface_type,interface_type> >& interacting_indices);
-  void ExtendPerimeter(const BGenotype& binary_genome,uint8_t tile_detail, int8_t x,int8_t y, std::vector<int8_t>& placed_tiles,std::vector<int8_t>& potential_sites,std::vector<double>& binding_strengths);
+  std::vector<int8_t> AssembleProteinNew(const BGenotype& binary_genome,std::set<interaction_pair>& interacting_indices);
+  void ExtendPerimeter(const BGenotype& binary_genome,uint8_t tile_detail, int8_t x,int8_t y, std::vector<int8_t>& placed_tiles,std::vector<int8_t>& potential_sites,std::vector<double>& binding_strengths,std::vector<interaction_pair>& interaction_pairs);
   
 
 
@@ -93,9 +94,8 @@ namespace interface_model
             new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
             known_phenotypes[phenotype_size].push_back(phen);
             //std::gamma_distribution<double> fitness_dist(sqrt(static_cast<double>(phenotype_size)),1);
-            std::gamma_distribution<double> fitness_dist(sqrt(static_cast<double>(phenotype_size)),1);
+            std::gamma_distribution<double> fitness_dist(sqrt(phenotype_size),1);
             phenotype_fitnesses[phenotype_size].emplace_back(fitness_dist(RNG_Engine));
-            //std::cout<<"fitness of "<<+phenotype_size<<" "<<phenotype_fitnesses[phenotype_size].size()-1<<" is "<<phenotype_fitnesses[phenotype_size].back()<<std::endl;
             new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()-1);
             
             return phenotype_fitnesses[phenotype_size].size()-1;
@@ -113,7 +113,7 @@ namespace interface_model
     }
 
     /* Replace previously undiscovered phenotype IDs with new phenotype ID */
-    void RelabelPhenotypes(std::vector<Phenotype_ID >& pids,std::map<Phenotype_ID, std::map<std::pair<interface_type,interface_type>, uint8_t> >& p_ints) { 
+    void RelabelPhenotypes(std::vector<Phenotype_ID >& pids,std::map<Phenotype_ID, std::map<interaction_pair, uint8_t> >& p_ints) { 
       for(std::unordered_map<uint8_t,std::vector<uint16_t> >::iterator x_iter=new_phenotype_xfer.begin();x_iter!=new_phenotype_xfer.end();++x_iter) 
         for(std::vector<uint16_t>::iterator r_iter=x_iter->second.begin();r_iter!=x_iter->second.end();r_iter+=2) {
           std::replace(pids.begin(),pids.end(),std::make_pair(x_iter->first,*(r_iter)),std::make_pair(x_iter->first,*(r_iter+1)));
@@ -147,7 +147,7 @@ namespace interface_model
     void ReassignFitness() {
       for(std::unordered_map<uint8_t,std::vector<double> >::iterator fit_iter=phenotype_fitnesses.begin();fit_iter!=phenotype_fitnesses.end();++fit_iter) {
 	if(fit_iter->first) {
-	  std::gamma_distribution<double> fitness_dist(sqrt(static_cast<double>(fit_iter->first)),1);
+	  std::gamma_distribution<double> fitness_dist(sqrt(fit_iter->first),1);
 	  for(double& fitness : fit_iter->second)
 	    fitness=fitness_dist(RNG_Engine);
 	}

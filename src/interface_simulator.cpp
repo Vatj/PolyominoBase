@@ -57,7 +57,7 @@ void EvolvePopulation(std::string run_details) {
 
       interface_model::MutateInterfaces(evolving_genotype.genotype);
 
-      std::vector<std::pair<interface_type,interface_type> > pid_interactions;
+      std::vector<interaction_pair> pid_interactions;
       population_fitnesses[nth_genotype]=interface_model::ProteinAssemblyOutcome(evolving_genotype.genotype,&pt,evolving_genotype.pid,pid_interactions);
       for(auto x : pid_interactions)
         fout_strength<<+x.first<<" "<<+x.second<<",";  
@@ -163,15 +163,20 @@ int main(int argc, char* argv[]) {
   }
   
   //auto a = BindingProbabilities();
-  BGenotype bg{1,1,1,113, 0,0,0,127};
-  std::set< std::pair<interface_type,interface_type> > aa;
+  BGenotype bg{1,100,50,100, 100,100,177,127};
+  std::set<interaction_pair > aa;
   std::vector<int8_t> a;
   switch(run_option) {
   case 'E':
     EvolutionRunner();
     break;
   case 'X':
-    interface_model::AssembleProteinNew(bg);
+    a=interface_model::AssembleProteinNew(bg,aa);
+    for(auto qqqq :a)
+      std::cout<<+qqqq<<" ";
+    std::cout<<std::endl;
+    for(auto qq : aa)
+      std::cout<<+qq.first<<"/"<<+qq.second<<std::endl;
     std::cout<<"Unused at this time"<<std::endl;
     break;
   case 'D':
@@ -210,6 +215,7 @@ void SetRuntimeConfigurations(int argc, char* argv[]) {
       
       case 'M': model_params::mu_prob=std::stod(argv[arg+1]);break;
       case 'T': model_params::temperature=std::stod(argv[arg+1]);break;
+      case 'Y': model_params::binding_threshold=std::stod(argv[arg+1]);break;
       case 'X': model_params::UND_threshold=std::stod(argv[arg+1]);break;
       case 'I': model_params::interface_threshold=std::stod(argv[arg+1]);break;
 	
