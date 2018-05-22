@@ -11,7 +11,7 @@
 #include <iostream>
 
 
-typedef uint64_t interface_type;
+typedef uint8_t interface_type;
 typedef std::vector<interface_type> BGenotype;
 
 namespace simulation_params
@@ -65,6 +65,10 @@ namespace interface_model
   double ProteinAssemblyOutcome(BGenotype binary_genome, InterfacePhenotypeTable* pt,Phenotype_ID& pid,std::vector<std::pair<interface_type,interface_type> >& pid_interactions);
   std::vector<int8_t> AssembleProtein(const BGenotype& binary_genome,std::set< std::pair<interface_type,interface_type> >& interacting_indices);
   void PerimeterGrowth(int8_t x,int8_t y,int8_t theta,int8_t direction, int8_t tile_type,std::vector<int8_t>& growing_perimeter,std::vector<int8_t>& placed_tiles);
+
+  std::vector<int8_t> AssembleProteinNew(const BGenotype& binary_genome);//,std::set< std::pair<interface_type,interface_type> >& interacting_indices);
+  void ExtendPerimeter(const BGenotype& binary_genome,uint8_t tile_detail, int8_t x,int8_t y, std::vector<int8_t>& placed_tiles,std::vector<int8_t>& potential_sites,std::vector<double>& binding_strengths);
+  
 
 
   

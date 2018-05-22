@@ -156,12 +156,6 @@ int main(int argc, char* argv[]) {
   if(argc<2) {
     std::cout<<"no Params"<<std::endl;
     run_option='H';
-    //std::vector<uint8_t> s{1,1,1, 0,1,0, 1,1,1};
-    //uint8_t dx=3,dy=3;
-    //std::cout<<+PhenotypeSymmetryFactor(s,dx,dy)<<std::endl;
-    for(auto g : SequenceDifference({0,1,2,3,4,9,6,7},{19,1,2,3,4,5,6,7}))
-      std::cout<<+g<<" ";
-    std::cout<<std::endl;
   }
   else {
     run_option=argv[1][1];
@@ -169,11 +163,15 @@ int main(int argc, char* argv[]) {
   }
   
   //auto a = BindingProbabilities();
+  BGenotype bg{1,1,1,113, 0,0,0,127};
+  std::set< std::pair<interface_type,interface_type> > aa;
+  std::vector<int8_t> a;
   switch(run_option) {
   case 'E':
     EvolutionRunner();
     break;
   case 'X':
+    interface_model::AssembleProteinNew(bg);
     std::cout<<"Unused at this time"<<std::endl;
     break;
   case 'D':

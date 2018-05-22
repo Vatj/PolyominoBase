@@ -19,6 +19,7 @@ namespace model_params
 
 namespace interface_model
 {
+  
  
   std::mt19937 RNG_Engine(std::random_device{}());
   uint8_t GAUGE=4;
@@ -85,6 +86,7 @@ namespace interface_model
 
 
   std::vector<int8_t> AssembleProtein(const BGenotype& binary_genome,std::set< std::pair<interface_type,interface_type> >& interacting_indices) {
+    
     std::vector<int8_t> placed_tiles{0,0,1},growing_perimeter;
     PerimeterGrowth(0,0,0,-1,0,growing_perimeter,placed_tiles);
     int8_t orientation, tile, direction, x, y;
@@ -151,13 +153,69 @@ namespace interface_model
     }
   }
   
-  std::vector<int8_t> AssembleProtein(const BGenotype& binary_genome,std::set< std::pair<interface_type,interface_type> >& interacting_indices) {
+  std::vector<int8_t> AssembleProteinNew(const BGenotype& binary_genome) {//},std::set< std::pair<interface_type,interface_type> >& interacting_indices) {
     std::vector<int8_t> placed_tiles{0,0,1},growing_perimeter;
-    PerimeterGrowth(0,0,0,-1,0,growing_perimeter,placed_tiles);
-    int8_t orientation, tile, direction, x, y;
-    std::vector<uint8_t> genome_bases(binary_genome.size());
-    std::iota(genome_bases.begin(), genome_bases.end(), 0);
+    std::vector<double> strengths,strengths_cdf;
+    ExtendPerimeter(binary_genome,1,0,0,placed_tiles,growing_perimeter,strengths);
 
+    while(!strengths.empty()) {
+      //select new site proportional to binding strength
+      strengths_cdf.resize(strengths.size());
+      std::partial_sum(strengths.begin(), strengths.end(), strengths_cdf.begin());
+      std::uniform_real_distribution<double> random_interval(0,strengths_cdf.back());
+      size_t selected_choice=static_cast<size_t>(std::lower_bound(strengths_cdf.begin(),strengths_cdf.end(),random_interval(interface_model::RNG_Engine))-strengths_cdf.begin());
+
+      //place new tile
+      const int8_t f_x=*(growing_perimeter.begin()+selected_choice*3),f_y=*(growing_perimeter.begin()+selected_choice*3+1),f_t=*(growing_perimeter.begin()+selected_choice*3+2);
+      placed_tiles.insert(placed_tiles.end(),growing_perimeter.begin()+selected_choice*3,growing_perimeter.begin()+selected_choice*3+3);
+      
+      
+      //remove all further options in same tile location
+      for(size_t cut_index=0;cut_index<strengths.size();) {
+	if(f_x==*(growing_perimeter.begin()+cut_index*3) && f_y==*(growing_perimeter.begin()+cut_index*3+1)) {
+	  strengths.erase(strengths.begin()+cut_index);
+	  growing_perimeter.erase(growing_perimeter.begin()+cut_index*3,growing_perimeter.begin()+cut_index*3+3);
+	}
+	else
+	  ++cut_index;
+      }
+
+      //find new potential sites
+      ExtendPerimeter(binary_genome,f_t,f_x,f_y,placed_tiles,growing_perimeter,strengths);
+
+      //unbound limit reached
+      if(placed_tiles.size()>static_cast<size_t>(0.75*binary_genome.size()*binary_genome.size()))
+        return {};
+    }
+    return placed_tiles;
+  }
+
+ 
+  void ExtendPerimeter(const BGenotype& binary_genome,uint8_t tile_detail, int8_t x,int8_t y, std::vector<int8_t>& placed_tiles,std::vector<int8_t>& new_sites,std::vector<double>& binding_strengths) {
+    int8_t dx=0,dy=0,tile=(tile_detail-1)/4,theta=(tile_detail-1)%4;
+    for(uint8_t f=0;f<4;++f) {
+      switch(f) {
+      case 0:dx=0;dy=1;break;
+      case 1:dx=1;dy=0;break;
+      case 2:dx=0;dy=-1;break;
+      case 3:dx=-1;dy=0;break;
+      }
+      //site already occupied, move on
+      for(std::vector<int8_t>::reverse_iterator tile_info=placed_tiles.rbegin();tile_info!=placed_tiles.rend();tile_info+=3) 
+        if((x+dx)==*(tile_info+2) && (y+dy)==*(tile_info+1)) 
+	  goto nextloop;
+
+      //find all above threshold bindings and add to new sites
+      for(uint8_t base=0;base<binary_genome.size();++base) {
+	uint8_t SD=SammingDistance(binary_genome[base],binary_genome[tile*4+(f-theta+4)%4]);
+	if(SD<=static_cast<uint8_t>(floor(model_params::interface_size*model_params::temperature))){
+	  binding_strengths.emplace_back(model_params::binding_probabilities[SD]);
+	  new_sites.insert(new_sites.end(),{static_cast<int8_t>(x+dx),static_cast<int8_t>(y+dy),static_cast<int8_t>(base-base%4+((f+2)%4-base%4+4)%4+1)});
+	}
+      }
+    nextloop: ; //continue if site already occupied
+    }
+      
   }
 
   
