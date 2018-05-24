@@ -8,7 +8,7 @@ const uint16_t printing_resolution=100; /* NOTE RESOLUTION IS 1 */
 void EvolvePopulation(std::string run_details) {
   /* Output files */
   std::string file_base_path="//scratch//asl47//Data_Runs//Bulk_Data//";    //"//rscratch//asl47//Bulk_Run//Interfaces//";
-  std::string file_simulation_details="I"+std::to_string(model_params::interface_size)+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
+  std::string file_simulation_details="I"+std::to_string(model_params::interface_size)+"_T"+std::to_string(model_params::binding_threshold)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
     
   std::ofstream fout_strength(file_base_path+"Strengths_"+file_simulation_details, std::ios_base::out);
   std::ofstream fout_fitness(file_base_path+"Fitness_"+file_simulation_details, std::ios_base::out);
