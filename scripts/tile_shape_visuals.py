@@ -42,13 +42,13 @@ def PlotManyLengths(mu):
     t=3
     Os=[5,25,125]
     l1=LoadLengths(t,mu)
-    print "T3 size: ",l1.shape[0]
+    print("T3 size: ",l1.shape[0])
     fig=plt.figure(figsize=(10,7))
     plt.title(r'$\langle \mu L \rangle =${}'.format(4./mu))
     PlotCCLengths(l1,r'Static}',**{'c':colour_args[t],'marker':marker_args[0],'ls':ls_args[0],'alpha':1 if l1.shape[0]>10000 else 0.2})
     for (t,o) in product([4,5],Os):
         l1=LoadLengths(t,mu,o)
-        print "T{}O{} size: ".format(t,o),l1.shape[0]
+        print("T{}O{} size: ".format(t,o),l1.shape[0])
         PlotCCLengths(l1,r'Dynamic $\Omega^{0}_{{{1}}}$'.format(2 if t==4 else 1,o),**{'c':colour_args[t],'marker':marker_args[o],'ls':ls_args[o],'alpha':1 if l1.shape[0]>10000 else 0.2})
     fig.set_tight_layout(True)
 
@@ -58,7 +58,7 @@ def PlotManyLengths(mu):
 
 def PlotShapeSizes(data,ret=False):
     sizes=[sum(shape[2:-2]) for shape in data]
-    sym_sizes=[list() for i in xrange(4)]
+    sym_sizes=[list() for i in range(4)]
     colours=['forestgreen','darkorange','mediumslateblue','k']
     for shape in data:
         if shape[-2]==0:
@@ -96,7 +96,7 @@ def PlotShapeDistrs(mu):
     sorted_keys[4:]=sorted(sorted_keys[4:],key=lambda x: int(x[x.index('O')+1:]))
 
     for key in sorted_keys:
-        print key, "len ",len(data_dict[key])
+        print(key, "len ",len(data_dict[key]))
         #hist_vals,bin_edges=np.histogram(data,
         #plt.hist(data,range=(0,100),bins=100)
         #print key
@@ -140,8 +140,8 @@ def VisualiseSingleShape(shape):
 
     dx=shape[0]
     dy=shape[1]
-    for i in xrange(dx):
-        for j in xrange(dy):
+    for i in range(dx):
+        for j in range(dy):
             if(shape[2+i+j*dx]):
                 ax.add_patch(Rectangle((i-dx/2., dy/2.-j-1), 1, 1, facecolor=cols[(shape[2+i+j*dx]-1)/4],edgecolor='slategrey',fill=True,hatch='////',lw=0))
                 
@@ -170,8 +170,8 @@ def Visualise_Shape_From_Binary(Shape_String_X,count,currentAxis,X_Y_LIMS,tightB
         valid=1#Shape_String_X[-2]
         DELTA_X=Shape_String[0]
         DELTA_Y=Shape_String[1]
-        for i in xrange(DELTA_X):
-            for j in xrange(DELTA_Y):
+        for i in range(DELTA_X):
+            for j in range(DELTA_Y):
                 if(Shape_String[2+i+j*DELTA_X]):
                     if valid:
                         currentAxis.add_patch(Rectangle((i-DELTA_X/2., DELTA_Y/2.-j-1), 1, 1, facecolor='lightsteelblue',edgecolor='slategrey',fill=True,hatch='////',lw=0))
@@ -228,23 +228,23 @@ def VisualiseShapesNew(shapes,saving=False,fileSave='Test',valid_only=True):
     pdf = PdfPages(fname)
     pgN=0
     if valid_only:
-        print "cutting"
+        print("cutting")
         shapes.sort(key=lambda x: x[-2])
         gener = (i for i,v in enumerate(shapes) if v[-2]==1)
-        indexer=gener.next()
-        print indexer
+        indexer=next(gener)
+        print(indexer)
         shapes=shapes[:100]#indexer:]
     shapes.sort(key=lambda x: sum(x[2:-2]))
     #return shapes
-    for pg in xrange(int(ceil(len(shapes)/(X_rows*Y_rows*1.)))):
+    for pg in range(int(ceil(len(shapes)/(X_rows*Y_rows*1.)))):
         Make_Shape_Page(shapes[X_rows*Y_rows*pgN:X_rows*Y_rows*(pgN+1)],[sum(shape[2:-2]) for shape in shapes][X_rows*Y_rows*pgN:X_rows*Y_rows*(pgN+1)],X_rows,Y_rows,10,saving,pdf,pgN)
         pgN+=1
     pdf.close()
 
 def Load_Shapes():
     shape_dict={int(key): [int(info) for info in deltas.split()+shape.split()] for (key,deltas,shape) in [line.rstrip('\n').split('*')[2::2] for line in open('/rscratch/asl47/Modular_Shapes.txt')]}
-    print "done"
-    print shape_dict
+    print("done")
+    print(shape_dict)
     return shape_dict
 
 def TargetShapes(targets,labels):
@@ -287,8 +287,8 @@ def TargetShapes(targets,labels):
         currentAxis.set_ylim([-delta_y/2.-0.5,delta_y/2.+0.5])
         
         currentAxis.text(0, delta_y/2.+0.5,label,horizontalalignment='center',verticalalignment='center')
-        for i in xrange(delta_y):
-            for j in xrange(delta_x):
+        for i in range(delta_y):
+            for j in range(delta_x):
                 if target[2+j+i*delta_x]==1:
                     currentAxis.add_patch(Rectangle((j-delta_x/2., delta_y/2.-i-1), 1, 1, facecolor='red',edgecolor='slategrey',fill=True,hatch='////',lw=0))
                 elif target[2+j+i*delta_x]==2:
@@ -311,7 +311,7 @@ def sortShapes(Shapes,Counts):
         Shapes.append(-4)
     if not -1 in Shapes:
         Shapes.append(-1)
-    np_counts=np.array(Counts.values())
+    np_counts=np.array(list(Counts.values()))
     inds=np_counts.argsort()
     np_counts=np_counts[inds]
     sortedShapes=[Shapes[i] for i in inds]
@@ -326,7 +326,7 @@ def Visualise_Shapes(Shape_Strings,Shape_Counts,X_Y_LIMS,saving=False,fileSave="
     fname="{}.pdf".format(fileSave)
     pdf = PdfPages(fname)
     pgN=0
-    for pg in xrange(int(ceil(len(Shape_Strings)/(X_rows*Y_rows*1.)))):
+    for pg in range(int(ceil(len(Shape_Strings)/(X_rows*Y_rows*1.)))):
         Make_Shape_Page(sortShape[pg*(X_rows*Y_rows):(pg+1)*(X_rows*Y_rows)],np_count[pg*(X_rows*Y_rows):(pg+1)*(X_rows*Y_rows)]/totalC*100,X_rows,Y_rows,X_Y_LIMS,saving,pdf,pgN)
         pgN+=1
     pdf.close()
@@ -336,8 +336,8 @@ def Visualise_Shapes(Shape_Strings,Shape_Counts,X_Y_LIMS,saving=False,fileSave="
 
 def Clockwise_Rotation(Shape_String):
     rotated_String=Shape_String[1::-1]
-    for column in xrange(Shape_String[0]):
-        for row in xrange(Shape_String[1]-1,-1,-1):
+    for column in range(Shape_String[0]):
+        for row in range(Shape_String[1]-1,-1,-1):
             rotated_String.append(Shape_String[2+row*Shape_String[0]+column])
     return rotated_String
 
@@ -352,15 +352,15 @@ def Merge_Shape_Data_Files(runType,runNum,numParts):
 
     Shape_Strings_Base=[[int(j) for j in u if j!=' '] for u in [q[0]+q[1] for q in [line.rstrip('\n').split("Deltas ")[-1].split("  Shape: ") for line in open(Shape_Base_Fname)]]]
 
-    for i in xrange(2,numParts+1):
-        print "Merging on part ",i
+    for i in range(2,numParts+1):
+        print("Merging on part ",i)
         Data_Fname="Output/S_{}_Run_R{}P{}_Data.txt".format(runType,runNum,i)
         Shape_Fname="Output/S_{}_Run_R{}P{}_Shapes.txt".format(runType,runNum,i)
         Shape_Strings=[[int(j) for j in u if j!=' '] for u in [q[0]+q[1] for q in [line.rstrip('\n').split("Deltas ")[-1].split("  Shape: ") for line in open(Shape_Fname)]]]
         Shape_Counts={int(key):int(value) for (key,value) in [line.rstrip('\n').split("Code:")[-1].split(" N:") for line in open(Data_Fname)]}
 
 
-        for key,value in Shape_Counts.iteritems():
+        for key,value in Shape_Counts.items():
             if key>=0: 
                 continue
             else:
@@ -399,7 +399,7 @@ def find_Difference(stringSet1, stringSet2):
                 else:
                     rotation+=1
             else: #is different
-                print string
+                print(string)
 
                 
 def f(x,a,b):

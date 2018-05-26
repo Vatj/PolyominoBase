@@ -24,7 +24,7 @@ def plotEvolution(files,labels=False,title=""):
     for n,fileN in enumerate(files):
         
         lines=[line.rstrip('\n') for line in open("Evolution_Runs/{}.txt".format(fileN))]
-        pp=[filter(None,re.split('[a-z]|:|_|[A-Z]',line)) for line in lines]
+        pp=[[_f for _f in re.split('[a-z]|:|_|[A-Z]',line) if _f] for line in lines]
         pp_float=np.array([[float(i) for i in  p] for p in pp])
 
 
@@ -86,17 +86,17 @@ def Plot_Genome_Length(Ts):
         #L_ax.plot(xrange(1,L_FIX+1),mean_Data[::2]-std_Data[::2],c=cs[i],zorder=5,lw=0.5)
         #L_ax.plot(xrange(1,L_FIX+1),mean_Data[::2]+std_Data[::2],c=cs[i],zorder=5,lw=0.5)
         
-        L_ax.plot(xrange(2,L_FIX+2),mean_Data[::2],c=cs[i],zorder=10,lw=3)
-        L_ax.fill_between(xrange(2,L_FIX+2), mean_Data[::2]-std_Data[::2],mean_Data[::2]+std_Data[::2],facecolor=cs[i],alpha=0.3,interpolate=True,zorder=1)
-        L_ax.plot(xrange(2,L_FIX+2),mean_Data[::2]-std_Data[::2],c=cs[i],zorder=5,lw=0.5)
-        L_ax.plot(xrange(2,L_FIX+2),mean_Data[::2]+std_Data[::2],c=cs[i],zorder=5,lw=0.5)
+        L_ax.plot(range(2,L_FIX+2),mean_Data[::2],c=cs[i],zorder=10,lw=3)
+        L_ax.fill_between(range(2,L_FIX+2), mean_Data[::2]-std_Data[::2],mean_Data[::2]+std_Data[::2],facecolor=cs[i],alpha=0.3,interpolate=True,zorder=1)
+        L_ax.plot(range(2,L_FIX+2),mean_Data[::2]-std_Data[::2],c=cs[i],zorder=5,lw=0.5)
+        L_ax.plot(range(2,L_FIX+2),mean_Data[::2]+std_Data[::2],c=cs[i],zorder=5,lw=0.5)
         
         #F_ax.plot(xrange(1,L_FIX+1),mean_Data[1::2],'-',c=cs[i],zorder=10,lw=3)
         #F_ax.fill_between(xrange(1,L_FIX+1), mean_Data[1::2]-std_Data[1::2],np.minimum(mean_Data[1::2]+std_Data[1::2],[1]),facecolor=cs[i],alpha=0.3,interpolate=True,zorder=1)
         #F_ax.plot(xrange(1,L_FIX+1),mean_Data[1::2]-std_Data[1::2],c=cs[i],zorder=5,lw=0.5)
         #F_ax.plot(xrange(1,L_FIX+1),np.minimum(mean_Data[1::2]+std_Data[1::2],[1]),c=cs[i],zorder=5,lw=0.5)
         
-        print "T", np.mean(mean_Data[500::2]), "+-", np.mean(std_Data[500::2])/np.sqrt(100000)
+        print("T", np.mean(mean_Data[500::2]), "+-", np.mean(std_Data[500::2])/np.sqrt(100000))
 
     #F_ax.xaxis.tick_top()
     L_ax.set_xscale('log')
@@ -123,7 +123,7 @@ def Plot_Frac_Oc(Ts,R):
     frac_matrix=np.zeros((10,10))
     frac_matrix2=np.zeros((10,10))
     
-    for T in xrange(1,Ts+1):
+    for T in range(1,Ts+1):
         lines=[line.rstrip('\n') for line in open('/rscratch/asl47/Frac_Oc/Fractional_Occupation_T{}_Run_{}.txt'.format(T,R))]
         for line in lines:
             frac_matrix[int(line.split(' ')[1])/4 -1][T-1] +=float(line.split(' ')[2])/250000000
@@ -155,11 +155,11 @@ def Plot_Frac_Oc(Ts,R):
     #cb2=f.colorbar(p_im,cax2,ticks=np.logspace(int(floor(np.log10(np.min(masked_frac_M2)))),0,abs(int(floor(np.log10(np.min(masked_frac_M2)))))+1),orientation='horizontal')
     
  
-    F_ax.xaxis.set(ticks=np.arange(0.5, 10), ticklabels=[i for i in xrange(1,11)])
-    F_ax.yaxis.set(ticks=np.arange(0.5, 10), ticklabels=[i for i in xrange(4,44,4)])
+    F_ax.xaxis.set(ticks=np.arange(0.5, 10), ticklabels=[i for i in range(1,11)])
+    F_ax.yaxis.set(ticks=np.arange(0.5, 10), ticklabels=[i for i in range(4,44,4)])
 
-    P_ax.xaxis.set(ticks=np.arange(0.5, 10), ticklabels=[i for i in xrange(1,11)])
-    P_ax.yaxis.set(ticks=np.arange(0.5, 10), ticklabels=[i for i in xrange(4,44,4)])
+    P_ax.xaxis.set(ticks=np.arange(0.5, 10), ticklabels=[i for i in range(1,11)])
+    P_ax.yaxis.set(ticks=np.arange(0.5, 10), ticklabels=[i for i in range(4,44,4)])
 
     F_ax.set_ylabel('Colours')
     f.text(0.54,0.98,r'$N_{T}$',ha='center',va='top')
@@ -170,8 +170,8 @@ def Plot_Frac_Oc(Ts,R):
 
     plt.figure()
     colors = [ cm.viridis(x) for x in np.linspace(0,1,10)]
-    for i in xrange(10):
-        plt.plot([j for j in xrange(1,11)], frac_matrix[i,:],c=colors[i])
+    for i in range(10):
+        plt.plot([j for j in range(1,11)], frac_matrix[i,:],c=colors[i])
     #plt.yscale('log',nonposy='mask')
     plt.xlabel(r'$N_{T}$')
     plt.ylabel('B/D Fraction')
@@ -199,7 +199,7 @@ def Plot_Evolution_New(subfolder,files,labels):
     for n,fileN in enumerate(files):
         #print n,":",labels[n],fileN
         lines=[line.rstrip('\n') for line in open('/scratch/asl47/Data_Runs/{}/{}.txt'.format(subfolder,fileN))]
-        pp=[filter(None,re.split('[a-z]|:|_|[A-Z]',line)) for line in lines]
+        pp=[[_f for _f in re.split('[a-z]|:|_|[A-Z]',line) if _f] for line in lines]
         pp_float=np.array([[float(i) for i in  p] for p in pp])
         
         
@@ -247,7 +247,7 @@ def Plot_Evolution_Reg(subName='Evolution_Regulation_17_06_26'):
     for i,fileN in enumerate(glob.glob('/scratch/asl47/Data_Runs/{}/*.txt'.format(subName))):
         T=int(fileN.split('_')[6][1])
         R=int(fileN.split('_')[14])
-        print T,R
+        print(T,R)
         lines=np.array([[float(x) for x in line.rstrip('\n').split()[1:6:2]] for line in open(fileN)])
         #ls.append(lines)
         
@@ -262,7 +262,7 @@ def Plot_Evolution_Reg(subName='Evolution_Regulation_17_06_26'):
         slopeR, interceptR, r_valueR, p_valueR, std_errR = linregress(np.log10(lines[:10,0]),np.log10(lines[:10,1]))
         Z_ax.plot(lines[:,0],[10**(interceptR)*(l**slopeR) for l in lines[:,0]],c=cs[i],zorder=1)
         #print [10**(interceptR)*(l**slopeR) for l in lines[:,1]]
-        print "R",slopeR, interceptR, r_valueR**2, std_errR
+        print("R",slopeR, interceptR, r_valueR**2, std_errR)
 
    
     plt.legend()
@@ -285,7 +285,7 @@ def Plot_Evolution_Reg(subName='Evolution_Regulation_17_06_26'):
     plt.show(block=False)
 
     
-def Plot_Evolution_Mins(T=2,Cs=[i for i in xrange(6,32,2)]+[i for i in xrange(32,120,4)]+[i for i in xrange(120,200,10)]+[i for i in xrange(200,600,100)] ,N=100,D=10000,M=3,F=12,K=500,R=0):
+def Plot_Evolution_Mins(T=2,Cs=[i for i in range(6,32,2)]+[i for i in range(32,120,4)]+[i for i in range(120,200,10)]+[i for i in range(200,600,100)] ,N=100,D=10000,M=3,F=12,K=500,R=0):
     Use_Seaborn()
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
@@ -330,21 +330,21 @@ def Plot_Evolution_Mins(T=2,Cs=[i for i in xrange(6,32,2)]+[i for i in xrange(32
     T_ax.plot(Cs,D_Mins,lw=0.75,ls='',marker='o',markersize=7,markeredgecolor='dodgerblue',label=r'$\langle \tau_{D} \rangle$',zorder=10,fillstyle='full',markeredgewidth=1.25,markerfacecolor='white')
     #T_ax.plot(Cs,D_Mins,lw=0.75,ls='--',c='dodgerblue',zorder=1,alpha=0.6)
     #S_ax = T_ax.twinx()
-    sorted_Walk_X,sorted_Walk_Y=zip(*sorted(zip(R_xs,R_MinsArr[:,0])))
+    sorted_Walk_X,sorted_Walk_Y=list(zip(*sorted(zip(R_xs,R_MinsArr[:,0]))))
     #print sorted_Walk_Y
-    T_ax.plot(*zip(*sorted(zip(R_xs,R_MinsArr[:,0]))),ls='',marker='D',markersize=7,markeredgecolor='darkgreen',label='Random Walk',zorder=10,fillstyle='full',markeredgewidth=1.25,markerfacecolor='white')
+    T_ax.plot(*list(zip(*sorted(zip(R_xs,R_MinsArr[:,0])))),ls='',marker='D',markersize=7,markeredgecolor='darkgreen',label='Random Walk',zorder=10,fillstyle='full',markeredgewidth=1.25,markerfacecolor='white')
     #T_ax.plot(*zip(*sorted(zip(R_xs,R_MinsArr[:,0]))),ls=':',zorder=1,alpha=0.6,c='darkgreen')
-    T_ax.errorbar(*zip(*sorted(zip(R_xs,R_MinsArr[:,0]))),yerr=zip(*sorted(zip(R_xs,R_MinsArr[:,1])))[1],fmt='',ls='',ecolor='darkgreen')
+    T_ax.errorbar(*list(zip(*sorted(zip(R_xs,R_MinsArr[:,0])))),yerr=zip(*sorted(zip(R_xs,R_MinsArr[:,1])))[1],fmt='',ls='',ecolor='darkgreen')
 
     slopeA, interceptA, r_valueA, p_valueA, std_errA = linregress(Cs[-5:],T_Mins[-5:])
     slopeD, interceptD, r_valueD, p_valueD, std_errD = linregress(Cs[-5:],D_Mins[-5:])
     slopeR, interceptR, r_valueR, p_valueR, std_errR = linregress(np.log10(sorted_Walk_X[-5:]),np.log10(sorted_Walk_Y[-5:]))
-    print slopeA,slopeD,slopeR
-    print interceptA,interceptD,interceptR
+    print(slopeA,slopeD,slopeR)
+    print(interceptA,interceptD,interceptR)
 
-    print "A",slopeA, interceptA, r_valueA**2, std_errA
-    print "D",slopeD, interceptD, r_valueD**2, std_errD
-    print "R",slopeR, interceptR, r_valueR**2, std_errR
+    print("A",slopeA, interceptA, r_valueA**2, std_errA)
+    print("D",slopeD, interceptD, r_valueD**2, std_errD)
+    print("R",slopeR, interceptR, r_valueR**2, std_errR)
         
     T_ax.plot(Cs[-35:],[(C**slopeR)*(10**interceptR) for C in Cs[-35:]],lw=1,ls='--',c='darkgreen',alpha=1,zorder=1)
    
@@ -382,7 +382,7 @@ def temp():
         try:
             n=int(fileN.split('_')[6])
             temx=[[float(x.split()[0]) for x in line.rstrip('\n').split(':')[2:]] for line in open(fileN)]
-            print temx[2]
+            print(temx[2])
             zz[n]=temx[2][0]
             R_ys.append(temx[1][0]/temx[2][0])
             R_xs.append(int(fileN.split('_')[6]))
@@ -390,12 +390,12 @@ def temp():
             #R_Mins.append([[float(x.split()[0]) for x in line.rstrip('\n').split(':')[2:]] for line in open(fileN)])
         except:
             continue
-    plt.plot(*zip(*sorted(zip(R_xs,R_ys))))
+    plt.plot(*list(zip(*sorted(zip(R_xs,R_ys)))))
     plt.show(block=False)
     return zz
 from math import floor,ceil
 def Plot_Max_Size():
-    xs=range(1,11)
+    xs=list(range(1,11))
     plt.figure()
     plt.plot(xs,[4*(x**2) for x in xs],ls='--',c='k',alpha=.7,zorder=1)
     #plt.plot(xs,[(2*ceil(x/2.)+floor(x/2.))**2 for x in xs],ls='--',c='c',alpha=.7,zorder=1)
@@ -426,13 +426,13 @@ def Plot_Max_Size():
 
 def Get_Max(T,C,Mu,R):
     maxs=[]
-    for r in xrange(R):
+    for r in range(R):
         lines=np.array([[float(x) for x in line.rstrip('\n').split()[1:6:2]] for line in open('/rscratch/asl47/Bulk_Run/Fitness/T_{}C_{}N_{}Mu_{}_Osc_{}_Gen_{}_Run_{}.txt'.format(T,C,500,Mu,20000,20000,r))])
         maxs.append(np.max(lines[:,2]))
         if np.max(lines[:,2])==152.0:
-            print r
+            print(r)
             del maxs[-1]
-    print max(maxs)
+    print(max(maxs))
 
 
 
@@ -475,7 +475,7 @@ def Plot_Fitness_Evolution(T,C,Mus,Osc_Rate,labels,runs,Gen_Limit,maxes=True):
     Max_Ax_High.spines['left'].set_visible(False)
     line_caps=[]
 
-    temp_cases=[0]+[n*Osc_Rate for n in xrange(1,Gen_Limit/Osc_Rate)]
+    temp_cases=[0]+[n*Osc_Rate for n in range(1,Gen_Limit/Osc_Rate)]
     Alt= 2 if maxes else 3
     
     ms={0:'o', 13:'s', 17:'^', 15:'D'}
@@ -562,7 +562,7 @@ def Plot_Fitness_Evolution(T,C,Mus,Osc_Rate,labels,runs,Gen_Limit,maxes=True):
     Max_Ax_Low.axhline(.5,c='k',lw=1.5,ls='--')
     Max_Ax_High.axhline(.5,c='k',lw=1.5,ls='--')
 
-    for jj in xrange(1,51):
+    for jj in range(1,51):
         Avg_Ax_Low.plot([jj*75]*2,[0,1],c='gray',lw=1.5,ls='--',alpha=0.6)
         Avg_Ax_High.plot([22500+jj*75]*2,[0,1],c='gray',lw=1.5,ls='--',alpha=0.6)
         Max_Ax_Low.plot([jj*75]*2,[0.0000001,1],c='gray',lw=1.5,ls='--',alpha=0.6)
@@ -608,11 +608,11 @@ def Adaptation_Times(Averaged_DataD,Osc_Rate,Gen_Limit):
 
     fig, Adapt_Ax = plt.subplots()
     #Peak_Ax=Adapt_Ax.twinx()
-    for Mu in Averaged_DataD.keys():
-        print "on mu: ",Mu
+    for Mu in list(Averaged_DataD.keys()):
+        print("on mu: ",Mu)
         Adaptations[Mu]=[]
         Peaks[Mu]=[]
-        temp_cases=[0]+[n*Osc_Rate for n in xrange(1,Gen_Limit/Osc_Rate)]
+        temp_cases=[0]+[n*Osc_Rate for n in range(1,Gen_Limit/Osc_Rate)]
         for oscillation_L,oscillation_H in zip(temp_cases,temp_cases[1:]):
             Oscillation_Slice=Averaged_DataD[Mu][:,2][oscillation_L:oscillation_H]
             
@@ -624,7 +624,7 @@ def Adaptation_Times(Averaged_DataD,Osc_Rate,Gen_Limit):
                 Adaptations[Mu].append(index)
                 Peaks[Mu].append(max(Oscillation_Slice))
                 
-        Adapt_Ax.plot([Osc_Rate*x for x in xrange(len(Adaptations[Mu])) ],Adaptations[Mu],label=Mu,lw=0.5)
+        Adapt_Ax.plot([Osc_Rate*x for x in range(len(Adaptations[Mu])) ],Adaptations[Mu],label=Mu,lw=0.5)
         #Peak_Ax.plot(Peaks[Mu],'--')
 
     Adapt_Ax.set_xlabel('Generations (Cycle={})'.format(Osc_Rate))
@@ -642,14 +642,14 @@ def Plot_CC_Size(Mus):
     colours=['royalblue','firebrick','darkgreen','goldenrod','deeppink','navy','lime']*2
     xl=[]
     for Mu in Mus:
-        for run in xrange(10):
+        for run in range(10):
             Fitness_Packed=np.array([[float(value) for value in line.rstrip('\n').split()[1::2]] for line in open('/rscratch/asl47/Bulk_Run/Fitness/Mu_{}_Osc_{}_Gen_{}_Run_{}_3.txt'.format(Mu,15,1000,run))])
-            print Fitness_Packed.shape
+            print(Fitness_Packed.shape)
             plt.plot(Fitness_Packed[:,4][~np.isnan(Fitness_Packed[:,4])],ls='-',c=colours[run])
             #print "Run ",run, " average is ", np.nanmean(Fitness_Packed[:,4][~np.isnan(Fitness_Packed[:,4])])
             xl.append(np.nanmean(Fitness_Packed[:,4][~np.isnan(Fitness_Packed[:,4])]))
             plt.scatter([-10],[np.nanmean(Fitness_Packed[:,4][~np.isnan(Fitness_Packed[:,4])])],marker='x',s=80,c=colours[run])
-    print np.nanmean(np.array(xl))
+    print(np.nanmean(np.array(xl)))
     #plt.title(Mus[0])
     plt.show(block=False)
     
@@ -666,7 +666,7 @@ def Hamming_Load():
     std_d=np.std(distances)
     IQ1=np.percentile(distances,25)
     IQ2=np.percentile(distances,75)
-    counter_d=dict(zip(*np.unique(distances, return_counts=True)))
+    counter_d=dict(list(zip(*np.unique(distances, return_counts=True))))
 
     with open('/scratch/asl47/Hamming_Details.txt','w') as f:
         f.write(str(max_d)+'\n')
@@ -691,16 +691,16 @@ def Hamming_Plot():
     IQ2=float(lines[5])
     counter_d=eval(lines[6])
     ax=plt.subplot(1,1,1)
-    plt.scatter(counter_d.keys(),[counter_d[key]*1./sum(counter_d.values()) for key in counter_d.keys()],marker='o',s=70,c='darkred',label='Distribution')
-    plt.plot(counter_d.keys(),[counter_d[key]*1./sum(counter_d.values()) for key in counter_d.keys()],ls='--',c='darkred',lw=1,alpha=0.75)
+    plt.scatter(list(counter_d.keys()),[counter_d[key]*1./sum(counter_d.values()) for key in list(counter_d.keys())],marker='o',s=70,c='darkred',label='Distribution')
+    plt.plot(list(counter_d.keys()),[counter_d[key]*1./sum(counter_d.values()) for key in list(counter_d.keys())],ls='--',c='darkred',lw=1,alpha=0.75)
     plt.yscale('log')
     #####FIXED POSITION#####
     ymin,ymax=ax.get_ylim()
-    print ymin,ymax
+    print(ymin,ymax)
     
     ymean=10**(0.1*(3*np.log10(ymin)+np.log10(ymax)))
     (_,caps,_)=plt.errorbar([mean_d],[ymean], xerr=std_d, fmt='',lw=2,c='forestgreen', capsize=10)
-    print mean_d,std_d
+    print(mean_d,std_d)
     for cap in caps:
         cap.set_markeredgewidth(2)
         
@@ -784,7 +784,7 @@ def Plot_Phenotypes_Colour(mapped=True):
     
     labels=['UND','Small Square','Hollow Square','Small Cross','Thick Cross','T Shape','L Catherine Wheel','R Catherine Wheel','L Shape','I Shape','Domino','Monomino']
     labels_Ordered=['']*len(labels)
-    for k,v in Manual_Ordering.iteritems():
+    for k,v in Manual_Ordering.items():
         labels_Ordered[v+1]=labels[k+1]
     if not mapped:
         cols=['black','firebrick','dodgerblue','royalblue','steelblue','skyblue','cornflowerblue','goldenrod','lime','seagreen','darkgreen','darkolivegreen']
@@ -795,7 +795,7 @@ def Plot_Phenotypes_Colour(mapped=True):
             #print phenotype
             plt.plot(y[:,0],zm[:,phenotype+1],label=labels_Ordered[phenotype+1],c=cols[phenotype+1],ls=styles[phenotype+1],marker=markers[phenotype+1],markersize=8)
             slopeR, interceptR, r_valueR, p_valueR, std_errR = linregress(np.log10(y[-5:,0]),np.log10(zm[-5:,phenotype+1]))
-            print labels_Ordered[phenotype+1],"R",round(slopeR)#, interceptR, r_valueR**2, std_errR
+            print(labels_Ordered[phenotype+1],"R",round(slopeR))#, interceptR, r_valueR**2, std_errR
 
             
         plt.xscale('log')
@@ -835,7 +835,7 @@ def Plot_Phenotypes_Colour(mapped=True):
     cb.ax.set_ylabel(r'Normalised $\rho_{\mathrm{p}}$', rotation=90)
     ax.set_ylabel(r'Number of Colours')
     
-    for x_l in xrange(-1,12,1):
+    for x_l in range(-1,12,1):
         ax.axvline(x=x_l,color='snow',linestyle='-',linewidth=1)
     ax.set_xlim([-1,11])
 
@@ -848,7 +848,7 @@ def Plot_Phenotypes_Colour(mapped=True):
     im2 = ax2.pcolormesh(x[:,:4], y[:,:4], zm[:,:4], cmap=cmap2, norm=color.LogNorm(vmin=zm[:,:3].min(), vmax=zm[:,:3].max()))#,edgecolors='k')
     ax2.set_xticks(x[0,:3]+0.5)
     ax2.set_xticklabels(labels_Ordered[:3], rotation=45)
-    for x_l in xrange(-1,3,1):
+    for x_l in range(-1,3,1):
         ax2.axvline(x=x_l,color='snow',linestyle='-',linewidth=1)
     fig.colorbar(im2, ax=ax2)
 
@@ -872,7 +872,7 @@ from scipy.stats import linregress
 from numpy import log10
 def Find_Log_Slope(fileI):
     lines=[line.rstrip('\n') for line in open("Output/{}.txt".format(fileI))]
-    pp=[filter(None,re.split('[a-z]|:|_|[A-Z]',line)) for line in lines]
+    pp=[[_f for _f in re.split('[a-z]|:|_|[A-Z]',line) if _f] for line in lines]
     pp_float=np.array([[float(i) for i in  p] for p in pp])
 
     round_Factor=0.75
@@ -880,7 +880,7 @@ def Find_Log_Slope(fileI):
     index_start_D=0
     while(pp_float[:,1][index_start_D]>=20000):
         index_start_D+=1
-    print index_start_D
+    print(index_start_D)
     adjusted_min_D=int(round(round_Factor*index_min_D))
     slope_D,intercept_D, R_D,P_D,err_D=linregress(log10(pp_float[:,0][index_start_D:adjusted_min_D]),log10(pp_float[:,1][index_start_D:adjusted_min_D]))
     
@@ -889,13 +889,13 @@ def Find_Log_Slope(fileI):
     index_start_A=0
     while(pp_float[:,4][index_start_A]>=20000):
         index_start_A+=1
-    print index_start_A
+    print(index_start_A)
     adjusted_min_A=int(round(round_Factor*index_min_A))
     slope_A,intercept_A, R_A,P_A,err_A=linregress(log10(pp_float[:,0][index_start_A:adjusted_min_A]),log10(pp_float[:,4][index_start_A:adjusted_min_A]))
 
     
-    print "Discovery slope: ",slope_D
-    print "Adaptation slope: ",slope_A
+    print("Discovery slope: ",slope_D)
+    print("Adaptation slope: ",slope_A)
 
     
 def makeFileName(T,C,N,R,M,Targ,Thresh,Reg,Run):
@@ -944,18 +944,18 @@ def Make_Colour_Min_Plot(files,xes):
     minsD_err_Lower=[]
     for fil in files:
         lines=[line.rstrip('\n') for line in open("Evolution_Runs/{}.txt".format(fil))]
-        pp=[filter(None,re.split('[a-z]|:|_|[A-Z]',line)) for line in lines]
+        pp=[[_f for _f in re.split('[a-z]|:|_|[A-Z]',line) if _f] for line in lines]
         pp_float=np.array([[float(i) for i in  p] for p in pp])
         minsA.append(min(pp_float[:,4]))
         minsA_Ind=np.argmin(pp_float[:,4])
         minsA_err_Upper.append(pp_float[:,6][minsA_Ind]-minsA[-1])
         minsA_err_Lower.append(minsA[-1]-pp_float[:,5][minsA_Ind])
-        print minsA[-1],minsA_err_Upper[-1],minsA_err_Lower[-1]
+        print(minsA[-1],minsA_err_Upper[-1],minsA_err_Lower[-1])
         minsD.append(min(pp_float[:,1]))
         minsD_Ind=np.argmin(pp_float[:,1])
         minsD_err_Upper.append(pp_float[:,3][minsD_Ind]-minsD[-1])
         minsD_err_Lower.append(minsD[-1]-pp_float[:,2][minsD_Ind])
-        print minsD[-1],minsD_err_Upper[-1],minsD_err_Lower[-1]
+        print(minsD[-1],minsD_err_Upper[-1],minsD_err_Lower[-1])
     Use_Seaborn()
     plt.errorbar(xes,minsA,yerr=[minsA_err_Lower,minsA_err_Upper],marker='',ls='',c='cornflowerblue')
     plt.errorbar(xes,minsD,yerr=[minsD_err_Lower,minsD_err_Upper],marker='',ls='',c='orangered')
@@ -995,7 +995,7 @@ def Plot_Random_Walks(Input_Colours):
     
     for Col in Input_Colours:
         lines_Raw=[line.rstrip('\n') for line in open('/scratch/asl47/Data_Runs/Random_Walks/Random_Walk_L8_C_{}_W_1000000_Z_0.txt'.format(Col))]
-        Filtered_lines=[filter(None,re.split('[a-z]|:|_|[A-Z]',line)) for line in lines_Raw]
+        Filtered_lines=[[_f for _f in re.split('[a-z]|:|_|[A-Z]',line) if _f] for line in lines_Raw]
         for run in Filtered_lines:
             Mutation_Steps_Avg[float(run[0])].append(float(run[1]))
             Mutation_Steps_dev[float(run[0])].append(float(run[2])*ERROR_MAGNIFICATION_FACTOR)
@@ -1005,7 +1005,7 @@ def Plot_Random_Walks(Input_Colours):
     Walk_Ax.set_prop_cycle(cycler('color',['midnightblue','midnightblue','slategrey','slategrey','darkgreen','darkgreen','firebrick','firebrick'])+cycler('marker',['^','^','s','s','D','D','o','o']))
     
     
-    for Mu in Mutation_Steps_Avg.keys():
+    for Mu in list(Mutation_Steps_Avg.keys()):
         Walk_Ax.errorbar(Input_Colours,Mutation_Steps_Avg[Mu],yerr=Mutation_Steps_dev[Mu],markeredgecolor='none',ls='',lw=2)
         Walk_Ax.plot(Input_Colours,Mutation_Steps_Avg[Mu],ls=':',lw=1.5,label=r'$\mu={:}$'.format(Fraction(Mu)),markeredgewidth=2,markersize=7,markerfacecolor='white')
     Walk_Ax.plot(Input_Colours,Logspaced_Fractions,marker='P',markeredgewidth=1.2,markeredgecolor='darkorchid',markersize=8,markerfacecolor='white',c='darkorchid',ls='--',lw=1.5,zorder=10,label=r'$1/\rho_{p}$')
@@ -1021,7 +1021,7 @@ def Plot_Random_Walks(Input_Colours):
     plt.show(block=False)
 
     fig2, Walk_Ax2 = plt.subplots()
-    for Mu in Mutation_Steps_Avg.keys():
+    for Mu in list(Mutation_Steps_Avg.keys()):
         Walk_Ax2.plot(Input_Colours,[a*1./b for (a,b) in zip(Mutation_Steps_Avg[Mu],Logspaced_Fractions)],ls=':',lw=1.5,label=r'$\mu={:}$'.format(Fraction(Mu)),markeredgewidth=2,markersize=7,markerfacecolor='white')
     Walk_Ax2.set_xscale('log')
     Walk_Ax2.set_yscale('log')
@@ -1043,16 +1043,16 @@ def Mu_L_Probability():
 
     for mu_L in MuLs:
         binomD=binom(N_f,mu_L/(1.*N_f))
-        for i in xrange(N_f+1):
+        for i in range(N_f+1):
             mutations[i].append(binomD.pmf(i))
 
     ax.set_prop_cycle(cycler('linestyle',[':','--','-.','-',':','--','-.','-',':'])+cycler('color',['midnightblue','lightslategrey','darkgreen','darkred','orange','lime','pink','m','olive']))
     #Colors=
     min_higher=3
-    for i in xrange(min_higher):     
+    for i in range(min_higher):     
         ax.plot(MuLs,mutations[i],lw=2.5,label='{} Mutation{plural}'.format(i,plural='s' if i!=1 else ''))
         higher_order=np.array(mutations[min_higher])
-    for i in xrange(min_higher+1,N_f+1):
+    for i in range(min_higher+1,N_f+1):
         higher_order+=mutations[i]
     ax.plot(MuLs,higher_order,lw=2.5,label='Higher Order Mutations')
     
@@ -1088,8 +1088,8 @@ def Plot_Degeneracy_Rate_Overlayed(Tile_Kit=[[0,0,0,1],[2,2,3,4]],C_Min=6):
     Frac_Ax.set_xlabel(r'Number of Colours')
 
     #Cs=[6,8,10,12,14,16,20,24,28,32,40,46,50,60,75]
-    Cs=[i for i in xrange(C_Min,100,2)]
-    Colours=[i for i in xrange(C_Min,24,2)]+[int(val) for val in logspace(log10(22),2,10)][1:]
+    Cs=[i for i in range(C_Min,100,2)]
+    Colours=[i for i in range(C_Min,24,2)]+[int(val) for val in logspace(log10(22),2,10)][1:]
     Fit_Cut=len(Colours)
     Colours+=[int(val) for val in logspace(2.13,3.55,10)]
     P_fit=[int(val) for val in logspace(2.13,3.55,10)]
@@ -1125,8 +1125,8 @@ def Plot_Degeneracy_Rate_Overlayed(Tile_Kit=[[0,0,0,1],[2,2,3,4]],C_Min=6):
     P_slope_F,P_intercept_F, P_R_F,P_P_F,P_err_F=linregress(P_Fit_Logged,log10(Logspaced_Fractions[Fit_Cut:]))
 
     
-    print "Multiplicty ~ O(N^{:.2f})".format(P_slope)
-    print "Fraction ~ O(N^{:.2f})".format(P_slope_F)
+    print("Multiplicty ~ O(N^{:.2f})".format(P_slope))
+    print("Fraction ~ O(N^{:.2f})".format(P_slope_F))
     #P_slope_F,P_intercept_F, P_R_F,P_P_F,P_err_F
     
     T_Fit_line,=Search_Ax.plot(Colours,[10**P_intercept*C**P_slope for C in Colours],ls='--',lw=1.5,c='cornflowerblue',zorder=1,alpha=0.7)
@@ -1167,15 +1167,15 @@ def GP_Robustness(C):
 
     #plt.plot(ba_x,ba_y,ls='--',c='orangered',marker='D',label='C=8')
     #plt.plot(counted_GPs.keys(),[cnt*1./sum(counted_GPs.values()) for cnt in counted_GPs.values()],'ro',alpha=0.3)
-    plt.plot([key*1./sum(Counts2) for key in counted_GPs2.keys()],[cnt*1./sum(counted_GPs2.values()) for cnt in counted_GPs2.values()],'o',c='firebrick',alpha=0.8,label='Topologies')
+    plt.plot([key*1./sum(Counts2) for key in list(counted_GPs2.keys())],[cnt*1./sum(counted_GPs2.values()) for cnt in list(counted_GPs2.values())],'o',c='firebrick',alpha=0.8,label='Topologies')
     
     BDs=[[i for i, x in enumerate(counted_GPs2.keys()) if x == Counts2[phen]] for phen in BD_Phen]
     BD_Flat=[item for sublist in BDs for item in sublist]
-    print BD_Flat
-    print [key*1./sum(Counts2) for key in [counted_GPs2.keys()[phen] for phen in BD_Flat]]
-    print [cnt*1./sum(counted_GPs2.values()) for cnt in [counted_GPs2.values()[phen] for phen in BD_Flat]]
+    print(BD_Flat)
+    print([key*1./sum(Counts2) for key in [list(counted_GPs2.keys())[phen] for phen in BD_Flat]])
+    print([cnt*1./sum(counted_GPs2.values()) for cnt in [list(counted_GPs2.values())[phen] for phen in BD_Flat]])
     
-    plt.plot([key*1./sum(Counts2) for key in [counted_GPs2.keys()[phen] for phen in BD_Flat]],[cnt*1./sum(counted_GPs2.values()) for cnt in [counted_GPs2.values()[phen] for phen in BD_Flat]],'o',c='slateblue',alpha=0.8,label='B/D Topologies')
+    plt.plot([key*1./sum(Counts2) for key in [list(counted_GPs2.keys())[phen] for phen in BD_Flat]],[cnt*1./sum(counted_GPs2.values()) for cnt in [list(counted_GPs2.values())[phen] for phen in BD_Flat]],'o',c='slateblue',alpha=0.8,label='B/D Topologies')
     
     plt.plot([b2*1./sum(Counts2) for b2 in ba_x2],ba_y2,ls='--',lw=2,c='firebrick',alpha=0.8,marker='',label='Fit')
     
@@ -1200,13 +1200,13 @@ def log_binning(counter_dict,bin_count=35):
     max_y = log10(max(counter_dict.values()))
     max_base = max([max_x,max_y])
 
-    min_x = log10(min(drop_zeros(counter_dict.keys())))
+    min_x = log10(min(drop_zeros(list(counter_dict.keys()))))
 
     bins = np.logspace(min_x,max_base,num=bin_count)
 
     # Based off of: http://stackoverflow.com/questions/6163334/binning-data-in-python-with-scipy-numpy
-    bin_means_y = (np.histogram(counter_dict.keys(),bins,weights=counter_dict.values())[0] / np.histogram(counter_dict.keys(),bins)[0])*1./sum(counter_dict.values())
-    bin_means_x = (np.histogram(counter_dict.keys(),bins,weights=counter_dict.keys())[0] / np.histogram(counter_dict.keys(),bins)[0])
+    bin_means_y = (np.histogram(list(counter_dict.keys()),bins,weights=list(counter_dict.values()))[0] / np.histogram(list(counter_dict.keys()),bins)[0])*1./sum(counter_dict.values())
+    bin_means_x = (np.histogram(list(counter_dict.keys()),bins,weights=list(counter_dict.keys()))[0] / np.histogram(list(counter_dict.keys()),bins)[0])
 
     return bin_means_x,bin_means_y
 

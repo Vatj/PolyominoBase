@@ -19,17 +19,22 @@ typedef std::pair<uint8_t, uint16_t> Phenotype_ID;
 
 typedef std::vector<Phenotype_ID> Phenotype_Set;
 
-struct PhenotypeTable {
-  std::unordered_map<uint8_t,std::vector<Phenotype> > known_phenotypes;
+struct PhenotypeTable
+{
+  std::unordered_map<uint8_t, std::vector<Phenotype>> known_phenotypes;
 
-  void PrintTable(std::ofstream& fout) {
-    for(auto known_phens : known_phenotypes) {
+  void PrintTable(std::ofstream& fout)
+  {
+    for(auto known_phens : known_phenotypes)
+    {
       uint16_t n_phen=0;
-      for(Phenotype known : known_phens.second) {
-	fout<<+known_phens.first<<" "<<+n_phen++<<" "<<+known.dx<<" "<<+known.dy<<" ";
-	for(uint8_t tile : known.tiling)
-	  fout<<+tile<<" ";
-	fout<<"\n";
+      for(Phenotype known : known_phens.second)
+      {
+	      fout<<+known_phens.first<<" "<<+n_phen++<<" "<<+known.dx<<" "<<+known.dy<<" ";
+
+        for(uint8_t tile : known.tiling)
+          fout<<+tile<<" ";
+	        fout<<"\n";
       }
     }
   }

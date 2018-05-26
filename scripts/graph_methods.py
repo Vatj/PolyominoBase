@@ -1,13 +1,13 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-from collections import defaultdict,deque,Counter
+from collections import defaultdict, deque, Counter
 import itertools
-# import seaborn as sns
+import seaborn as sns
 import numpy as np
 
 def Transform_Graph_From_List(tile_kit):
     graph_kit=nx.MultiDiGraph()
-    graph_kit.add_nodes_from(range(len(tile_kit)))
+    graph_kit.add_nodes_from(list(range(len(tile_kit))))
 
     ## Add edges for internal structure in clockwise orientation
     for internal_edge in range(len(tile_kit)//4):
@@ -44,7 +44,7 @@ def Draw_Graph(graph,kit):
 
 def StripIsomorphisms(file_in):
     tile_kits=[[int(i) for i in line.rstrip('\n').split()] for line in open(file_in)]
-    assembly_graphs=zip(range(len(tile_kits)),[Transform_Graph_From_List(tile_kit) for tile_kit in tile_kits])
+    assembly_graphs=list(zip(list(range(len(tile_kits))),[Transform_Graph_From_List(tile_kit) for tile_kit in tile_kits]))
 
     unique_assembly_graphs_indices=[]
 
@@ -84,7 +84,7 @@ def Trim_Topologies(fin):
     unique_C=0
     for key in reversed(sorted(TD.keys())):
         del_count=0
-        print("on ",key, len(TD[key]))
+        print(("on ",key, len(TD[key])))
         for i,comp1 in enumerate(TD[key]):
             G1=Transform_Graph_From_List(comp1)
             del_count=0
@@ -97,7 +97,7 @@ def Trim_Topologies(fin):
             unique_C+=1
     print(unique_C)
     with open(fin.decode('utf-8').rstrip('.txt') +'_Iso.txt', 'w') as outfile:
-        for zero_set in TD.values():
+        for zero_set in list(TD.values()):
             for genotype in zero_set:
                 genotype_str= ' '.join(map(str, genotype))+'\n'
                 outfile.write(genotype_str)
@@ -186,13 +186,13 @@ def Phenotype_Hamming_Distances():
     BP_Genotypes = [[int(face) for face in line.split()] for line in BP_Genotypes_Input]
     Loop_Genotypes_Input = [line.rstrip('\n') for line in open('/rscratch/asl47/Loop_Genotypes.txt')]
     Loop_Genotypes = [[int(face) for face in line.split()] for line in Loop_Genotypes_Input]
-    print("loops", len(Loop_Genotypes))
-    print("BPs", len(BP_Genotypes))
+    print(("loops", len(Loop_Genotypes)))
+    print(("BPs", len(BP_Genotypes)))
     H_D=[]
     with open('/scratch/asl47/Hamming_Distance.txt','w') as f:
         for n,BP in enumerate(BP_Genotypes):
             if n%100==0:
-                print("Now on {}".format(n))
+                print(("Now on {}".format(n)))
             for LP in Loop_Genotypes:
                 f.write(str(Hamming_Distance_Of_Topologies([BP[x:x+4] for x in range(0,len(BP),4)],[LP[x:x+4] for x in range(0,len(LP),4)]))+'\n')
     print("all finished")
@@ -201,12 +201,12 @@ def Phenotype_Hamming_Distances():
     Counts=Counter(H_D)
     np_H=np.array(H_D)
     print(Counts)
-    print(min(H_D))
-    print(max(H_D))
-    print(np.percentile(np_H,25))
-    print(np.percentile(np_H,75))
-    print(np.std(np_H))
-    # ax = sns.violinplot(x=H_D)
+    print((min(H_D)))
+    print((max(H_D)))
+    print((np.percentile(np_H,25)))
+    print((np.percentile(np_H,75)))
+    print((np.std(np_H)))
+    ax = sns.violinplot(x=H_D)
     plt.show(block=False)
 
 
@@ -221,8 +221,8 @@ if __name__ == "__main__":
 ############
 
 def Use_Seaborn():
-    # sns.set_context("paper",font_scale=2.2)
-    # sns.set_style("white",rc={"xtick.major.size": 8, "ytick.major.size": 8,"xtick.minor.size":5, "ytick.minor.size": 5,"axes.linewidth": 2,"axes.edgecolor":"darkgray","font.size":8,"axes.titlesize":8,"axes.labelsize":5})
+    sns.set_context("paper",font_scale=2.2)
+    sns.set_style("white",rc={"xtick.major.size": 8, "ytick.major.size": 8,"xtick.minor.size":5, "ytick.minor.size": 5,"axes.linewidth": 2,"axes.edgecolor":"darkgray","font.size":8,"axes.titlesize":8,"axes.labelsize":5})
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
 
@@ -310,9 +310,9 @@ def Plot_Method_Testing(Ts,R):
             ax.plot([T*4 for T in range(1,Ts+1)],np.mean(results[K],axis=1),c=k_colours[K],ls='--',lw=0.75,alpha=0.75,zorder=z_orders[K])
             ax.errorbar([T*4 for T in range(1,Ts+1)],np.mean(results[K],axis=1),yerr=np.std(results[K],axis=1,ddof=1)/np.sqrt(R),c=k_colours[K],ls='--',zorder=z_orders[K],lw=2)
             if K==20 and n==5:
-                print(results[K][3])
-                print(np.std(results[K],axis=1,ddof=1,dtype=np.float64)/np.sqrt(R))
-                print(np.mean(results[K],axis=1,dtype=np.float64))
+                print((results[K][3]))
+                print((np.std(results[K],axis=1,ddof=1,dtype=np.float64)/np.sqrt(R)))
+                print((np.mean(results[K],axis=1,dtype=np.float64)))
                 ax.plot([16],[0.02666667],markeredgecolor=k_colours[K],ls='',markeredgewidth=1.25,markerfacecolor='none',marker=K_ms[K],markersize=7,zorder=z_orders[K])
             #if n==0 and K==0:
             #    return results[K],np.std(results[K],axis=1,ddof=1)/np.sqrt(R)
@@ -376,7 +376,7 @@ def Plot_Method_Testing(Ts,R):
     plt.figure()
     results=timing_list[2]
     rats=np.mean(results[10],axis=1)/np.mean(results[0],axis=1)
-    plt.plot(range(1,Ts+1),rats)
+    plt.plot(list(range(1,Ts+1)),rats)
 
 
 
@@ -466,11 +466,11 @@ def PlotNewSimple():
     #plt.plot(range(1,16),ts[:,0],lw=2,ls='--',c='royalblue')
     #plt.plot(range(1,16),ts[:,1],lw=2,ls='-',c='firebrick')
 
-    plt.plot(range(1,T_max+1),40*ts[:,0],marker='o',ls='',c='royalblue')
-    plt.plot(range(1,T_max+1),40*ts[:,1],marker='s',ls='',c='firebrick')
+    plt.plot(list(range(1,T_max+1)),40*ts[:,0],marker='o',ls='',c='royalblue')
+    plt.plot(list(range(1,T_max+1)),40*ts[:,1],marker='s',ls='',c='firebrick')
 
     plt.yscale('log')
-    # sns.despine(right=1,top=1)
+    sns.despine(right=1,top=1)
 
     plt.show(block=False)
 

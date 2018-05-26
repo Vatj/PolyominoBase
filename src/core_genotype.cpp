@@ -8,10 +8,10 @@ void Clean_Genome(Genotype& genome,int secondNonInteracting=0,bool Remove_Duplic
   //defaults set to -1 and true//
   //Removes any non-bonding interfaces and reduces additional non-interacting faces to 0s
   //Note, no need to check for negatives, as either present and able to self-interact, or absent and no need to act
-  if(secondNonInteracting!=0) 
+  if(secondNonInteracting!=0)
     std::replace(genome.begin(),genome.end(),secondNonInteracting,0);
-  
-  for(int t=1;t<=*std::max_element(genome.begin(),genome.end());t+=2) { 
+
+  for(int t=1;t<=*std::max_element(genome.begin(),genome.end());t+=2) {
     if(std::count(genome.begin(),genome.end(),t)==0) //genotype doens't contain this face
         std::replace(genome.begin(),genome.end(),t+1,0);
     else //genotype does contain this face
@@ -19,7 +19,7 @@ void Clean_Genome(Genotype& genome,int secondNonInteracting=0,bool Remove_Duplic
         std::replace(genome.begin(),genome.end(),t,0);
   }
   Minimize_Tile_Set(genome);
-  if(Remove_Duplicates) 
+  if(Remove_Duplicates)
     DuplicateGenes(genome);
 }
 
@@ -74,7 +74,7 @@ bool Disjointed_Check(Genotype& genome) {
     Unvisited.erase(Unvisited.begin());
     Search_Next_Tile(genome,Unvisited,Connected_Components[CC_Size], New_Launch_Point);
   }
-  
+
   if(Connected_Components.size()>1) {
     genome.clear();
     for(auto& KV_pair : Connected_Components) {
@@ -83,7 +83,7 @@ bool Disjointed_Check(Genotype& genome) {
     }
     return true;
   }
-  return false;  
+  return false;
 }
 
 void Search_Next_Tile(Genotype& genome, std::vector<uint8_t>& Unvisited, std::vector<uint8_t>& Connected_Components,uint8_t tile) {
@@ -98,8 +98,25 @@ void Search_Next_Tile(Genotype& genome, std::vector<uint8_t>& Unvisited, std::ve
         Connected_Components.insert(Connected_Components.end(),genome.begin()+corresponding_Tile*4,genome.begin()+corresponding_Tile*4+4);
         Unvisited.erase(std::find(Unvisited.begin(),Unvisited.end(),corresponding_Tile));
         Search_Next_Tile(genome,Unvisited,Connected_Components,corresponding_Tile);
-      } 
+      }
       conjugate_iter=std::find(conjugate_iter+1,genome.end(),conjugate_Face);
     }
+  }
+}
+
+uint64_t genotype_to_index(Genotype& genotype, uint8_t n_genes, uint8_t colours) 
+{
+  uint64_t count=0;
+  for(uint8_t index=0;index<n_genes*4;++index)
+    count+= genotype[index] * pow(colours,n_genes*4-index-1);
+  return count;
+}
+
+void index_to_genotype(uint64_t index, Genotype& genotype, uint8_t n_genes, uint8_t colours)
+{
+  for(uint8_t count=0;count<n_genes*4;++count) {
+    uint64_t value=index/pow(colours,n_genes*4-count-1);
+    genotype[count]=value;
+    index-= value * pow(colours,n_genes*4-count-1);
   }
 }

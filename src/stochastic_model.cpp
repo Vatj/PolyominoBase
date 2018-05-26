@@ -5,12 +5,13 @@ namespace Stochastic
 {
   std::mt19937 RNG_Generator(std::random_device{}());
 
-  std::vector<Phenotype_ID> AssemblePlasticGenotype(Genotype genotype, uint8_t k_builds_per_seed, StochasticPhenotypeTable* pt,double UND_frac) {
+  std::vector<Phenotype_ID> AssemblePlasticGenotype(Genotype genotype, uint8_t k_builds_per_seed, StochasticPhenotypeTable* pt,double UND_frac) 
+  {
     std::map<Phenotype_ID,uint8_t> phenotype_counter;
     const uint8_t THRESHOLD_SIZE=(genotype.size()*genotype.size())/4;
     for(uint8_t kth=0;kth<k_builds_per_seed;++kth) {
       for(uint8_t seed=0;seed<genotype.size()/4;++seed) {
-	
+
 	std::vector<int8_t> placed_tiles=Stochastic_Polyomino_Builder(genotype,THRESHOLD_SIZE,seed);
 	if(placed_tiles.size()==0) {
 	  ++phenotype_counter[std::make_pair(0,0)];
@@ -38,18 +39,18 @@ namespace Stochastic
     }
     return plastic_phenotypes;
   }
-  
+
   Phenotype_ID Analyse_Genotype_Outcome(Genotype genome, uint8_t N_Repeated_Checks, StochasticPhenotypeTable* pt,uint8_t seed) {
     const uint8_t THRESHOLD_SIZE=(genome.size()*genome.size())/4;
     std::vector<int8_t> Placed_Tiles_Check=Stochastic_Polyomino_Builder(genome,THRESHOLD_SIZE,seed),Placed_Tiles_Compare;
-    
+
     if(Placed_Tiles_Check.empty())
       return std::make_pair(0,0);
     if(Placed_Tiles_Check.size()/4 > THRESHOLD_SIZE)
       return std::make_pair(255,0);
-    
+
     Phenotype phen1=Generate_Spatial_Occupancy(Placed_Tiles_Check,3),phen2;
-    
+
     for(uint8_t nth_repeat=1;nth_repeat<N_Repeated_Checks;++nth_repeat) {
       Placed_Tiles_Compare=Stochastic_Polyomino_Builder(genome,THRESHOLD_SIZE,seed);
       if(Placed_Tiles_Compare.size()/4 > THRESHOLD_SIZE)
@@ -71,21 +72,21 @@ namespace Stochastic
     }
     return result;
   }
-  
+
   std::vector<int8_t> Stochastic_Polyomino_Builder(const Genotype& genome, uint8_t THRESHOLD_SIZE, uint8_t initial_Tile) {
     std::vector<int8_t> Placed_Tiles{0,0,static_cast<int8_t>(initial_Tile),0},Interacting_Faces; //DEFINED AS (X,Y,Tile Type Number, Tile Rotation[in CW rotation])
     for(uint8_t face=0; face<4; ++face)
       if(genome[initial_Tile*4+face]!=0)
         Interacting_Adjacency(Interacting_Faces,genome[initial_Tile*4+face],face,0,0);
-        
-    while(!Interacting_Faces.empty()) {  
+
+    while(!Interacting_Faces.empty()) {
       for(int number_possibilities=(Interacting_Faces.size()/4)-1; number_possibilities >=0; --number_possibilities) {
         bool collision_Detected=false;
         for(std::vector<int8_t>::iterator occupied_iter = Placed_Tiles.begin(); occupied_iter!=Placed_Tiles.end(); occupied_iter+=4) {
           if(Interacting_Faces[number_possibilities*4]==*occupied_iter && Interacting_Faces[number_possibilities*4+1]==*(occupied_iter+1)) {
             if(Interacting_Faces[number_possibilities*4+2]!=genome[*(occupied_iter+2)*4+(Interacting_Faces[number_possibilities*4+3]-*(occupied_iter+3)+4)%4])
               return {}; //Steric mismatch, reject empty vector as sign
-            Interacting_Faces.erase(Interacting_Faces.end()-4,Interacting_Faces.end()); 
+            Interacting_Faces.erase(Interacting_Faces.end()-4,Interacting_Faces.end());
             collision_Detected=true;
             break;
           }
@@ -103,7 +104,7 @@ namespace Stochastic
           uint8_t new_Tile=(current_conjugate-genome.begin())/4,new_Face=(current_conjugate-genome.begin())%4,rotation= (Interacting_Faces[number_possibilities*4+3]-new_Face+4)%4;
 
           Placed_Tiles.insert(Placed_Tiles.end(),{Interacting_Faces[number_possibilities*4],Interacting_Faces[number_possibilities*4+1],static_cast<int8_t>(new_Tile),static_cast<int8_t>(rotation)});
-          if(Placed_Tiles.size()/4 > THRESHOLD_SIZE) 
+          if(Placed_Tiles.size()/4 > THRESHOLD_SIZE)
             return Placed_Tiles;
           uint8_t placed_X=Interacting_Faces[number_possibilities*4],placed_Y=Interacting_Faces[number_possibilities*4+1];
           Interacting_Faces.erase(Interacting_Faces.begin()+number_possibilities*4,Interacting_Faces.begin()+number_possibilities*4+4);
@@ -139,7 +140,7 @@ namespace Stochastic
     Interacting_Faces.insert(Interacting_Faces.begin()+std::uniform_int_distribution<size_t>{0,Interacting_Faces.size()/4}(RNG_Generator)*4,{static_cast<int8_t>(X+X_OFFSET),static_cast<int8_t>(Y+Y_OFFSET),static_cast<int8_t>(conjugate_Face),static_cast<int8_t>((face_index+2)%4)});
   }
 
-  
+
   Phenotype Generate_Spatial_Occupancy(std::vector<int8_t>& Placed_Tiles_Check, uint8_t generate_mode) {
     std::vector<int8_t> X_Locs_Check, Y_Locs_Check;
     std::vector<uint8_t>  Tile_Type_Check,Tile_Orientation_Check;
@@ -157,9 +158,9 @@ namespace Stochastic
     std::vector<uint8_t> Spatial_Occupancy_Check(dx*dy);
 
     for(uint8_t tileIndex=0;tileIndex<X_Locs_Check.size();++tileIndex) {
-      if(generate_mode==0) 
+      if(generate_mode==0)
         Spatial_Occupancy_Check[(*ty-Y_Locs_Check[tileIndex])*dx + (X_Locs_Check[tileIndex]-*lx)]=1;
-      if(generate_mode==3) 
+      if(generate_mode==3)
         Spatial_Occupancy_Check[(*ty-Y_Locs_Check[tileIndex])*dx + (X_Locs_Check[tileIndex]-*lx)]=1+Tile_Type_Check[tileIndex]*4+Tile_Orientation_Check[tileIndex];
     }
     Phenotype phen{dx,dy,Spatial_Occupancy_Check};
@@ -170,4 +171,3 @@ namespace Stochastic
   }
 
 }
-

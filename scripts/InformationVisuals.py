@@ -23,7 +23,7 @@ def Plot_Topology_Robustness(R_T,runs):
     N_mut=-1
     Colours=[]
         
-    for run in xrange(runs):
+    for run in range(runs):
         #lines=[line.rstrip('\n') for line in open('/rscratch/asl47/Topology_Robustness_{}_R{}.txt'.format(R_T,run+1))]
         #lines=[line.rstrip('\n') for line in open('/rscratch/asl47/Topology_Robustness_R{}_2.txt'.format(run+1))]
         lines=[line.rstrip('\n') for line in open('/rscratch/asl47/Topology_Robustness_{}_R{}.txt'.format(R_T,run+1))]
@@ -50,9 +50,9 @@ def Plot_Topology_Robustness(R_T,runs):
     
     f,(ax,ax2)=plt.subplots(2,1)
     for C,colour_data in enumerate(mean_data.T):
-        ax.plot(range(9),colour_data,color=pcs[C])
-        ax2.plot(MuLs_local,np.sum(binom_local.pmf(T)*(1-mean_data[T][C]) for T in xrange(9)),color=pcs[C])
-        c_r[C]=np.sum(binom_Set.pmf(T)*(1-mean_data[T][C]) for T in xrange(9))
+        ax.plot(list(range(9)),colour_data,color=pcs[C])
+        ax2.plot(MuLs_local,np.sum(binom_local.pmf(T)*(1-mean_data[T][C]) for T in range(9)),color=pcs[C])
+        c_r[C]=np.sum(binom_Set.pmf(T)*(1-mean_data[T][C]) for T in range(9))
 
     sm = plt.cm.ScalarMappable(cmap=cm.inferno, norm=plt.Normalize(vmin=0, vmax=0.9))
     sm._A = []
@@ -81,10 +81,10 @@ def Plot_Topology_Robustness(R_T,runs):
     return c_r
 
 def Plot_Other(z_in,N=100,alpha=0.95,mark='none'):
-    print "For a population of {}, with alpha {}".format(N,alpha)
+    print("For a population of {}, with alpha {}".format(N,alpha))
     COLOURS=[6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 38, 42, 50, 60, 70, 84, 100, 150, 250, 500]
     predicted_divergence=[]
-    for C in z_in.keys():
+    for C in list(z_in.keys()):
         binom_Set=binom(N,z_in[C])
         survivals=binom_Set.cdf(N/2-1)
   
@@ -132,10 +132,10 @@ def Plot_Divergence_Points(Z_in,R_T):
     #N_med=np.zeros((sy2.shape[0],sx2.shape[0]))
     #N_err=np.zeros((sy2.shape[0],sx2.shape[0]))
 
-    N_mus=[{} for i in xrange(3)]
-    N_med=[{} for i in xrange(3)]
-    N_err=[{} for i in xrange(3)]
-    N_err2=[{} for i in xrange(3)]
+    N_mus=[{} for i in range(3)]
+    N_med=[{} for i in range(3)]
+    N_err=[{} for i in range(3)]
+    N_err2=[{} for i in range(3)]
     
     N_runs={10:5000,100:2500,1000:1000,10000:250}
 
@@ -191,9 +191,9 @@ def Plot_Divergence_Points(Z_in,R_T):
     return "early"
     #f3,ax3=plt.subplots(1)
     cs=['g','b','r','k']
-    for j in xrange(20):
+    for j in range(20):
         plt.figure()
-        for i in xrange(sy.shape[0]):
+        for i in range(sy.shape[0]):
             plt.scatter(N_mus[i][j],N_err[i][j],c=cs[i])
             plt.scatter(N_mus[i][j],N_err2[i][j],c=cs[i],marker='s')
 

@@ -36,7 +36,7 @@ def LoadEvolutionHistory(temperature=0.000001,mu=1,gamma=1,run=0):
           converted=[int(i) for i in line.split()]
           if phen_line:
                phens=[]
-               for i in xrange(0,len(converted),2):
+               for i in range(0,len(converted),2):
                     phens.append((converted[i],converted[i+1]))
                phenotype_IDs.append(phens)
                phen_line=False
@@ -51,7 +51,7 @@ def LoadGenotypeHistory(n_tiles,temperature=0.000001,mu=1,gamma=1,run=0):
      genotypes=[]
      for line in open(BASE_FILE_PATH.format('GenotypeHistory',interface_length,temperature,mu,gamma,run)):
           converted=[int(i) for i in line.split()]
-          genotypes.append([[int(i) for i in j] for j in [converted[i:i + 4*n_tiles] for i in xrange(0, len(converted), 4*n_tiles)]])
+          genotypes.append([[int(i) for i in j] for j in [converted[i:i + 4*n_tiles] for i in range(0, len(converted), 4*n_tiles)]])
 
      return np.array(genotypes,dtype=interface_type)
 
@@ -91,7 +91,7 @@ def RandomWalk(I_size=32,n_steps=1000,phi=0.5,T_star=0.6,renorm=False,return_pro
      states[0]=1
      progressive_states=[]
 
-     for i in xrange(n_steps):
+     for i in range(n_steps):
           states=UpdateStates(states,s_hats[I_size-N+1:],phi,renorm)
           progressive_states.append(np.sum(s_hats[I_size-N+1:]*states))
      if not renorm:
@@ -121,7 +121,7 @@ def RandomWalk(I_size=32,n_steps=1000,phi=0.5,T_star=0.6,renorm=False,return_pro
 
 def UpdateStates(states,val,phi=0.25,renorm=False):
      states_updating=deepcopy(states)
-     for i in xrange(states.shape[0]):
+     for i in range(states.shape[0]):
           states_updating[i]-=states[i]*phi
           if i!=0:
                states_updating[i]+=states[i-1]*phi*(1-val[i-1])
@@ -131,7 +131,7 @@ def UpdateStates(states,val,phi=0.25,renorm=False):
 
 def mmatrix(N_states,mu,val):
      rows=[[1-mu,mu*(1-val[0])]+[0]*(N_states-2)]
-     for i in xrange(1,N_states-1):
+     for i in range(1,N_states-1):
           rows.append([0]*(i-1)+[mu*val[i],1-mu,mu*(1-val[i])]+[0]*(N_states-2-i))
      rows.append([0]*(N_states-2)+[mu*val[-1],1-mu])
      return np.vstack(rows).T
@@ -153,7 +153,7 @@ def writeResults(I,M,t,runs,offset=0):
      interface_type={8:np.uint8,16:np.uint16,32:np.uint32,64:np.uint64}[interface_length]
      
      pool = Pool()
-     data_struct=pool.map(partial(AnalysePhylogeneticStrengths, mu=M,t=t), xrange(offset,offset+runs)) 
+     data_struct=pool.map(partial(AnalysePhylogeneticStrengths, mu=M,t=t), range(offset,offset+runs)) 
      pool.close()
      with open('I{}Mu{}T{}O{}.pkl'.format(I,M,t,offset), 'wb') as f:
           pickle.dump(data_struct, f)
@@ -174,7 +174,7 @@ def concatenateResults(data_struct,trim_gen=True):
      Ws=Counter()
      slice_start=1 if trim_gen else 0
      for data in data_struct:
-          for k,v in data.iteritems():
+          for k,v in data.items():
                if k=='Wa':
                     Wa+=Counter(v)
                elif k=='Ws':
@@ -183,7 +183,7 @@ def concatenateResults(data_struct,trim_gen=True):
                     conc_data[k].extend([i[slice_start:] for i in v])
 
 
-     for k,v in conc_data.iteritems():
+     for k,v in conc_data.items():
           if len(v) and 'W' not in k:
                length = len(sorted(v,key=len, reverse=True)[0])
                conc_data[k]=np.array([xi+[np.nan]*(length-len(xi)) for xi in v])
@@ -209,8 +209,8 @@ def qBFS(genotypes,selections,strengths):
      W_a=Counter({K:0 for K in np.linspace(0,1,interface_length+1)})
      W_s=Counter({K:0 for K in np.linspace(0,1,interface_length/2+1)})
      
-     for generation in xrange(gen_limit-1):
-          for index in xrange(pop_size):
+     for generation in range(gen_limit-1):
+          for index in range(pop_size):
                diff= set(strengths[generation][index])-set(strengths[generation-1][selections[generation][index]]) if generation else strengths[generation][index] 
                for new_bond in diff:
                     stren_tree=qDFS(index,new_bond,genotypes[generation:],selections[generation:],strengths[generation:])
@@ -226,14 +226,14 @@ def qBFS(genotypes,selections,strengths):
                     weak_a,weak_s=qWeak(strengths[generation][index],genotypes[generation][index])
                     W_a+=weak_a
                     W_s+=weak_s
-     return filter(None,MSE_ae),filter(None,MSE_ai),filter(None,MSE_s),dict(W_a),dict(W_s)
+     return [_f for _f in MSE_ae if _f],[_f for _f in MSE_ai if _f],[_f for _f in MSE_s if _f],dict(W_a),dict(W_s)
 
 def qWeak(strength,genotype):
      weaknesses_asym=Counter({K:0 for K in np.linspace(0,1,interface_length+1)})
      weaknesses_sym=Counter({K:0 for K in np.linspace(0,1,interface_length/2+1)})
      g_length=12
      used_interfaces=set([item for sublist in strength for item in sublist])
-     non_interactings=set(xrange(g_length))-used_interfaces
+     non_interactings=set(range(g_length))-used_interfaces
      for pair in combinations(non_interactings,2):
           weaknesses_asym[BindingStrength(*genotype[[i for i in pair]])]+=1
      for face in non_interactings:

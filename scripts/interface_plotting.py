@@ -63,7 +63,7 @@ def plotInterfaceActivation(I_size,L_size):
 def plotBulkPhylogeny(data_struct,use_offset=False):
      plt.figure()
      for data in data_struct:
-          plotPhylogeny(*data.values(),called=True,use_offset=use_offset)
+          plotPhylogeny(*list(data.values()),called=True,use_offset=use_offset)
      plt.ylabel(r'$\hat{S}$')
      plt.xlabel('generations')
      plt.show(block=False)
@@ -73,13 +73,13 @@ def plotPhylogeny(mae,mai,ms,called=False,use_offset=False):
           plt.figure()     
      for interface_type,cr in zip([mae,mai,ms],[(.25,.38),(0.58,0.75),(0.91,.08)]):
           for data in interface_type:
-               slope, intercept, r_value, p_value, std_err = linregress(xrange(len(data)-1),data[1:])
+               slope, intercept, r_value, p_value, std_err = linregress(range(len(data)-1),data[1:])
                h= uniform(*cr) if cr[1]>cr[0] else choice([uniform(cr[0],1),uniform(0,cr[1])])
                s = uniform(0.2, 1)
                v = uniform(0.5, 1)       
                r, g, b = hsv_to_rgb(h, s, v)
                g_offset=data[0] if use_offset else 0
-               plt.plot(xrange(g_offset,g_offset+len(data)-1),data[1:],c=(r,g,b),alpha=0.2,zorder=1)
+               plt.plot(range(g_offset,g_offset+len(data)-1),data[1:],c=(r,g,b),alpha=0.2,zorder=1)
      patches = [plt.plot([],[],c=color,ls='--')[0] for color in [(.21,.8,.16),(0.16,.22,.8),(.8,.16,.16)]]
      plt.legend(patches,['AE','AI','S'], frameon=False)
      if not called:
@@ -117,22 +117,22 @@ def tsplotboot(ax,data,title='',**kw):
 
 def plotData(cc,I_size,t_star):
      fig,axs = plt.subplots(3)
-     for (k,v),ax in zip(cc.iteritems(),axs):
-          print k,len(v)
+     for (k,v),ax in zip(iter(cc.items()),axs):
+          print(k,len(v))
           if len(v)==0:
                continue
           tsplotboot(ax,v,k+' {}'.format(len(v)))
           if 'A' in k:
                #print k, "plotting here"
                pgs=RandomWalk(64,100,.5,t_star,1,1)
-               ax.plot(range(0,1200,12),pgs[:-1],'r--')
+               ax.plot(list(range(0,1200,12)),pgs[:-1],'r--')
                
                ax.plot([1100,1500],[pgs[-1]]*2,'k--')
           else:
                #print k, "plotting there"
                pgs=RandomWalk(32,50,.5,t_star,1,1)
                
-               ax.plot(range(0,1200,24),pgs[:-1],'r--')
+               ax.plot(list(range(0,1200,24)),pgs[:-1],'r--')
                ax.plot([1100,1500],[pgs[-1]]*2,'k--')
      plt.xlabel('elapsed generations')
      plt.tight_layout(pad=0)
@@ -143,7 +143,7 @@ def plotWs(Ws,I_size,t_star):
      plt.figure()
      for W in Ws:
           lists = sorted(W.items()) # sorted by key, return a list of tuples
-          x, y = zip(*lists)
+          x, y = list(zip(*lists))
           plt.plot(x,[float(i)/sum(y) for i in y],ls='',marker='o',label=len(W))
      plt.plot(np.linspace(0,1,I_size/2+1),binom(I_size/2,.5).pmf(np.linspace(0,I_size/2,I_size/2+1)),'k--')
      plt.plot(np.linspace(0,1,I_size+1),binom(I_size,.5).pmf(np.linspace(0,I_size,I_size+1)),'k--')

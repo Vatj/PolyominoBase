@@ -27,7 +27,7 @@ def Partial_Log_Space(lower,upper,nums,nparray=np.array([])):
         nparray= np.append(nparray,pls)
     else:
         nparray= np.append(nparray,pls[1:])
-    print pls
+    print(pls)
     return nparray
 def Write_Log_File(fName,nparray):
     with open('Logspace_Config_{}.txt'.format(fName), 'w') as the_file:
