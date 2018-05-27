@@ -10,7 +10,9 @@ std::mt19937 RNG_Engine1(std::random_device{}());
 // Constructor of the Genotype_Metrics structure
 Genotype_Metrics::Genotype_Metrics(uint8_t n_genes, uint8_t colours):
 n_genes(n_genes), colours(colours)
-{}
+{
+  number_of_neighbours = (colours - 1) * n_genes * 4.;
+}
 
 void Genotype_Metrics::set_reference(Genotype& genotype, std::vector <Phenotype_ID>& pIDs)
 {
@@ -26,7 +28,7 @@ void Genotype_Metrics::set_reference(Genotype& genotype, std::vector <Phenotype_
 void Genotype_Metrics::analyse_pIDs(std::vector <Phenotype_ID>& pIDs)
 {
   if (pIDs == ref_pIDs)
-    strict_robustness++;
+    strict_robustness+= 1.;
 
   std::vector <Phenotype_ID> intersection, union_set;
 
@@ -34,7 +36,13 @@ void Genotype_Metrics::analyse_pIDs(std::vector <Phenotype_ID>& pIDs)
   std::set_union(std::begin(pIDs), std::end(pIDs), std::begin(ref_pIDs), std::end(ref_pIDs), std::back_inserter(union_set));
 
   intersection_robustness += (double) intersection.size() / (double) ref_pIDs.size();
-  union_evolvability += (union_set.size() - ref_pIDs.size());
+  union_evolvability += (double) (union_set.size() - ref_pIDs.size());
+
+  if (std::find(std::begin(pIDs), std::end(pIDs), death_pID) != std::end(pIDs))
+    death += 1.;
+
+  if (std::find(std::begin(pIDs), std::end(pIDs), loop_pID) != std::end(pIDs))
+    loop += 1.;
 
   // for (auto shape: shapes)
   //   shape.robust_pID(pIDs);
@@ -65,11 +73,13 @@ void Genotype_Metrics::save_to_file(std::ofstream& fout)
   fout.seekp((long) fout.tellp() - 1);
   fout << ") ";
 
-  fout <<+ strict_robustness << " ";
-  fout <<+ intersection_robustness << " ";
-  fout <<+ union_evolvability << " ";
-  fout <<+ death << " ";
+  fout <<+ strict_robustness / number_of_neighbours << " ";
+  fout <<+ intersection_robustness / number_of_neighbours << " ";
+  fout <<+ union_evolvability / number_of_neighbours << " ";
+  fout <<+ death / number_of_neighbours << " ";
+  fout <<+ loop / number_of_neighbours << " ";
   fout <<+ diversity.size() << " ";
+  fout <<+ neutral_weight << " ";
 
   fout << "{";
   for (auto pID: ref_pIDs)
@@ -82,7 +92,7 @@ void Genotype_Metrics::save_to_file(std::ofstream& fout)
 void Genotype_Metrics::clear()
 {
   strict_robustness = 0, union_evolvability = 0, death = 0;
-  intersection_robustness = 0;
+  intersection_robustness = 0, loop = 0;
 
   // shapes.clear();
   diversity.clear();
@@ -115,6 +125,7 @@ void Set_Metrics::add_genotype_metrics(Genotype_Metrics& genome_metrics)
   intersection_robustnesses.emplace_back(genome_metrics.intersection_robustness / number_of_neighbours);
   union_evolvabilities.emplace_back(genome_metrics.union_evolvability / number_of_neighbours);
   deaths.emplace_back(genome_metrics.death / number_of_neighbours);
+  loops.emplace_back(genome_metrics.loop / number_of_neighbours);
 
   neutral_weightings.emplace_back(genome_metrics.neutral_weight);
 
@@ -129,7 +140,7 @@ void Set_Metrics::save_to_file(std::ofstream& fout)
   double total_neutral_size = std::accumulate(neutral_weightings.begin(), neutral_weightings.end(), uint64_t(0));
 
   double average_strict_robustness = 0, average_intersection_robustness = 0;
-  double average_union_evolvability = 0, average_death = 0;
+  double average_union_evolvability = 0, average_death = 0, average_loop = 0;
 
   for(size_t index = 0; index < strict_robustnesses.size(); ++index)
   {
@@ -137,6 +148,7 @@ void Set_Metrics::save_to_file(std::ofstream& fout)
      average_intersection_robustness += intersection_robustnesses[index] * (double) neutral_weightings[index] / total_neutral_size;
      average_union_evolvability += union_evolvabilities[index] * (double) neutral_weightings[index] / total_neutral_size;
      average_death += deaths[index] * (double) neutral_weightings[index] / total_neutral_size;
+     average_loop += loops[index] * (double) neutral_weightings[index] / total_neutral_size;
   }
 
   // fout << "strict robustness : " <<+ average_strict_robustness;
@@ -154,6 +166,7 @@ void Set_Metrics::save_to_file(std::ofstream& fout)
   fout <<+ average_intersection_robustness << " ";
   fout <<+ average_union_evolvability << " ";
   fout <<+ average_death << " ";
+  fout <<+ average_loop << " ";
   fout <<+ diversity.size() << " ";
 
   fout << "{";
@@ -167,7 +180,7 @@ void Set_Metrics::save_to_file(std::ofstream& fout)
 void Set_Metrics::clear()
 {
   strict_robustnesses.clear(), union_evolvabilities.clear(), deaths.clear();
-  intersection_robustnesses.clear(), neutral_weightings.clear();
+  intersection_robustnesses.clear(), neutral_weightings.clear(), loops.clear();
 
   diversity.clear();
 }

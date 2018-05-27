@@ -37,8 +37,11 @@ struct Genotype_Metrics
   Genotype ref_genotype;
   std::vector <Phenotype_ID> ref_pIDs;
 
-  uint32_t strict_robustness = 0, union_evolvability = 0, death = 0;
-  double intersection_robustness = 0;
+  Phenotype_ID death_pID = {0, 0}, loop_pID = {255, 0};
+
+  double number_of_neighbours;
+  double strict_robustness = 0.,intersection_robustness = 0., union_evolvability = 0.;
+  double death = 0., loop = 0.;
 
   std::vector <Shape_Metrics> shapes;
   std::set <Phenotype_ID> diversity;
@@ -62,8 +65,8 @@ struct Set_Metrics
 
   std::vector <Phenotype_ID> ref_pIDs;
 
-  std::vector <double> strict_robustnesses, union_evolvabilities, deaths;
-  std::vector <double> intersection_robustnesses;
+  std::vector <double> strict_robustnesses, union_evolvabilities;
+  std::vector <double> intersection_robustnesses, deaths, loops;
   std::vector <uint64_t> neutral_weightings;
 
   std::set <Phenotype_ID> diversity;
