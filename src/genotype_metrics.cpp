@@ -186,18 +186,12 @@ void GP_MapSampler(const char* file_path_c, uint8_t n_genes, uint8_t rcolours, u
 
   std::string file_path(file_path_c), file_details="_N"+std::to_string(n_genes)+"_C"+std::to_string(rcolours);
   std::ifstream file_in(file_path + "SampledGenotypes" + file_details + "_Processed.txt");
-  file_details += "_Cx" + std::to_string(colours);
 
-  // std::ofstream fout(file_path+"GP_Map" + std::to_string(colours)+file_details+".txt", std::ios_base::out);
+  file_details += "_Cx" + std::to_string(colours) + ".txt";
 
-  std::string shape_metrics_str = "shape_metrics", ending = ".txt";
-  std::ofstream shape_metrics_out(file_path + shape_metrics_str + file_details + ending);
-
-  std::string genome_metrics_str = "genome_metrics";
-  std::ofstream genome_metrics_out(file_path + genome_metrics_str + file_details + ending);
-
-  std::string set_metrics_str = "set_metrics";
-  std::ofstream set_metrics_out(file_path + set_metrics_str + file_details + ending);
+  std::ofstream shape_metrics_out(file_path + "shape_metrics" + file_details);
+  std::ofstream genome_metrics_out(file_path + "genome_metrics" + file_details);
+  std::ofstream set_metrics_out(file_path + "set_metrics" + file_details);
 
   Set_Metrics set_metrics(n_genes, colours);
 
