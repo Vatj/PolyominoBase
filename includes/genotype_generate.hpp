@@ -7,6 +7,7 @@ extern "C"
 {
   void ExhaustiveMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours);
   void SampleMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours, const uint32_t N_SAMPLES, bool allow_duplicates);
+  void PreProcessGenotypesTopology(const char* file_path_c, uint8_t n_genes, uint8_t colours);
   void PreProcessGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours);
 }
 
@@ -35,6 +36,7 @@ struct GenotypeGenerator
   std::vector<uint32_t> necklace_states;
   std::vector<std::vector<uint8_t> > necklaces;
   uint32_t n_necklaces;
+  Genotype nullg;
 
   void init()
   {
@@ -66,7 +68,7 @@ struct GenotypeGenerator
 
   bool valid_bindings(Genotype& genotype)
   {
-    for(uint8_t interface=1;interface<=*std::max_element(genotype.begin(),genotype.end());interface+=2)
+    for(uint8_t interface=1; interface<=*std::max_element(genotype.begin(), genotype.end()); interface+=2)
     {
       if(std::find(genotype.begin(),genotype.end(),interface)!=genotype.end())
       { //is present

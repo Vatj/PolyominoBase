@@ -40,8 +40,8 @@ struct Genotype_Metrics
   Phenotype_ID death_pID = {0, 0}, loop_pID = {255, 0};
 
   double number_of_neighbours;
-  double strict_robustness = 0.,intersection_robustness = 0., union_evolvability = 0.;
-  double death = 0., loop = 0.;
+  double strict_robustness = 0, intersection_robustness = 0, union_evolvability = 0;
+  double death = 0, loop = 0;
 
   std::vector <Shape_Metrics> shapes;
   std::set <Phenotype_ID> diversity;

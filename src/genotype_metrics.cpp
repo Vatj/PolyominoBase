@@ -35,7 +35,11 @@ void Genotype_Metrics::analyse_pIDs(std::vector <Phenotype_ID>& pIDs)
   std::set_intersection(std::begin(pIDs), std::end(pIDs), std::begin(ref_pIDs), std::end(ref_pIDs), std::back_inserter(intersection));
   std::set_union(std::begin(pIDs), std::end(pIDs), std::begin(ref_pIDs), std::end(ref_pIDs), std::back_inserter(union_set));
 
-  intersection_robustness += (double) intersection.size() / (double) ref_pIDs.size();
+  if(ref_pIDs.size() > 0)
+    intersection_robustness += (double) intersection.size() / (double) ref_pIDs.size();
+  else
+    intersection_robustness = 0;
+
   union_evolvability += (double) (union_set.size() - ref_pIDs.size());
 
   if (std::find(std::begin(pIDs), std::end(pIDs), death_pID) != std::end(pIDs))
@@ -53,20 +57,6 @@ void Genotype_Metrics::analyse_pIDs(std::vector <Phenotype_ID>& pIDs)
 
 void Genotype_Metrics::save_to_file(std::ofstream& fout)
 {
-  // fout << "genotype : ";
-  // for (auto face: ref_genotype)
-  //   fout <<+ face << " ";
-  //
-  // fout << "; strict robustness : " <<+ strict_robustness;
-  // fout << "; inter robustness : " <<+ intersection_robustness;
-  // fout << "; evolvability : " <<+ union_evolvability;
-  // fout << "; death : " <<+ death;
-  // fout << "; diversity : " <<+ diversity.size();
-  //
-  // fout << "; pIDs : ";
-  // for (auto pID: ref_pIDs)
-  //   fout <<+ pID.first << " " <<+ pID.second << " ";
-
   fout << "(";
   for (auto face: ref_genotype)
     fout <<+ face << ",";
@@ -81,12 +71,17 @@ void Genotype_Metrics::save_to_file(std::ofstream& fout)
   fout <<+ diversity.size() << " ";
   fout <<+ neutral_weight << " ";
 
-  fout << "{";
-  for (auto pID: ref_pIDs)
-    fout <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
+  if(ref_pIDs.size() > 0)
+  {
+    fout << "{";
+    for (auto pID: ref_pIDs)
+      fout <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
 
-  fout.seekp((long) fout.tellp() - 1);
-  fout << "}" << std::endl;
+    fout.seekp((long) fout.tellp() - 1);
+    fout << "}\n";
+  }
+  else
+    fout << "{}\n";
 }
 
 void Genotype_Metrics::clear()
@@ -151,17 +146,6 @@ void Set_Metrics::save_to_file(std::ofstream& fout)
      average_loop += loops[index] * (double) neutral_weightings[index] / total_neutral_size;
   }
 
-  // fout << "strict robustness : " <<+ average_strict_robustness;
-  // fout << "; intersection robustness : " <<+ average_intersection_robustness;
-  // fout << " ; evolvability : " <<+ average_union_evolvability;
-  // fout << " ; death : " <<+ average_death;
-  // fout << " ; diversity : " <<+ diversity.size();
-  //
-  // fout << "; pIDs : ";
-  //
-  // for (auto pID: ref_pIDs)
-  //   fout <<+ pID.first << " " <<+ pID.second << " ";
-
   fout <<+ average_strict_robustness << " ";
   fout <<+ average_intersection_robustness << " ";
   fout <<+ average_union_evolvability << " ";
@@ -169,12 +153,17 @@ void Set_Metrics::save_to_file(std::ofstream& fout)
   fout <<+ average_loop << " ";
   fout <<+ diversity.size() << " ";
 
-  fout << "{";
-  for (auto pID: ref_pIDs)
-    fout <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
+  if(ref_pIDs.size() > 0)
+  {
+    fout << "{";
+    for (auto pID: ref_pIDs)
+      fout <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
 
-  fout.seekp((long) fout.tellp() - 1);
-  fout << "}" << std::endl;
+    fout.seekp((long) fout.tellp() - 1);
+    fout << "}" << std::endl;
+  }
+  else
+    fout << "{}" << std::endl;
 }
 
 void Set_Metrics::clear()
@@ -252,10 +241,6 @@ void GP_MapSampler(const char* file_path_c, uint8_t n_genes, uint8_t rcolours, u
       {
         genome_metrics.save_to_file(genome_metrics_out);
         set_metrics.add_genotype_metrics(genome_metrics);
-
-        // for (auto pID: genotype_pIDs)
-        //   shape_metrics_out <<+ pID.first << " " <<+ pID.second << " ";
-        // shape_metrics_out << std::endl;
       }
 
       genome_metrics.clear();
