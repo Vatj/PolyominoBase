@@ -4,12 +4,21 @@
 #include <functional>
 #include <set>
 
-
-
-
-
-
-
+void LoadExistingTable(std::ifstream& fin,StochasticPhenotypeTable* pt_it) {
+  std::string str;
+  while (std::getline(fin, str)) {
+    std::stringstream iss(str);
+    int number;
+    std::vector<uint8_t> phenotype_line;
+    while (iss>>number)
+      phenotype_line.push_back(static_cast<uint8_t>(number));
+    Phenotype phen;
+    phen.dx=phenotype_line[2];
+    phen.dy=phenotype_line[3];
+    phen.tiling=std::vector<uint8_t>(phenotype_line.begin()+4,phenotype_line.end());
+    pt_it->known_phenotypes[phenotype_line[0]].emplace_back(phen);
+  }
+}
 
 std::vector<Phenotype_ID> GetPhenotypeIDs(Genotype& genotype, uint8_t k_builds, StochasticPhenotypeTable* pt_it) {
   std::vector<Phenotype_ID> pIDs;
@@ -58,6 +67,7 @@ void GetPhenotypesIDs(const char* file_path_c,const char* file_name_c, uint8_t n
 /***** MAIN *****/
 /****************/
 int main(int argc, char* argv[]) {
+
 
   StochasticPhenotypeTable pt;
   Stochastic::STERIC_FORBIDDEN=true;
