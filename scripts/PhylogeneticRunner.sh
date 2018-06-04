@@ -4,7 +4,7 @@ I_size=64
 Mu=$1
 T=$2
 STEP_SIZE=4
-RUNS=250
+RUNS=200
 
 let "END = $RUNS - $STEP_SIZE"
 
@@ -32,12 +32,12 @@ for (( j=1; j<argc; j++ )); do
 		nice -n 15 ~/Documents/PolyominoDev/bin/ProteinEvolution -E -N 3 -P 500 -K 2000 -B 20 -R 0 -F 1 -M $Mu -Y $T -X .51 -I .25 -D $STEP_SIZE -V $V
 	
 		nice -n 15 python ~/Documents/PolyominoDev/scripts/interface_analysis.py $I_size $Mu $T $STEP_SIZE $V
-		if [ "$save" = true ]; then	
-			XZ_OPT=-9 tar -Jcf DataI${I_size}Mu${Mu}T${T}V${V}.tar.xz *txt --remove-files
-		else
-			rm -f *.txt
-		fi
-		mv *.pkl /rscratch/asl47/Pickles/
+		#if [ "$save" = true ]; then	
+		#	XZ_OPT=-9 tar -Jcf DataI${I_size}Mu${Mu}T${T}V${V}.tar.xz *txt --remove-files
+		#else
+		#	rm -f *.txt
+		#fi
+		#mv *.pkl /rscratch/asl47/Pickles/
 	done
 done
 
