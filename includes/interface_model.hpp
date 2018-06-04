@@ -29,6 +29,7 @@ namespace model_params
   constexpr uint8_t interface_size=CHAR_BIT*sizeof(interface_type);
   
   extern double temperature,binding_threshold,mu_prob,fitness_factor,UND_threshold,interface_threshold;
+  extern bool fixed_seed;
   
   extern std::binomial_distribution<uint8_t> b_dist;
   extern std::uniform_real_distribution<double> real_dist;

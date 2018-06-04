@@ -185,8 +185,8 @@ def concatenateResults(data_struct,trim_gen=True):
      strengths={K:[] for K in ['E','I','S']}
      neutrals={K:Counter() for K in ['Sym','Asym']}
 
-     bindings=[Counter() for _ in xrange(len(data_struct[0]['N_binds']))]
-     fatal_phens=np.empty((len(data_struct),len(data_struct[0]['Unbounds'])))
+     #bindings=[Counter() for _ in xrange(len(data_struct[0]['N_binds']))]
+     #fatal_phens=np.empty((len(data_struct),len(data_struct[0]['Unbounds'])))
      phen_trans=defaultdict(lambda: defaultdict(int))
      first_trans=defaultdict(lambda: defaultdict(int))
      slice_start=1 if trim_gen else 0
@@ -219,7 +219,9 @@ def concatenateResults(data_struct,trim_gen=True):
                     for j,value in enumerate(x):
                          strengths[k][i][j]=  np.sum([a*b for a,b in value.iteritems()])/np.sum(value.values())
                          
-     return strengths,neutrals,phen_trans,first_trans#,bindings,fatal_phens
+     return strengths,neutrals,{k:dict(v) for k,v in phen_trans.iteritems()},{k:dict(v) for k,v in first_trans.iteritems()}
+#dict(phen_trans),dict(first_trans)#,bindings,fatal_phens
+
           
 def AnalysePhylogeneticStrengths(r,mu,t):
      g,s,p,st=LoadT(mu=mu,t=t,run=r)

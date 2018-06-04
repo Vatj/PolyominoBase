@@ -10,6 +10,7 @@ namespace simulation_params
 
 namespace model_params
 {
+  bool fixed_seed=false;
   double temperature=1,binding_threshold=1,mu_prob=0.2,fitness_factor=1,UND_threshold=0.2,interface_threshold=0.2;
   std::binomial_distribution<uint8_t> b_dist(interface_size,mu_prob);
   std::uniform_real_distribution<double> real_dist(0, 1);
@@ -152,10 +153,14 @@ namespace interface_model
   }
   
   std::vector<int8_t> AssembleProteinNew(const BGenotype& binary_genome,std::set<interaction_pair>& interacting_indices) {
-    std::vector<int8_t> placed_tiles{0,0,1},growing_perimeter;
+    int8_t seed=1;
+    if(model_params::fixed_seed)
+      seed=1+4*(std::uniform_int_distribution<uint8_t>(1,binary_genome.size()/4)(interface_model::RNG_Engine)-1);
+      
+    std::vector<int8_t> placed_tiles{0,0,seed},growing_perimeter;
     std::vector<double> strengths,strengths_cdf;
     std::vector<interaction_pair> interaction_pairs;
-    ExtendPerimeter(binary_genome,1,0,0,placed_tiles,growing_perimeter,strengths,interaction_pairs);
+    ExtendPerimeter(binary_genome,seed,0,0,placed_tiles,growing_perimeter,strengths,interaction_pairs);
 
     while(!strengths.empty()) {
       //select new site proportional to binding strength
@@ -292,7 +297,10 @@ void InterfaceStrengths(BGenotype& interfaces, std::vector<uint32_t>& strengths)
 std::array<double,model_params::interface_size+1> GenBindingProbsLUP() {
   std::array<double,model_params::interface_size+1> probs;
   std::fill(probs.begin(),probs.begin()+static_cast<size_t>((1-model_params::binding_threshold)*model_params::interface_size)+1,1);
-  //return probs;
+  if(model_params::temperature<0) {
+    model_params::temperature=0;
+    return probs;
+  }
   for(size_t i=0;i<probs.size();++i) {
     
     probs[i]=(i<=static_cast<size_t>((1.-model_params::binding_threshold)*model_params::interface_size)?1:0)*exp((double(i)/model_params::interface_size)/((model_params::binding_threshold-1.)*model_params::temperature));

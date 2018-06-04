@@ -212,7 +212,8 @@ void SetRuntimeConfigurations(int argc, char* argv[]) {
       case 'R': simulation_params::random_initilisation=std::stoi(argv[arg+1])>0;break; 
         
       case 'F': model_params::fitness_factor=std::stod(argv[arg+1]);break;
-      
+
+      case 'S': model_params::fixed_seed=std::stoi(argv[arg+1])>0;break;
       case 'M': model_params::mu_prob=std::stod(argv[arg+1]);break;
       case 'T': model_params::temperature=std::stod(argv[arg+1]);break;
       case 'Y': model_params::binding_threshold=double(static_cast<uint8_t>(model_params::interface_size*std::stod(argv[arg+1])))/model_params::interface_size;break;

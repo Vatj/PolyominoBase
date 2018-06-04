@@ -7,7 +7,7 @@ import icy;icy.Use_Seaborn()
 
 from colorsys import hsv_to_rgb
 from random import uniform,choice
-from interface_analysis import qBFS, loadManyResults, concatenateResults,RandomWalk,BindingStrength, set_length,PhenotypicTransitions
+from interface_analysis import qBFS, loadManyResults, concatenateResults,RandomWalk,BindingStrength, set_length
 from scipy.stats import linregress,binom,scoreatpercentile
 from itertools import combinations_with_replacement as cwr
 from random import choice
@@ -253,6 +253,19 @@ def plotFatals(counts):
      plt.show(block=False)
 
 
+     
+def PhenotypicTransitions(phen_trans,N=40,crit_factor=0.5):
+     print "N set for ",N
+     common_transitions=deepcopy(phen_trans)
+     for phen_key,trans in phen_trans.iteritems():
+          print "max",phen_key,max(trans.iterkeys(), key=(lambda key: trans[key])),max(trans.values())
+          for tran,count in trans.iteritems():
+               if count>N*crit_factor:
+                    print tran,count
+               else:
+                    del common_transitions[phen_key][tran]
+ 
+     return common_transitions
 def plotTransitions(phen_trans,cdict=None):
      
      fig =plt.figure()
