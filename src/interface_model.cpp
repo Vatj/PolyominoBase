@@ -21,7 +21,6 @@ namespace interface_model
 {  
  
   std::mt19937 RNG_Engine(std::random_device{}());
-  uint8_t GAUGE=4;
   
   inline interface_type reverse_bits(interface_type v) {
     interface_type s(model_params::interface_size);
@@ -293,6 +292,13 @@ void InterfaceStrengths(BGenotype& interfaces, std::vector<uint32_t>& strengths)
 std::array<double,model_params::interface_size+1> GenBindingProbsLUP() {
   std::array<double,model_params::interface_size+1> probs;
   std::fill(probs.begin(),probs.begin()+static_cast<size_t>((1-model_params::binding_threshold)*model_params::interface_size)+1,1);
+  //return probs;
+  for(size_t i=0;i<probs.size();++i) {
+    
+    probs[i]=(i<=static_cast<size_t>((1.-model_params::binding_threshold)*model_params::interface_size)?1:0)*exp((double(i)/model_params::interface_size)/((model_params::binding_threshold-1.)*model_params::temperature));
+
+  }
   return probs;
+  
 }
 

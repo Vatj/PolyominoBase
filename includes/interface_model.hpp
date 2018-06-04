@@ -56,7 +56,7 @@ namespace interface_model
   struct InterfacePhenotypeTable;
 
   extern std::mt19937 RNG_Engine;
-  extern uint8_t GAUGE;
+  constexpr uint8_t GAUGE=4;
   interface_type reverse_bits(interface_type v);
   uint8_t ArbitraryPopcount(interface_type face1);
   uint8_t SammingDistance(interface_type face1,interface_type face2);

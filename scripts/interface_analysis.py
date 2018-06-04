@@ -11,8 +11,14 @@ from itertools import combinations
 from numpy import linalg as LA
 
 
-
-
+def GG(N):
+     a=[]
+     while len(a)<N:
+	  r1=random.getrandbits(64)
+ 	  r2=random.getrandbits(64)
+ 	  if BindingStrength(r1,r2)>0.7:
+               a.append((r1,r2))
+     return a
 def setBasePath(path):
      global BASE_FILE_PATH
      if path=='scratch':

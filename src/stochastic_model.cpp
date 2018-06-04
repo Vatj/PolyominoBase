@@ -3,7 +3,7 @@
 namespace Stochastic
 {
   std::mt19937 RNG_Generator(std::random_device{}());
-  bool STERIC_FORBIDDEN = true;
+  bool STERIC_FORBIDDEN = false;
   uint8_t GAUGE=4;
 
   std::vector<Phenotype_ID> AssemblePlasticGenotype(Genotype genotype, uint8_t k_builds_per_seed, StochasticPhenotypeTable* pt,double UND_frac) {
@@ -14,7 +14,7 @@ namespace Stochastic
 	
 	std::vector<int8_t> placed_tiles=Stochastic_Polyomino_Builder(genotype,THRESHOLD_SIZE,seed);
 	if(placed_tiles.size()==0) {
-	  ++phenotype_counter[std::make_pair(0,0)];
+	  //++phenotype_counter[std::make_pair(0,0)];
 	  continue;
 	}
 	else {
@@ -33,9 +33,15 @@ namespace Stochastic
       }
     }
     std::vector<Phenotype_ID> plastic_phenotypes;
-    for(auto kv : phenotype_counter)
+    bool rare_phenotypes=false;
+    for(auto kv : phenotype_counter) {
       if(kv.second>=(UND_frac*k_builds_per_seed*genotype.size()/4))
 	plastic_phenotypes.emplace_back(kv.first);
+      else
+	rare_phenotypes=true;
+    }
+    if(rare_phenotypes)
+      plastic_phenotypes.emplace_back(0,0);
     return plastic_phenotypes;
   }
   

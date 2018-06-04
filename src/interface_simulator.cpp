@@ -215,7 +215,7 @@ void SetRuntimeConfigurations(int argc, char* argv[]) {
       
       case 'M': model_params::mu_prob=std::stod(argv[arg+1]);break;
       case 'T': model_params::temperature=std::stod(argv[arg+1]);break;
-      case 'Y': model_params::binding_threshold=std::stod(argv[arg+1]);break;
+      case 'Y': model_params::binding_threshold=double(static_cast<uint8_t>(model_params::interface_size*std::stod(argv[arg+1])))/model_params::interface_size;break;
       case 'X': model_params::UND_threshold=std::stod(argv[arg+1]);break;
       case 'I': model_params::interface_threshold=std::stod(argv[arg+1]);break;
 	
