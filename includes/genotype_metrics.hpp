@@ -5,6 +5,7 @@
 extern "C"
 {
   void GP_MapSampler(const char* file_path_c,uint8_t n_genes, uint8_t rcolours,uint8_t colours);
+  void GP_MapSampler_new(const char* file_path_c, uint8_t n_genes, uint8_t rcolours, uint8_t colours);
 }
 
 /*GP map calculations*/
@@ -48,7 +49,7 @@ struct Genotype_Metrics
 
   Genotype_Metrics(uint8_t ngenes, uint8_t colours);
 
-  void set_reference(Genotype& genotype, std::vector <Phenotype_ID>& pIDs);
+  void set_reference(Genotype& genotype, std::vector <Phenotype_ID> pIDs);
 
   void clear();
 
@@ -68,6 +69,7 @@ struct Set_Metrics
   std::vector <double> strict_robustnesses, union_evolvabilities;
   std::vector <double> intersection_robustnesses, deaths, loops;
   std::vector <uint64_t> neutral_weightings;
+  std::vector <Genotype_Metrics> genome_metrics;
 
   std::set <Phenotype_ID> diversity;
 
@@ -75,7 +77,7 @@ struct Set_Metrics
 
   void add_genotype_metrics(Genotype_Metrics& gmetrics);
 
-  void save_to_file(std::ofstream& fout);
+  void save_to_file(std::ofstream& set_out, std::ofstream& genome_out);
 
   void clear();
 };

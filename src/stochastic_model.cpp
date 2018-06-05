@@ -1,12 +1,12 @@
 #include <stochastic_model.hpp>
-#include <iostream>
 
 namespace Stochastic
 {
   std::mt19937 RNG_Generator(std::random_device{}());
+  bool STERIC_FORBIDDEN = false;
+  uint8_t GAUGE=4;
 
-  std::vector<Phenotype_ID> AssemblePlasticGenotype(Genotype genotype, uint8_t k_builds_per_seed, StochasticPhenotypeTable* pt,double UND_frac) 
-  {
+  std::vector<Phenotype_ID> AssemblePlasticGenotype(Genotype genotype, uint8_t k_builds_per_seed, StochasticPhenotypeTable* pt,double UND_frac) {
     std::map<Phenotype_ID,uint8_t> phenotype_counter;
     const uint8_t THRESHOLD_SIZE=(genotype.size()*genotype.size())/4;
     for(uint8_t kth=0;kth<k_builds_per_seed;++kth) {
@@ -14,7 +14,7 @@ namespace Stochastic
 
 	std::vector<int8_t> placed_tiles=Stochastic_Polyomino_Builder(genotype,THRESHOLD_SIZE,seed);
 	if(placed_tiles.size()==0) {
-	  ++phenotype_counter[std::make_pair(0,0)];
+	  //++phenotype_counter[std::make_pair(0,0)];
 	  continue;
 	}
 	else {
@@ -33,12 +33,18 @@ namespace Stochastic
       }
     }
     std::vector<Phenotype_ID> plastic_phenotypes;
+    bool rare_phenotypes=false;
     for(auto kv : phenotype_counter) {
       if(kv.second>=(UND_frac*k_builds_per_seed*genotype.size()/4))
 	plastic_phenotypes.emplace_back(kv.first);
+      else
+	rare_phenotypes=true;
     }
+    if(rare_phenotypes)
+      plastic_phenotypes.emplace_back(0,0);
     return plastic_phenotypes;
   }
+
 
   Phenotype_ID Analyse_Genotype_Outcome(Genotype genome, uint8_t N_Repeated_Checks, StochasticPhenotypeTable* pt,uint8_t seed) {
     const uint8_t THRESHOLD_SIZE=(genome.size()*genome.size())/4;
@@ -58,7 +64,7 @@ namespace Stochastic
       if(Placed_Tiles_Compare.empty() || Placed_Tiles_Check.size()!=Placed_Tiles_Compare.size())
         return std::make_pair(0,0);
       phen2=Generate_Spatial_Occupancy(Placed_Tiles_Compare,3);
-      if(!ComparePolyominoes(phen1,phen2))
+      if(!ComparePolyominoes(phen1,phen2,Stochastic::GAUGE))
         return std::make_pair(0,0);
       if(N_Repeated_Checks-nth_repeat>1) {
 	phen1=phen2;
@@ -68,59 +74,58 @@ namespace Stochastic
     Phenotype_ID result;
     #pragma omp critical(table_lookup)
     {
-      result=pt->GetPhenotypeID(phen2); //Placed_Tiles_Check.size()/4;
+      result=pt->GetPhenotypeID(phen2);
     }
     return result;
   }
 
   std::vector<int8_t> Stochastic_Polyomino_Builder(const Genotype& genome, uint8_t THRESHOLD_SIZE, uint8_t initial_Tile) {
-    std::vector<int8_t> Placed_Tiles{0,0,static_cast<int8_t>(initial_Tile),0},Interacting_Faces; //DEFINED AS (X,Y,Tile Type Number, Tile Rotation[in CW rotation])
+    std::vector<int8_t> Placed_Tiles{0,0,static_cast<int8_t>(initial_Tile),0},next_binds; //DEFINED AS (X,Y,Tile Type Number, Tile Rotation[in CW rotation])
     for(uint8_t face=0; face<4; ++face)
       if(genome[initial_Tile*4+face]!=0)
-        Interacting_Adjacency(Interacting_Faces,genome[initial_Tile*4+face],face,0,0);
+        Interacting_Adjacency(next_binds,genome[initial_Tile*4+face],face,0,0);
 
-    while(!Interacting_Faces.empty()) {
-      for(int number_possibilities=(Interacting_Faces.size()/4)-1; number_possibilities >=0; --number_possibilities) {
-        bool collision_Detected=false;
+    while(!next_binds.empty()) {
+      for(int Noptions=(next_binds.size()/4)-1; Noptions >=0; --Noptions) {
+        bool overlapped=false;
         for(std::vector<int8_t>::iterator occupied_iter = Placed_Tiles.begin(); occupied_iter!=Placed_Tiles.end(); occupied_iter+=4) {
-          if(Interacting_Faces[number_possibilities*4]==*occupied_iter && Interacting_Faces[number_possibilities*4+1]==*(occupied_iter+1)) {
-            if(Interacting_Faces[number_possibilities*4+2]!=genome[*(occupied_iter+2)*4+(Interacting_Faces[number_possibilities*4+3]-*(occupied_iter+3)+4)%4])
-              return {}; //Steric mismatch, reject empty vector as sign
-            Interacting_Faces.erase(Interacting_Faces.end()-4,Interacting_Faces.end());
-            collision_Detected=true;
+          if(next_binds[Noptions*4]==*occupied_iter && next_binds[Noptions*4+1]==*(occupied_iter+1)) {
+            if(STERIC_FORBIDDEN && next_binds[Noptions*4+2]!=genome[*(occupied_iter+2)*4+(next_binds[Noptions*4+3]-*(occupied_iter+3)+4)%4])
+              return {};
+            next_binds.erase(next_binds.end()-4,next_binds.end());
+            overlapped=true;
             break;
           }
         }
-        if(collision_Detected)
+        if(overlapped)
           continue;
-        else {
-          uint8_t conjugate_count=std::count(genome.begin(),genome.end(),Interacting_Faces[number_possibilities*4+2]);
-          std::uniform_int_distribution<uint8_t> Random_Count(0,conjugate_count-1);
-          int nth_conjugate=Random_Count(RNG_Generator);
-	  auto current_conjugate=std::find(genome.begin(),genome.end(),Interacting_Faces[number_possibilities*4+2]);
-          for(uint8_t conj_cnt=1;conj_cnt<=nth_conjugate;++conj_cnt) {
-            current_conjugate=std::find(current_conjugate+1,genome.end(),Interacting_Faces[number_possibilities*4+2]);
-          }
-          uint8_t new_Tile=(current_conjugate-genome.begin())/4,new_Face=(current_conjugate-genome.begin())%4,rotation= (Interacting_Faces[number_possibilities*4+3]-new_Face+4)%4;
 
-          Placed_Tiles.insert(Placed_Tiles.end(),{Interacting_Faces[number_possibilities*4],Interacting_Faces[number_possibilities*4+1],static_cast<int8_t>(new_Tile),static_cast<int8_t>(rotation)});
-          if(Placed_Tiles.size()/4 > THRESHOLD_SIZE)
-            return Placed_Tiles;
-          uint8_t placed_X=Interacting_Faces[number_possibilities*4],placed_Y=Interacting_Faces[number_possibilities*4+1];
-          Interacting_Faces.erase(Interacting_Faces.begin()+number_possibilities*4,Interacting_Faces.begin()+number_possibilities*4+4);
-          for(uint8_t face=1;face<4;++face) {
-            uint8_t temp_Face=genome[new_Tile*4+(new_Face+face)%4];
-            if(temp_Face!=0)
-              Interacting_Adjacency(Interacting_Faces,temp_Face,(new_Face+face+rotation)%4,placed_X,placed_Y);
-          }
-          break;
+        uint8_t conjugate_count=std::count(genome.begin(),genome.end(),next_binds[Noptions*4+2]);
+        std::uniform_int_distribution<uint8_t> Random_Count(0,conjugate_count-1);
+        int nth_conjugate=Random_Count(RNG_Generator);
+        auto current_conjugate=std::find(genome.begin(),genome.end(),next_binds[Noptions*4+2]);
+        for(uint8_t conj_cnt=1;conj_cnt<=nth_conjugate;++conj_cnt)
+          current_conjugate=std::find(current_conjugate+1,genome.end(),next_binds[Noptions*4+2]);
+        uint8_t new_Tile=(current_conjugate-genome.begin())/4,new_Face=(current_conjugate-genome.begin())%4,rotation= (next_binds[Noptions*4+3]-new_Face+4)%4;
+
+        Placed_Tiles.insert(Placed_Tiles.end(),{next_binds[Noptions*4],next_binds[Noptions*4+1],static_cast<int8_t>(new_Tile),static_cast<int8_t>(rotation)});
+        if(Placed_Tiles.size()/4 > THRESHOLD_SIZE)
+          return Placed_Tiles;
+        uint8_t placed_X=next_binds[Noptions*4],placed_Y=next_binds[Noptions*4+1];
+        next_binds.erase(next_binds.begin()+Noptions*4,next_binds.begin()+Noptions*4+4);
+        for(uint8_t face=1;face<4;++face) {
+          uint8_t temp_Face=genome[new_Tile*4+(new_Face+face)%4];
+          if(temp_Face!=0)
+            Interacting_Adjacency(next_binds,temp_Face,(new_Face+face+rotation)%4,placed_X,placed_Y);
         }
+        break;
+
       }
     }
     return Placed_Tiles;
   }
 
-  void Interacting_Adjacency(std::vector<int8_t>& Interacting_Faces, uint8_t interacting_Face, uint8_t face_index, int8_t X, int8_t Y) {
+  void Interacting_Adjacency(std::vector<int8_t>& next_binds, uint8_t interacting_Face, uint8_t face_index, int8_t X, int8_t Y) {
     int8_t X_OFFSET=0,Y_OFFSET=0;
     switch(face_index) {
     case 0:
@@ -137,7 +142,7 @@ namespace Stochastic
       break;
     }
     uint8_t conjugate_Face=Interaction_Matrix(interacting_Face);
-    Interacting_Faces.insert(Interacting_Faces.begin()+std::uniform_int_distribution<size_t>{0,Interacting_Faces.size()/4}(RNG_Generator)*4,{static_cast<int8_t>(X+X_OFFSET),static_cast<int8_t>(Y+Y_OFFSET),static_cast<int8_t>(conjugate_Face),static_cast<int8_t>((face_index+2)%4)});
+    next_binds.insert(next_binds.begin()+std::uniform_int_distribution<size_t>{0,next_binds.size()/4}(RNG_Generator)*4,{static_cast<int8_t>(X+X_OFFSET),static_cast<int8_t>(Y+Y_OFFSET),static_cast<int8_t>(conjugate_Face),static_cast<int8_t>((face_index+2)%4)});
   }
 
 
@@ -166,7 +171,7 @@ namespace Stochastic
     Phenotype phen{dx,dy,Spatial_Occupancy_Check};
     if(dy>dx)
       ClockwiseRotation(phen);
-    MinimalTilingRepresentation(phen.tiling);
+    MinimizePhenRep(phen.tiling,Stochastic::GAUGE);
     return phen;
   }
 

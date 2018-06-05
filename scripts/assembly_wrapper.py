@@ -40,6 +40,12 @@ def GPMap_wrapper(file_path, ngenes, rcolours, colours):
     c_ = ctypes.c_buffer(file_path)
     Poly_Lib.GP_MapSampler(c_, ngenes, rcolours, colours)
 
+def GPMap_wrapper_new(file_path, ngenes, rcolours, colours):
+    Poly_Lib.GP_MapSampler.restype = None
+    Poly_Lib.GP_MapSampler.argtypes = [ctypes.POINTER(ctypes.c_char), ctypes.c_uint8, ctypes.c_uint8, ctypes.c_uint8]
+    c_ = ctypes.c_buffer(file_path)
+    Poly_Lib.GP_MapSampler_new(c_, ngenes, rcolours, colours)
+
 
 def PreProcessGenotypesTopology_wrapper(file_path, ngenes, colours):
     Poly_Lib.PreProcessGenotypesTopology.restype = None
@@ -68,4 +74,4 @@ def GenerateGenotypes(file_path, ngenes, colours, samples=-1):
         ExhaustiveMinimalMethod_wrapper(file_path, ngenes, colours)
     else:
         SampleMinimalMethod_wrapper(file_path, ngenes, colours, samples, True)
-    PreProcessGenotypes_wrapper(file_path, ngenes, colours)
+    # PreProcessGenotypes_wrapper(file_path, ngenes, colours)

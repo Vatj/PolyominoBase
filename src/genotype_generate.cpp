@@ -6,79 +6,25 @@
 
 std::mt19937 RNG_Engine(std::random_device{}());
 
-// void SampleMinimalGenotypes_old(const char* file_path_c, uint8_t n_genes, uint8_t colours,const uint32_t N_SAMPLES,bool allow_duplicates)
-// {
-//   uint32_t good_genotypes=0;
-//   std::string file_path(file_path_c),file_details="_N"+std::to_string(n_genes)+"_C"+std::to_string(colours)+".txt";
-//   std::ofstream fout(file_path+"SampledGenotypes"+file_details);
-//
-//   GenotypeGenerator ggenerator = GenotypeGenerator(n_genes, colours);
-//   ggenerator.init();
-//   StochasticPhenotypeTable pt;
-//   uint8_t k_builds=5;
-//
-//
-// #pragma omp parallel
-//   while(true) {
-//     uint32_t local_counter;
-//      Genotype genotype;
-//      std::vector<uint32_t> states;
-// #pragma omp atomic read
-//     local_counter = good_genotypes;
-//     if(local_counter >= N_SAMPLES)
-//       break;
-//
-//     uint32_t lbound_neck=0;
-//     for(uint8_t neck_ind=0;neck_ind<n_genes;++neck_ind) {
-//       lbound_neck=std::uniform_int_distribution<uint32_t>{lbound_neck,ggenerator.n_necklaces-1}(RNG_Engine);
-//       states.emplace_back(lbound_neck);
-//       if(!allow_duplicates) {
-//         if((lbound_neck+n_genes-neck_ind)>ggenerator.n_necklaces)
-//           continue;
-//         ++lbound_neck;
-//       }
-//     }
-//     for(auto state : states)
-//       genotype.insert(genotype.end(),ggenerator.necklaces[state].begin(),ggenerator.necklaces[state].end());
-//
-//     if(!ggenerator.valid_genotype(genotype))
-//       continue;
-//
-//     bool all_zero_phen=true;
-//     for(uint8_t seed=0;seed<n_genes;++seed) {
-//       uint8_t phen_size = Stochastic::Analyse_Genotype_Outcome(genotype,k_builds,&pt,seed).first;
-//       if(phen_size==255)
-//         continue;
-//       if(phen_size>0)
-//         all_zero_phen=false;
-//     }
-//     if(all_zero_phen)
-//       continue;
-// #pragma omp atomic update
-//     ++good_genotypes;
-// #pragma omp critical
-//     {
-// 	     for(auto g : genotype)
-// 	      fout<<+g<<" ";
-//        fout<<"\n";
-//     }
-//   }
-// }
-
 void SampleMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours,const uint32_t N_SAMPLES,bool allow_duplicates)
 {
   uint64_t good_genotypes=0, generated_genotypes=0;
   std::string file_path(file_path_c),file_details="_N"+std::to_string(n_genes)+"_C"+std::to_string(colours)+".txt";
-  std::ofstream fout(file_path+"SampledGenotypes"+file_details);
+  std::ofstream fout(file_path + "SampledGenotypes" + file_details);
+
+  std::ifstream pheno_in(file_path + "PhenotypeTable" + file_details);
+  std::ofstream pheno_out(file_path + "PhenotypeTable" + file_details);
+
   std::ofstream logut(file_path+"log"+file_details);
 
   GenotypeGenerator ggenerator = GenotypeGenerator(n_genes, colours);
   ggenerator.init();
   StochasticPhenotypeTable pt;
-  uint8_t k_builds = 5;
-  Phenotype_ID death_pID = {0, 0}, loop_pID = {255, 0};
+  // uint8_t k_builds = 50;
+  // Phenotype_ID death_pID = {0, 0}, loop_pID = {255, 0};
   std::vector<Phenotype_ID> pIDs;
   Genotype nullg;
+  // LoadExistingTable(pheno_in, &pt_it);
 
 #pragma omp parallel firstprivate(pIDs)
   while(true)
@@ -112,14 +58,14 @@ void SampleMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t co
     for(auto state : states)
       genotype.insert(genotype.end(),ggenerator.necklaces[state].begin(), ggenerator.necklaces[state].end());
 
-    // if(!ggenerator.valid_genotype(genotype))
-    //   continue;
+    if(!ggenerator.valid_genotype(genotype))
+      continue;
 
-    pIDs = GetSetPIDs(genotype, k_builds, &pt);
+    // pIDs = GetSetPIDs(genotype, k_builds, &pt);
 
-    if(pIDs.size() > 0)
-      if ((pIDs.front() == death_pID) || (pIDs.back() == loop_pID))
-        continue;
+    // if(pIDs.size() > 0)
+    //   if ((pIDs.front() == death_pID) || (pIDs.back() == loop_pID))
+    //     continue;
 
     #pragma omp atomic update
       ++good_genotypes;
@@ -185,87 +131,6 @@ void ExhaustiveMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_
     for(auto g : genotype)
       fout<<+g<<" ";
     fout<<"\n";
-  }
-}
-
-void PreProcessGenotypesTopology(const char* file_path_c, uint8_t n_genes, uint8_t colours)
-{
-  std::string str,file_path(file_path_c),file_details="_N"+std::to_string(n_genes)+"_C"+std::to_string(colours);
-  std::ifstream fin(file_path+"SampledGenotypes"+file_details+"_Iso.txt");
-  std::ofstream fout(file_path+"SampledGenotypes"+file_details+"_Processed.txt");
-
-  StochasticPhenotypeTable pt;
-  uint8_t k_builds=5;
-  std::map<std::vector<Phenotype_ID>, std::vector<Genotype>> phen_sets;
-  Genotype genotype;
-
-  while (std::getline(fin, str))
-  {
-    std::istringstream is( str );
-    genotype.assign( std::istream_iterator<int>( is ), std::istream_iterator<int>() );
-
-    const Genotype g_write(genotype);
-    std::vector<Phenotype_ID> pIDs = GetSetPIDs(genotype, k_builds, &pt);
-    phen_sets[pIDs].emplace_back(g_write);
-  }
-
-  for(auto kv : phen_sets)
-  {
-    for(Genotype& gen : kv.second)
-    {
-      for(uint8_t base : gen)
-      {
-	       fout<<+base<<" ";
-      }
-      fout<<"\n";
-    }
-
-    fout << "x ";
-    for(auto pID: kv.first)
-      fout <<+ pID.first << " " <<+ pID.second << " ";
-    fout << "\n";
-
-  }
-}
-
-void PreProcessGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours)
-{
-  std::string str,file_path(file_path_c),file_details="_N"+std::to_string(n_genes)+"_C"+std::to_string(colours);
-  std::ifstream fin(file_path+"SampledGenotypes"+file_details+".txt");
-  std::ofstream fout(file_path+"SampledGenotypes"+file_details+"_Processed.txt");
-
-  StochasticPhenotypeTable pt;
-  uint8_t k_builds=5;
-  std::map<std::vector<Phenotype_ID>, std::vector<Genotype>> phen_sets;
-  Genotype genotype;
-
-
-  while (std::getline(fin, str))
-  {
-    std::istringstream is( str );
-    genotype.assign( std::istream_iterator<int>( is ), std::istream_iterator<int>() );
-
-    const Genotype g_write(genotype);
-    std::vector<Phenotype_ID> pIDs = GetSetPIDs(genotype, k_builds, &pt);
-    phen_sets[pIDs].emplace_back(g_write);
-  }
-
-  for(auto kv : phen_sets)
-  {
-    for(Genotype& gen : kv.second)
-    {
-      for(uint8_t base : gen)
-      {
-	       fout<<+base<<" ";
-      }
-      fout<<"\n";
-    }
-
-    fout << "x ";
-    for(auto pID: kv.first)
-      fout <<+ pID.first << " " <<+ pID.second << " ";
-    fout << "\n";
-
   }
 }
 

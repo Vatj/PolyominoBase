@@ -9,7 +9,6 @@
 
 typedef std::vector<uint8_t> Genotype;
 
-
 uint8_t Interaction_Matrix(uint8_t input_face);
 void Clean_Genome(Genotype& genome,int secondNonInteracting,bool Remove_Duplicates);
 void Minimize_Tile_Set(Genotype& genome);
