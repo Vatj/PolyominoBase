@@ -10,7 +10,7 @@ namespace simulation_params
 
 namespace model_params
 {
-  bool fixed_seed=false;
+  bool fixed_seed=true;
   double temperature=1,binding_threshold=1,mu_prob=0.2,fitness_factor=1,UND_threshold=0.2,interface_threshold=0.2;
   std::binomial_distribution<uint8_t> b_dist(interface_size,mu_prob);
   std::uniform_real_distribution<double> real_dist(0, 1);
@@ -42,7 +42,6 @@ namespace interface_model
     return static_cast<uint8_t>(ArbitraryPopcount(face1 ^ reverse_bits(~face2)));
   }
 
-
   void MutateInterfaces(BGenotype& binary_genome) {
     std::vector<uint8_t> interface_indices(model_params::interface_size);
     std::iota(interface_indices.begin(),interface_indices.end(),0);
@@ -60,7 +59,7 @@ namespace interface_model
     std::set<interaction_pair > interacting_indices;
     std::map<Phenotype_ID, std::map<interaction_pair, uint8_t> > phenotype_interactions;
     for(uint8_t nth=0;nth<simulation_params::phenotype_builds;++nth) {
-      assembly_information=AssembleProtein(binary_genome,interacting_indices);
+      assembly_information=AssembleProteinNew(binary_genome,interacting_indices);
       
       if(assembly_information.size()>0) {
         for(auto interacting_pair : interacting_indices)
@@ -146,7 +145,6 @@ namespace interface_model
           break;
         }
       }
-      
       if(!occupied_site)
         growing_perimeter.insert(growing_perimeter.begin()+5*index_randomizer(RNG_Engine),{static_cast<int8_t>(x+dx),static_cast<int8_t>(y+dy),static_cast<int8_t>((f+2)%4),tile_type,static_cast<int8_t>((4+f-theta)%4)});      
     }
@@ -154,7 +152,7 @@ namespace interface_model
   
   std::vector<int8_t> AssembleProteinNew(const BGenotype& binary_genome,std::set<interaction_pair>& interacting_indices) {
     int8_t seed=1;
-    if(model_params::fixed_seed)
+    if(!model_params::fixed_seed)
       seed=1+4*(std::uniform_int_distribution<uint8_t>(1,binary_genome.size()/4)(interface_model::RNG_Engine)-1);
       
     std::vector<int8_t> placed_tiles{0,0,seed},growing_perimeter;
@@ -296,8 +294,10 @@ void InterfaceStrengths(BGenotype& interfaces, std::vector<uint32_t>& strengths)
 
 std::array<double,model_params::interface_size+1> GenBindingProbsLUP() {
   std::array<double,model_params::interface_size+1> probs;
-  std::fill(probs.begin(),probs.begin()+static_cast<size_t>((1-model_params::binding_threshold)*model_params::interface_size)+1,1);
-  if(model_params::temperature<0) {
+  size_t N_active_strengths=static_cast<size_t>((1-model_params::binding_threshold)*model_params::interface_size)+1;
+  std::fill(probs.begin(),probs.begin()+N_active_strengths,1);
+  std::fill(probs.begin()+N_active_strengths,probs.end(),0);
+  if(model_params::temperature<0 || static_cast<uint32_t>(model_params::binding_threshold)==1) {
     model_params::temperature=0;
     return probs;
   }

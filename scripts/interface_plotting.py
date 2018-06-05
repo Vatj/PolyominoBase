@@ -12,6 +12,7 @@ from scipy.stats import linregress,binom,scoreatpercentile
 from itertools import combinations_with_replacement as cwr
 from random import choice
 from math import ceil
+from copy import deepcopy
 
 """RANDOM THEORY SECTION """
 def plotRandomTheory(I_size,g_len):
@@ -179,7 +180,6 @@ def tsplotboot(ax,data,title='',**kw):
     x = np.arange(data.shape[1])
     est = np.nanmean(data, axis=0)
     cis = bootstrap(data,100)
-    #return cis
     ax.fill_between(x,cis[0],cis[1],alpha=0.3,color='dimgray', **kw)
     
     ax.plot(x,est,c='dimgray',lw=2)
@@ -193,27 +193,25 @@ def tsplotboot(ax,data,title='',**kw):
     plt.show(block=False)
 
 
-def plotData(cc,I_size,t_star):
+def plotData(cc,I_size,t_star,mu=1,g_size=12):
      fig,axs = plt.subplots(3)
      for (k,v),ax in zip(cc.iteritems(),axs):
           print k,len(v)
-          if len(v)==0:
-               continue
-          tsplotboot(ax,v,k+' {}'.format(len(v)))
-          #for q in v:
-          #     ax.plot(q[0]+np.linspace(0,len(q)-2,len(q)-1),q[1:],alpha=0.25)
-          if 'S' not in k:
-               #print k, "plotting here"
-               pgs=RandomWalk(I_size,199,.5,t_star,1,1)
-               ax.plot(range(0,1200,6),pgs[:-1],'r--')
+          if v:
+               v=np.array(v)
+               tsplotboot(ax,v,k+' {}'.format(len(v)))
                
-               ax.plot([1100,1500],[pgs[-1]]*2,'k--')
-          else:
-               #print k, "plotting there"
-               pgs=RandomWalk(I_size/2,99,.5,t_star,1,1)
                
-               ax.plot(range(0,1200,12),pgs[:-1],'r--')
-               ax.plot([1100,1500],[pgs[-1]]*2,'k--')
+               gen_length=v[0].shape[0]
+               co_factor=2 if 'S' in k else 1
+               step_length=int(g_size/(2.*mu/co_factor))
+               N_steps=int(ceil(gen_length/float(step_length)))
+               pgs=RandomWalk(I_size/co_factor,N_steps,.5,t_star,1,1)
+               ax.plot(range(0,(N_steps+1)*step_length,step_length),pgs[:-1],'r--')
+               ax.plot([0,gen_length],[pgs[-1]]*2,'k--',alpha=0.5)
+        
+                    
+                    
      plt.xlabel('elapsed generations')
      plt.tight_layout(pad=0)
      fig.suptitle(r'$l_I = %i , S^* = %.2f$' % (I_size,t_star))
@@ -252,20 +250,21 @@ def plotFatals(counts):
      plt.plot(range(counts.shape[1]),np.mean(counts,axis=0))
      plt.show(block=False)
 
-
-     
 def PhenotypicTransitions(phen_trans,N=40,crit_factor=0.5):
      print "N set for ",N
      common_transitions=deepcopy(phen_trans)
      for phen_key,trans in phen_trans.iteritems():
-          print "max",phen_key,max(trans.iterkeys(), key=(lambda key: trans[key])),max(trans.values())
+          #print "max",phen_key,max(trans.iterkeys(), key=(lambda key: trans[key])),max(trans.values())
           for tran,count in trans.iteritems():
-               if count>N*crit_factor:
-                    print tran,count
-               else:
+               if count<N*crit_factor:
                     del common_transitions[phen_key][tran]
- 
+
+     for key in common_transitions.keys():
+          if not common_transitions[key]:
+               del common_transitions[key]
      return common_transitions
+
+
 def plotTransitions(phen_trans,cdict=None):
      
      fig =plt.figure()

@@ -24,11 +24,11 @@ def setBasePath(path):
      if path=='scratch':
           BASE_FILE_PATH='/scratch/asl47/Data_Runs/Bulk_Data/{0}_I{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
      elif path=='rscratch':
-          BASE_FILE_PATH='/rscratch/asl47/Bulk_Run/Interfaces/{0}_I{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+          BASE_FILE_PATH='/rscratch/asl47/Pickles/{0}_I{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
      else:
           BASE_FILE_PATH='/home/icyhawaiian/Documents/Data/{0}_I{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
 
-setBasePath('scratch')
+setBasePath('rscratch')
           
 interface_length=64
 interface_type={8:np.uint8,16:np.uint16,32:np.uint32,64:np.uint64}[interface_length]
@@ -38,10 +38,15 @@ def set_length(length):
      interface_length=length
      global interface_type
      interface_type={8:np.uint8,16:np.uint16,32:np.uint32,64:np.uint64}[interface_length]
+     
 def convint(x):
      return interface_type(x)
 
+def BindingStrength(base1,base2):
+     return 1-bin(np.bitwise_xor(convint(base1),revbits(base2))).count("1")/float(interface_length)
 
+def revbits(x):
+     return interface_type(int(bin(~convint(x))[2:].zfill(interface_length)[::-1], 2))
  
 def LoadEvolutionHistory(temperature=0.000001,mu=1,gamma=1,run=0):
      phen_line=True
@@ -50,16 +55,11 @@ def LoadEvolutionHistory(temperature=0.000001,mu=1,gamma=1,run=0):
      for line in open(BASE_FILE_PATH.format('PhenotypeHistory',interface_length,temperature,mu,gamma,run)):
           converted=[int(i) for i in line.split()]
           if phen_line:
-               phens=[]
-               for i in xrange(0,len(converted),2):
-                    phens.append((converted[i],converted[i+1]))
-               phenotype_IDs.append(phens)
+               phenotype_IDs.append(zip(*(iter(converted),) * 2))
                phen_line=False
           else:
                selections.append(converted)
-               phen_line=True
-               continue
-     
+               phen_line=True     
      return phenotype_IDs,np.array(selections,np.uint16)
 
 def LoadGenotypeHistory(n_tiles,temperature=0.000001,mu=1,gamma=1,run=0):
@@ -67,7 +67,6 @@ def LoadGenotypeHistory(n_tiles,temperature=0.000001,mu=1,gamma=1,run=0):
      for line in open(BASE_FILE_PATH.format('GenotypeHistory',interface_length,temperature,mu,gamma,run)):
           converted=[int(i) for i in line.split()]
           genotypes.append([[int(i) for i in j] for j in [converted[i:i + 4*n_tiles] for i in xrange(0, len(converted), 4*n_tiles)]])
-
      return np.array(genotypes,dtype=interface_type)
 
 def LoadStrengthHistory(temperature=0.000001,mu=1,gamma=1,run=0):
@@ -86,11 +85,6 @@ def LoadT(mu=1,t=0.35,run=0):
      p,s=LoadEvolutionHistory(mu=mu,temperature=t,run=run)
      return (g,s,p,st)
 
-def BindingStrength(base1,base2):
-     return 1-bin(np.bitwise_xor(convint(base1),revbits(base2))).count("1")/float(interface_length)
-
-def revbits(x):
-     return interface_type(int(bin(~convint(x))[2:].zfill(interface_length)[::-1], 2))
 
 
 """ DRIFT SECTION """
@@ -195,7 +189,7 @@ def concatenateResults(data_struct,trim_gen=True):
                if 'Neutral' in k:
                     neutrals[k.split('_')[-1]]+=Counter(v)
                elif 'Stren' in k:
-                    strengths[k.split('_')[-1]].extend([i[slice_start:] for i in v])
+                    strengths[k.split('_')[-1]].extend([i[slice_start:]for i in v])
                elif k=='N_binds':
                     for i,cn in enumerate(v):
                          bindings[i]+=Counter(cn)
@@ -210,14 +204,13 @@ def concatenateResults(data_struct,trim_gen=True):
                          first_trans[sub_k][sub_v]+=1
               
 
-     for k,v in strengths.iteritems():
-          if len(v):
-               length = len(sorted(v,key=len, reverse=True)[0])
-               strengths[k]=np.array([xi+[np.nan]*(length-len(xi)) for xi in v])
-               for i,x in enumerate(v):
-                    strengths[k][i][0]=x[0].keys()[0]
-                    for j,value in enumerate(x):
-                         strengths[k][i][j]=  np.sum([a*b for a,b in value.iteritems()])/np.sum(value.values())
+     for stren_type,stren_matrix in strengths.iteritems():
+          if stren_matrix:
+               length = len(sorted(stren_matrix,key=len, reverse=True)[0])
+               for i,strens in enumerate(stren_matrix):
+                    strens=[trim for trim in strens if trim]
+                    strengths[stren_type][i]=np.array([np.sum([a*b for a,b in value.iteritems()])/np.sum(value.values()) for value in strens]+[np.nan]*(length-len(strens)),dtype=np.double)
+               strengths[stren_type]=np.array(stren_matrix)
                          
      return strengths,neutrals,{k:dict(v) for k,v in phen_trans.iteritems()},{k:dict(v) for k,v in first_trans.iteritems()}
 #dict(phen_trans),dict(first_trans)#,bindings,fatal_phens
@@ -351,6 +344,7 @@ def PhenOrderTail(genotypes,phen_table,phenotype_IDs,selections,strengths):
      transition_probabilities_PHENOTYPES={}
      for key in transition_probabilities:
           transition_probabilities_PHENOTYPES[phen_table[key]]={phen_table[phen_ID]:count for phen_ID,count in transition_probabilities[key].iteritems()}
+     del first_transitions[(1,1,1)]
      return transition_probabilities_PHENOTYPES,first_transitions
 
 def PurgeDescendents(generation,index,selections,phenotype_IDs):
@@ -371,3 +365,18 @@ def main(argv):
      return
 if __name__ == "__main__":
     main(sys.argv)
+
+def PhenotypicTransitions(phen_trans,N=40,crit_factor=0.5):
+     print "N set for ",N
+     common_transitions=deepcopy(phen_trans)
+     for phen_key,trans in phen_trans.iteritems():
+          #print "max",phen_key,max(trans.iterkeys(), key=(lambda key: trans[key])),max(trans.values())
+          for tran,count in trans.iteritems():
+               if count<N*crit_factor:
+                    del common_transitions[phen_key][tran]
+
+     for key in common_transitions.keys():
+          if not common_transitions[key]:
+               del common_transitions[key]
+     return common_transitions
+

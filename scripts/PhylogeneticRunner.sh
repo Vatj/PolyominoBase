@@ -4,7 +4,7 @@ I_size=64
 Mu=$1
 T=$2
 STEP_SIZE=4
-RUNS=500
+RUNS=400
 save=false
 
 let "END = $RUNS - $STEP_SIZE"

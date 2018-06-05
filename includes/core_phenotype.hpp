@@ -13,6 +13,8 @@ struct Phenotype {
 
 void ClockwiseRotation(Phenotype& phen);
 void ClockwisePiRotation(Phenotype& phen);
+void ChiralFlip(Phenotype& phen);
+
 bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2,uint8_t GAUGE);
 void MinimizePhenRep(std::vector<uint8_t>& tiling,uint8_t GAUGE);
 

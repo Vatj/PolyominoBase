@@ -163,9 +163,10 @@ int main(int argc, char* argv[]) {
   }
   
   //auto a = BindingProbabilities();
-  BGenotype bg{1,100,50,100, 100,100,177,127};
+  BGenotype bg{15540537610786488263,3375271998381208445,0,2018349694661896724, 0,0,3375271998381208445,4697909892076606603};
   std::set<interaction_pair > aa;
   std::vector<int8_t> a;
+  Phenotype phen;
   switch(run_option) {
   case 'E':
     EvolutionRunner();
@@ -178,6 +179,11 @@ int main(int argc, char* argv[]) {
     for(auto qq : aa)
       std::cout<<+qq.first<<"/"<<+qq.second<<std::endl;
     std::cout<<"Unused at this time"<<std::endl;
+    phen=SpatialGrid(a);
+    std::cout<<"phen: "<<+phen.dx<<", "<<+phen.dy<<", ";
+    for(auto qqqqqq: phen.tiling)
+      std::cout<<+qqqqqq<<", ";
+    std::cout<<std::endl;
     break;
   case 'D':
     std::cout<<"ProteinEvolution -E -N 2 -P 100 -K 250 -B 25 -S 1 -R 0 -F 1 -X 1 -T 0.000001 -M 0.25 -D 1"<<std::endl;
@@ -216,7 +222,7 @@ void SetRuntimeConfigurations(int argc, char* argv[]) {
       case 'S': model_params::fixed_seed=std::stoi(argv[arg+1])>0;break;
       case 'M': model_params::mu_prob=std::stod(argv[arg+1]);break;
       case 'T': model_params::temperature=std::stod(argv[arg+1]);break;
-      case 'Y': model_params::binding_threshold=double(static_cast<uint8_t>(model_params::interface_size*std::stod(argv[arg+1])))/model_params::interface_size;break;
+      case 'Y': model_params::binding_threshold=double(static_cast<uint8_t>(ceil(model_params::interface_size*std::stod(argv[arg+1]))))/model_params::interface_size;break;
       case 'X': model_params::UND_threshold=std::stod(argv[arg+1]);break;
       case 'I': model_params::interface_threshold=std::stod(argv[arg+1]);break;
 	

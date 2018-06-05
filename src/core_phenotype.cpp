@@ -1,27 +1,40 @@
 #include "core_phenotype.hpp"
 
 bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2,uint8_t GAUGE) {
+  constexpr uint8_t FREE_POLYOMINO=true ? 2 : 1;
   if(phen1.tiling.size()!=phen2.tiling.size() || std::count(phen1.tiling.begin(),phen1.tiling.end(),0)!=std::count(phen2.tiling.begin(),phen2.tiling.end(),0))
-    return false;
+    return false; //different sized polyominoes
   if(phen1.dx==phen2.dx && phen1.dy==phen2.dy && phen1.dx==phen2.dy) {
-    if(phen1.tiling==phen2.tiling) 
-      return true;
-    for(int rotation=0;rotation<3;++rotation) {
-      ClockwiseRotation(phen1);
-      MinimizePhenRep(phen1.tiling,GAUGE);
+    for(uint8_t flip=0; flip<FREE_POLYOMINO;++flip) {
       if(phen1.tiling==phen2.tiling) 
         return true;
+      for(int rotation=0;rotation<3;++rotation) {
+        ClockwiseRotation(phen1);
+        MinimizePhenRep(phen1.tiling,GAUGE);
+        if(phen1.tiling==phen2.tiling) 
+          return true;
+      }
+      if(flip==(FREE_POLYOMINO-1))
+        return false; //square phenotype, but never matching
+      ChiralFlip(phen1);
+      MinimizePhenRep(phen1.tiling,GAUGE);
     }
-    return false;
   }
   if(phen1.dx==phen2.dx && phen1.dy==phen2.dy) {
-    if(phen1.tiling==phen2.tiling)
-      return true;
-    ClockwisePiRotation(phen1);
-    MinimizePhenRep(phen1.tiling,GAUGE);
-    return phen1.tiling==phen2.tiling;
+    for(uint8_t flip=0; flip<FREE_POLYOMINO;++flip) {
+      if(phen1.tiling==phen2.tiling)
+        return true;
+      ClockwisePiRotation(phen1);
+      MinimizePhenRep(phen1.tiling,GAUGE);
+      if(phen1.tiling==phen2.tiling)
+        return true;
+      if(flip==(FREE_POLYOMINO-1))
+        return false; //rectangular phenotype, but never matching
+      ChiralFlip(phen1);
+      MinimizePhenRep(phen1.tiling,GAUGE);
+    }
   }
-  return false;
+  return false; //catch all
 }
 
 void ClockwiseRotation(Phenotype& phen) {
@@ -36,6 +49,11 @@ void ClockwiseRotation(Phenotype& phen) {
 
 void ClockwisePiRotation(Phenotype& phen) {
   std::reverse(phen.tiling.begin(),phen.tiling.end());
+}
+
+void ChiralFlip(Phenotype& phen) {
+  for(uint8_t row=0;row<phen.dx;++row)
+    std::reverse(phen.tiling.begin()+row*phen.dy,phen.tiling.begin()+(row+1)*phen.dy);
 }
 
 void MinimizePhenRep(std::vector<uint8_t>& tiling,uint8_t GAUGE) {
