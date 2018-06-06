@@ -52,8 +52,8 @@ void ClockwisePiRotation(Phenotype& phen) {
 }
 
 void ChiralFlip(Phenotype& phen) {
-  for(uint8_t row=0;row<phen.dx;++row)
-    std::reverse(phen.tiling.begin()+row*phen.dy,phen.tiling.begin()+(row+1)*phen.dy);
+  for(uint8_t row=0;row<phen.dy;++row)
+    std::reverse(phen.tiling.begin()+row*phen.dx,phen.tiling.begin()+(row+1)*phen.dx);
 }
 
 void MinimizePhenRep(std::vector<uint8_t>& tiling,uint8_t GAUGE) {

@@ -20,7 +20,6 @@ namespace simulation_params
   extern uint8_t n_tiles,phenotype_builds;
   extern uint16_t population_size;
   extern uint32_t generation_limit,independent_trials,run_offset;
-
   extern bool random_initilisation;
 }
 
@@ -30,7 +29,6 @@ namespace model_params
   
   extern double temperature,binding_threshold,mu_prob,fitness_factor,UND_threshold,interface_threshold;
   extern bool fixed_seed;
-  
   extern std::binomial_distribution<uint8_t> b_dist;
   extern std::uniform_real_distribution<double> real_dist;
   extern std::array<double,model_params::interface_size+1> binding_probabilities;
@@ -38,11 +36,8 @@ namespace model_params
 
 std::array<double,model_params::interface_size+1> GenBindingProbsLUP();
 
-
-
 /* SPATIAL */
 Phenotype SpatialGrid(std::vector<int8_t>& placed_tiles);
-
 
 /* PRINTING */
 void PrintShape(Phenotype phen);
@@ -82,11 +77,11 @@ namespace interface_model
     std::unordered_map<uint8_t,std::vector<uint16_t> > new_phenotype_xfer;
     std::vector<uint16_t> undiscovered_phenotype_counts;
 
-    uint16_t PhenotypeCheck(Phenotype& phen) {
+    Phenotype_ID PhenotypeCheck(Phenotype& phen) {
       uint8_t phenotype_size=std::count_if(phen.tiling.begin(),phen.tiling.end(),[](const int c){return c != 0;});
       for(uint16_t phenotype_index=0; phenotype_index != known_phenotypes[phenotype_size].size();++phenotype_index) {
         if(ComparePolyominoes(phen,known_phenotypes[phenotype_size][phenotype_index],GAUGE)) 
-	  return phenotype_index;
+	  return std::make_pair(phenotype_size,phenotype_index);
       }
       uint8_t new_phenotype_index=0;
       for(Phenotype phen_p : undiscovered_phenotypes[phenotype_size]) {
@@ -94,23 +89,43 @@ namespace interface_model
           if(++undiscovered_phenotype_counts[new_phenotype_index]>=ceil(model_params::UND_threshold*simulation_params::phenotype_builds)) {
             new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
             known_phenotypes[phenotype_size].push_back(phen);
-            //std::gamma_distribution<double> fitness_dist(sqrt(static_cast<double>(phenotype_size)),1);
-            std::gamma_distribution<double> fitness_dist(sqrt(phenotype_size),1);
+            std::gamma_distribution<double> fitness_dist(sqrt(phenotype_size),1./sqrt(phenotype_size));
             phenotype_fitnesses[phenotype_size].emplace_back(fitness_dist(RNG_Engine));
             new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()-1);
             
-            return phenotype_fitnesses[phenotype_size].size()-1;
+            return std::make_pair(phenotype_size,phenotype_fitnesses[phenotype_size].size()-1);
           }
           else
-            return phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds;
+            return std::make_pair(phenotype_size,phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
         }
         ++new_phenotype_index;
       }
       
+      std::vector< std::vector<uint8_t> > min_tilings;
+      if(phen.dy > phen.dx)
+          ClockwiseRotation(phen);
       MinimizePhenRep(phen.tiling,GAUGE);
+      min_tilings.emplace_back(phen.tiling);
+      
+      if(phen.dy != phen.dx) {        
+        ClockwisePiRotation(phen);
+        MinimizePhenRep(phen.tiling,GAUGE);
+        min_tilings.emplace_back(phen.tiling);
+      }
+      else {
+        for(uint8_t rot=0;rot<3;++rot) {
+          ClockwiseRotation(phen);
+          MinimizePhenRep(phen.tiling,GAUGE);
+          min_tilings.emplace_back(phen.tiling);
+        }
+      }
+
+      std::sort(min_tilings.begin(),min_tilings.end());
+      phen.tiling=min_tilings.front();
+
       undiscovered_phenotypes[phenotype_size].emplace_back(phen);
       undiscovered_phenotype_counts.emplace_back(1);
-      return phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds;
+      return std::make_pair(phenotype_size,phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
     }
 
     /* Replace previously undiscovered phenotype IDs with new phenotype ID */
@@ -124,7 +139,7 @@ namespace interface_model
       undiscovered_phenotypes.clear();
       undiscovered_phenotype_counts.clear();
       new_phenotype_xfer.clear();
-
+      
     }
     
     /* Count each ID frequency */
@@ -148,7 +163,7 @@ namespace interface_model
     void ReassignFitness() {
       for(std::unordered_map<uint8_t,std::vector<double> >::iterator fit_iter=phenotype_fitnesses.begin();fit_iter!=phenotype_fitnesses.end();++fit_iter) {
 	if(fit_iter->first) {
-	  std::gamma_distribution<double> fitness_dist(sqrt(fit_iter->first),1);
+	  std::gamma_distribution<double> fitness_dist(sqrt(fit_iter->first),1./sqrt(fit_iter->first));
 	  for(double& fitness : fit_iter->second)
 	    fitness=fitness_dist(RNG_Engine);
 	}

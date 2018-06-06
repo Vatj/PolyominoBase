@@ -176,6 +176,8 @@ def loadManyResults(I,M,t,runs):
      return bulk_results
 
 def concatenateResults(data_struct,trim_gen=True):
+     ##params##
+     count_thresh=10
      strengths={K:[] for K in ['E','I','S']}
      neutrals={K:Counter() for K in ['Sym','Asym']}
 
@@ -205,12 +207,14 @@ def concatenateResults(data_struct,trim_gen=True):
               
 
      for stren_type,stren_matrix in strengths.iteritems():
+          for k in xrange(len(stren_matrix)):
+               stren_matrix[k]=[trim for trim in stren_matrix[k] if sum(trim.values())>count_thresh]
           if stren_matrix:
                length = len(sorted(stren_matrix,key=len, reverse=True)[0])
                for i,strens in enumerate(stren_matrix):
-                    strens=[trim for trim in strens if trim]
                     strengths[stren_type][i]=np.array([np.sum([a*b for a,b in value.iteritems()])/np.sum(value.values()) for value in strens]+[np.nan]*(length-len(strens)),dtype=np.double)
-               strengths[stren_type]=np.array(stren_matrix)
+               smarr=np.array(stren_matrix)     
+               strengths[stren_type]=smarr[~np.all(np.isnan(smarr),axis=1)]
                          
      return strengths,neutrals,{k:dict(v) for k,v in phen_trans.iteritems()},{k:dict(v) for k,v in first_trans.iteritems()}
 #dict(phen_trans),dict(first_trans)#,bindings,fatal_phens

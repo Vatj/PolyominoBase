@@ -65,7 +65,7 @@ namespace interface_model
         for(auto interacting_pair : interacting_indices)
 	  ++phenotype_interactions[Phenotype_IDs.back()][interacting_pair];
         phen=SpatialGrid(assembly_information);
-        Phenotype_IDs.emplace_back(std::count_if(phen.tiling.begin(),phen.tiling.end(),[](const int c){return c != 0;}),pt->PhenotypeCheck(phen));
+        Phenotype_IDs.emplace_back(pt->PhenotypeCheck(phen));
 	
       }
       else

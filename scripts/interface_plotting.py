@@ -3,6 +3,7 @@ from matplotlib.patches import Patch
 import numpy as np
 
 import icy;icy.Use_Seaborn()
+from tile_shape_visuals import VisualiseSingleShape as VSS
 #from seaborn import despine
 
 from colorsys import hsv_to_rgb
@@ -183,8 +184,8 @@ def tsplotboot(ax,data,title='',**kw):
     ax.fill_between(x,cis[0],cis[1],alpha=0.3,color='dimgray', **kw)
     
     ax.plot(x,est,c='dimgray',lw=2)
-    #for i in data:
-    #     ax.plot(x,i,alpha=0.05)
+    for i in data:
+         ax.plot(x,i,alpha=0.05,rasterized=1)
     ax.margins(x=0)
     
     ax.set_ylabel(r'$\langle \hat{S} \rangle$')
@@ -197,8 +198,10 @@ def plotData(cc,I_size,t_star,mu=1,g_size=12):
      fig,axs = plt.subplots(3)
      for (k,v),ax in zip(cc.iteritems(),axs):
           print k,len(v)
-          if v:
+          if v.size:
                v=np.array(v)
+               v=v[v[:,0]==t_star]
+               #v=v[np.count_nonzero(np.isnan(v),axis=1)<1000]
                tsplotboot(ax,v,k+' {}'.format(len(v)))
                
                
