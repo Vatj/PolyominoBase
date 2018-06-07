@@ -103,10 +103,7 @@ namespace interface_model
       for(uint8_t base : genome_bases) {
         if(model_params::real_dist(RNG_Engine)<model_params::binding_probabilities[SammingDistance(binary_genome[tile*4+orientation],binary_genome[base])]) {
 	  interacting_indices.insert(std::minmax(static_cast<uint8_t>(tile*4+orientation),base));
-          if(GAUGE==4)
-            placed_tiles.insert(placed_tiles.end(),{x,y,static_cast<int8_t>(base-base%4+(direction-base%4+4)%4+1)});
-          else
-            placed_tiles.insert(placed_tiles.end(),{x,y,static_cast<int8_t>(base%4)});
+          placed_tiles.insert(placed_tiles.end(),{x,y,static_cast<int8_t>(base%4+((GAUGE==4)*(-2*(base%4)+(direction-base%4+4)%4+1)))});
 	  PerimeterGrowth(x,y,(4+direction-(base%4))%4,direction,base/4,growing_perimeter,placed_tiles);
 	  break;
 	}
@@ -245,7 +242,7 @@ Phenotype SpatialGrid(std::vector<int8_t>& placed_tiles) {
   if(dy>dx) {
     ClockwiseRotation(phen);
   }
-  MinimizePhenRep(phen.tiling,interface_model::GAUGE);
+  MinimizePhenRep(phen.tiling);
   return phen;
 }
 

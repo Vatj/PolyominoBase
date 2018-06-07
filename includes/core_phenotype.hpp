@@ -4,6 +4,7 @@
 #include <fstream>
 #include <unordered_map>
 
+constexpr uint8_t FREE_POLYOMINO = true ? 2 : 1, GAUGE = true ? 4 : 1;
 
 struct Phenotype {
   uint8_t dx=1;
@@ -15,8 +16,9 @@ void ClockwiseRotation(Phenotype& phen);
 void ClockwisePiRotation(Phenotype& phen);
 void ChiralFlip(Phenotype& phen);
 
-bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2,uint8_t GAUGE);
-void MinimizePhenRep(std::vector<uint8_t>& tiling,uint8_t GAUGE);
+bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2);
+void MinimizePhenRep(std::vector<uint8_t>& tiling);
+void GetMinPhenRepresentation(Phenotype& phen);
 
 typedef std::pair<uint8_t,uint16_t> Phenotype_ID;
 

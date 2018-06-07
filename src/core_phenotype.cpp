@@ -1,7 +1,6 @@
 #include "core_phenotype.hpp"
 
-bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2,uint8_t GAUGE) {
-  constexpr uint8_t FREE_POLYOMINO=true ? 2 : 1;
+bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2) {
   if(phen1.tiling.size()!=phen2.tiling.size() || std::count(phen1.tiling.begin(),phen1.tiling.end(),0)!=std::count(phen2.tiling.begin(),phen2.tiling.end(),0))
     return false; //different sized polyominoes
   if(phen1.dx==phen2.dx && phen1.dy==phen2.dy && phen1.dx==phen2.dy) {
@@ -10,14 +9,14 @@ bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2,uint8_t GAUGE) 
         return true;
       for(int rotation=0;rotation<3;++rotation) {
         ClockwiseRotation(phen1);
-        MinimizePhenRep(phen1.tiling,GAUGE);
+        MinimizePhenRep(phen1.tiling);
         if(phen1.tiling==phen2.tiling) 
           return true;
       }
       if(flip==(FREE_POLYOMINO-1))
         return false; //square phenotype, but never matching
       ChiralFlip(phen1);
-      MinimizePhenRep(phen1.tiling,GAUGE);
+      MinimizePhenRep(phen1.tiling);
     }
   }
   if(phen1.dx==phen2.dx && phen1.dy==phen2.dy) {
@@ -25,13 +24,13 @@ bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2,uint8_t GAUGE) 
       if(phen1.tiling==phen2.tiling)
         return true;
       ClockwisePiRotation(phen1);
-      MinimizePhenRep(phen1.tiling,GAUGE);
+      MinimizePhenRep(phen1.tiling);
       if(phen1.tiling==phen2.tiling)
         return true;
       if(flip==(FREE_POLYOMINO-1))
         return false; //rectangular phenotype, but never matching
       ChiralFlip(phen1);
-      MinimizePhenRep(phen1.tiling,GAUGE);
+      MinimizePhenRep(phen1.tiling);
     }
   }
   return false; //catch all
@@ -54,9 +53,14 @@ void ClockwisePiRotation(Phenotype& phen) {
 void ChiralFlip(Phenotype& phen) {
   for(uint8_t row=0;row<phen.dy;++row)
     std::reverse(phen.tiling.begin()+row*phen.dx,phen.tiling.begin()+(row+1)*phen.dx);
+  for(uint8_t& element : phen.tiling) {
+    if(element && element%2==0) {
+      element+=-(element-1)%GAUGE+((element-1)%GAUGE+2)%GAUGE;
+    }
+  }
 }
 
-void MinimizePhenRep(std::vector<uint8_t>& tiling,uint8_t GAUGE) {
+void MinimizePhenRep(std::vector<uint8_t>& tiling) {
   if(tiling.size()==1)
     return;
   for(uint8_t& t:tiling)
@@ -71,6 +75,35 @@ void MinimizePhenRep(std::vector<uint8_t>& tiling,uint8_t GAUGE) {
       std::replace(tiling.begin(),tiling.end(),uint8_t(255),pre_swap);
       ++swap_count;
     }  
-    t_iter=std::find_if(tiling.begin(),tiling.end(),[swap_count,GAUGE](const int s) { return (s>0 && s-(s-1)%GAUGE >= swap_count); });
+    t_iter=std::find_if(tiling.begin(),tiling.end(),[swap_count](const int s) { return (s>0 && s-(s-1)%GAUGE >= swap_count); });
   }
+}
+
+void GetMinPhenRepresentation(Phenotype& phen) {
+  std::vector< std::vector<uint8_t> > min_tilings;
+  if(phen.dy > phen.dx)
+    ClockwiseRotation(phen);
+  
+  for(uint8_t rot=0;rot<FREE_POLYOMINO;++rot) {
+    MinimizePhenRep(phen.tiling);
+    min_tilings.emplace_back(phen.tiling);
+      
+    if(phen.dy != phen.dx) {
+      ClockwisePiRotation(phen);
+      MinimizePhenRep(phen.tiling);
+      min_tilings.emplace_back(phen.tiling);
+    }
+    else {
+      for(uint8_t rot=0;rot<3;++rot) {
+        ClockwiseRotation(phen);
+        MinimizePhenRep(phen.tiling);
+        min_tilings.emplace_back(phen.tiling);
+      }
+    }
+    if(rot==(FREE_POLYOMINO-1))
+      break;
+    ChiralFlip(phen);
+  }
+  std::sort(min_tilings.begin(),min_tilings.end());
+  phen.tiling=min_tilings.front();
 }

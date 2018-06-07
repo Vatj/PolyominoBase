@@ -52,7 +52,6 @@ namespace interface_model
   struct InterfacePhenotypeTable;
 
   extern std::mt19937 RNG_Engine;
-  constexpr uint8_t GAUGE=4;
   interface_type reverse_bits(interface_type v);
   uint8_t ArbitraryPopcount(interface_type face1);
   uint8_t SammingDistance(interface_type face1,interface_type face2);
@@ -80,12 +79,12 @@ namespace interface_model
     Phenotype_ID PhenotypeCheck(Phenotype& phen) {
       uint8_t phenotype_size=std::count_if(phen.tiling.begin(),phen.tiling.end(),[](const int c){return c != 0;});
       for(uint16_t phenotype_index=0; phenotype_index != known_phenotypes[phenotype_size].size();++phenotype_index) {
-        if(ComparePolyominoes(phen,known_phenotypes[phenotype_size][phenotype_index],GAUGE)) 
+        if(ComparePolyominoes(phen,known_phenotypes[phenotype_size][phenotype_index])) 
 	  return std::make_pair(phenotype_size,phenotype_index);
       }
       uint8_t new_phenotype_index=0;
       for(Phenotype phen_p : undiscovered_phenotypes[phenotype_size]) {
-        if(ComparePolyominoes(phen,phen_p,GAUGE)) {
+        if(ComparePolyominoes(phen,phen_p)) {
           if(++undiscovered_phenotype_counts[new_phenotype_index]>=ceil(model_params::UND_threshold*simulation_params::phenotype_builds)) {
             new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
             known_phenotypes[phenotype_size].push_back(phen);
@@ -100,29 +99,7 @@ namespace interface_model
         }
         ++new_phenotype_index;
       }
-      
-      std::vector< std::vector<uint8_t> > min_tilings;
-      if(phen.dy > phen.dx)
-          ClockwiseRotation(phen);
-      MinimizePhenRep(phen.tiling,GAUGE);
-      min_tilings.emplace_back(phen.tiling);
-      
-      if(phen.dy != phen.dx) {        
-        ClockwisePiRotation(phen);
-        MinimizePhenRep(phen.tiling,GAUGE);
-        min_tilings.emplace_back(phen.tiling);
-      }
-      else {
-        for(uint8_t rot=0;rot<3;++rot) {
-          ClockwiseRotation(phen);
-          MinimizePhenRep(phen.tiling,GAUGE);
-          min_tilings.emplace_back(phen.tiling);
-        }
-      }
-
-      std::sort(min_tilings.begin(),min_tilings.end());
-      phen.tiling=min_tilings.front();
-
+      GetMinPhenRepresentation(phen);
       undiscovered_phenotypes[phenotype_size].emplace_back(phen);
       undiscovered_phenotype_counts.emplace_back(1);
       return std::make_pair(phenotype_size,phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
