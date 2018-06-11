@@ -92,7 +92,7 @@ std::vector<Genotype> SampleMinimalGenotypes(uint8_t n_genes, uint8_t colours,
   ggenerator.init();
 
   uint8_t k_builds = 20;
-  std::vector<Phenotype_ID> loop_pID = {{255, 0}};
+  Phenotype_ID rare_pID = {0, 0}, loop_pID = {255, 0};
   std::vector<Phenotype_ID> pIDs;
 
 #pragma omp parallel firstprivate(pIDs)
@@ -132,8 +132,8 @@ std::vector<Genotype> SampleMinimalGenotypes(uint8_t n_genes, uint8_t colours,
     if(!ggenerator.valid_genotype(genotype))
       continue;
 
-    // pIDs = GetSetPIDs(genotype, k_builds, &pt);
-    if(GetSetPIDs(genotype, k_builds, pt) == loop_pID)
+    pIDs = GetSetPIDs(genotype, k_builds, pt);
+    if(pIDs.front() == rare_pID || pIDs.back() == loop_pID)
       continue;
 
       #pragma omp critical
@@ -218,48 +218,48 @@ std::vector<Genotype> ExhaustiveMinimalGenotypes(uint8_t n_genes, uint8_t colour
 std::vector<Genotype> ExhaustiveFullGenotypes2(uint8_t colours, StochasticPhenotypeTable* pt)
 {
   std::vector<Genotype> genomes;
+  //
+  // // GenotypeGenerator ggenerator = GenotypeGenerator(n_genes, colours);
+  // // ggenerator.init();
+  // uint8_t k_builds=100;
+  // // Genotype genotype(2 * 4);
+  // Phenotype_ID rare_pID = {0, 0}, loop_pID = {255, 0};
+  // std::vector<Phenotype_ID> pIDs;
+  // uint64_t good_genotypes = 0, generated_genotypes = 0;
 
-  // GenotypeGenerator ggenerator = GenotypeGenerator(n_genes, colours);
-  // ggenerator.init();
-  uint8_t k_builds=100;
-  // Genotype genotype(2 * 4);
-  Phenotype_ID rare_pID = {0, 0}, loop_pID = {255, 0};
-  std::vector<Phenotype_ID> pIDs;
-  uint64_t good_genotypes = 0, generated_genotypes = 0;
+  // for(int i=0;i<colours;++i) {
+  //   for(int j=0;j<colours;++j) {
+  //     for(int k=0;k<colours;++k) {
+  //       for(int l=0;l<colours;++l) {
+  //         for(int q=0;q<colours;++q) {
+  //           for(int w=0;w<colours;++w) {
+  //             for(int e=0;e<colours;++e) {
+  //               for(int r=0;r<colours;++r) {
+  //
+  //                 Genotype genotype = {i,j,k,l,q,w,e,r};
+  //                 Genotype copy = {i,j,k,l,q,w,e,r};
+  //                 generated_genotypes++;
+  //
+  //                 pIDs = GetSetPIDs(genotype, k_builds, pt);
+  //
+  //                 if (pIDs.front() != rare_pID && pIDs.back() != loop_pID)
+  //                 {
+  //                   good_genotypes++;
+  //                   genomes.emplace_back(copy);
+  //
+  //                   if(good_genotypes % 10000 == 0)
+  //                     std::cout << "Found " <<+ good_genotypes << " out of " <<+ generated_genotypes << " generated \n";
+  //                 }
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
 
-  for(int i=0;i<colours;++i) {
-    for(int j=0;j<colours;++j) {
-      for(int k=0;k<colours;++k) {
-        for(int l=0;l<colours;++l) {
-          for(int q=0;q<colours;++q) {
-            for(int w=0;w<colours;++w) {
-              for(int e=0;e<colours;++e) {
-                for(int r=0;r<colours;++r) {
-
-                  Genotype genotype = {i,j,k,l,q,w,e,r};
-                  Genotype copy = {i,j,k,l,q,w,e,r};
-                  generated_genotypes++;
-
-                  pIDs = GetSetPIDs(genotype, k_builds, pt);
-
-                  if (pIDs.front() != rare_pID && pIDs.back() != loop_pID)
-                  {
-                    good_genotypes++;
-                    genomes.emplace_back(copy);
-
-                    if(good_genotypes % 10000 == 0)
-                      std::cout << "Found " <<+ good_genotypes << " out of " <<+ generated_genotypes << " generated \n";
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  std::cout << "Final Values : Found " <<+ genomes.size() << " out of " <<+ generated_genotypes << " generated \n";
+  // std::cout << "Final Values : Found " <<+ genomes.size() << " out of " <<+ generated_genotypes << " generated \n";
   return genomes;
 }
 

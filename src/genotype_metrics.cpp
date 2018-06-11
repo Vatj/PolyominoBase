@@ -173,11 +173,9 @@ void Set_Metrics::clear()
 void GP_MapSampler(uint8_t n_genes, uint8_t metric_colours, std::vector<Set_Metrics>& metrics,
    Set_to_Genome& set_to_genome, StochasticPhenotypeTable* pt)
 {
-  const uint8_t k_builds = 20;
+  const uint8_t k_builds = 10;
   const uint32_t N_JIGGLE = 10;
-  std::vector<Phenotype_ID> loop_pID = {{255, 0}};
-
-  // metrics.resize(set_to_genome.size(), Set_Metrics(n_genes, metric_colours));
+  Phenotype_ID loop_pID = {255, 0}, rare_pID = {0, 0};
 
   uint16_t number_of_genomes = 0;
   for(Set_to_Genome::iterator iter = std::begin(set_to_genome); iter != std::end(set_to_genome); iter++)
@@ -193,7 +191,7 @@ void GP_MapSampler(uint8_t n_genes, uint8_t metric_colours, std::vector<Set_Metr
     number_of_genomes -= (iter->second).size();
     std::cout << "}. Only " <<+ number_of_genomes << " left! \n";
 
-    if(iter->first == loop_pID)
+    if(((iter->first).front() == rare_pID) || ((iter->first).back() == loop_pID))
       continue;
 
     Set_Metrics set_metrics(n_genes, metric_colours);
@@ -225,43 +223,6 @@ void GP_MapSampler(uint8_t n_genes, uint8_t metric_colours, std::vector<Set_Metr
     }
     metrics.emplace_back(set_metrics);
   }
-
-
-  // #pragma omp parallel for schedule(dynamic)
-  // for(uint32_t index=0; index < set_to_genome.size(); ++index)
-  // {
-  //   if ((index % 10) == 0)
-  //     std::cout << "iteration : " <<+ index << " out of " <<+ set_to_genome.size() << "\n";
-  //
-  //   Set_to_Genome::iterator iter = std::begin(set_to_genome);
-  //   std::advance(iter, index);
-  //
-  //   if(iter->first == loop_pID)
-  //     continue;
-  //
-  //   Set_Metrics set_metrics(n_genes, metric_colours);
-  //   set_metrics.ref_pIDs = iter->first;
-  //
-  //   for(auto genotype: iter->second)
-  //   {
-  //     for(uint32_t nth_jiggle=0; nth_jiggle<N_JIGGLE; ++nth_jiggle)
-  //     {
-  //       Clean_Genome(genotype, 0, false);
-  //       JiggleGenotype(genotype, metric_colours);
-  //
-  //       Genotype_Metrics genome_metric(n_genes, metric_colours);
-  //       genome_metric.set_reference(genotype, iter->first);
-  //
-  //       for(Genotype neighbour : genotype_neighbourhood(genotype, n_genes, metric_colours))
-  //       {
-  //          std::vector<Phenotype_ID> neighbour_pIDs = GetSetPIDs(neighbour, k_builds, pt);
-  //          genome_metric.analyse_pIDs(neighbour_pIDs);
-  //        }
-  //        set_metrics.add_genotype_metrics(genome_metric);
-  //      }
-  //    }
-  //   metrics[index] = set_metrics;
-  // }
 }
 
 // Subroutine of the GP_MapSampler
