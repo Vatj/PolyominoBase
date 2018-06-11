@@ -1,12 +1,11 @@
-#include "genotype_phenotype.hpp"
+#include "genotype_generate.hpp"
 #include <iostream>
 
 /*External wrappers for python integration */
-extern "C"
-{
-  void GP_MapSampler(const char* file_path_c,uint8_t n_genes, uint8_t rcolours,uint8_t colours);
-  void GP_MapSampler_new(const char* file_path_c, uint8_t n_genes, uint8_t rcolours, uint8_t colours);
-}
+// extern "C"
+// {
+//   void GP_MapSampler(const char* file_path_c,uint8_t n_genes, uint8_t rcolours,uint8_t colours);
+// }
 
 /*GP map calculations*/
 // std::vector<Phenotype_ID> GetPhenotypeIDs(Genotype& genotype, uint8_t k_builds, StochasticPhenotypeTable* pt_it);
@@ -33,23 +32,23 @@ typedef struct Shape_Metrics Shape_Metrics;
 struct Genotype_Metrics
 {
   uint8_t n_genes, colours;
-  uint64_t neutral_weight;
+
 
   Genotype ref_genotype;
   std::vector <Phenotype_ID> ref_pIDs;
 
-  Phenotype_ID death_pID = {0, 0}, loop_pID = {255, 0};
+  Phenotype_ID rare_pID = {0, 0}, loop_pID = {255, 0};
 
   double number_of_neighbours;
   double strict_robustness = 0, intersection_robustness = 0, union_evolvability = 0;
-  double death = 0, loop = 0;
+  double rare = 0, loop = 0, neutral_weight=0;
 
   std::vector <Shape_Metrics> shapes;
   std::set <Phenotype_ID> diversity;
 
   Genotype_Metrics(uint8_t ngenes, uint8_t colours);
 
-  void set_reference(Genotype& genotype, std::vector <Phenotype_ID> pIDs);
+  void set_reference(Genotype& genotype, std::vector <Phenotype_ID> pIDs, double neutral);
 
   void clear();
 
@@ -62,13 +61,13 @@ typedef struct Genotype_Metrics Genotype_Metrics;
 
 struct Set_Metrics
 {
-  uint8_t n_genes, colours;
+  uint8_t n_genes, colours, analysed;
 
   std::vector <Phenotype_ID> ref_pIDs;
 
   std::vector <double> strict_robustnesses, union_evolvabilities;
-  std::vector <double> intersection_robustnesses, deaths, loops;
-  std::vector <uint64_t> neutral_weightings;
+  std::vector <double> intersection_robustnesses, rares, loops;
+  std::vector <double> neutral_weightings;
   std::vector <Genotype_Metrics> genome_metrics;
 
   std::set <Phenotype_ID> diversity;
@@ -83,3 +82,6 @@ struct Set_Metrics
 };
 
 typedef struct Set_Metrics Set_Metrics;
+
+void GP_MapSampler(uint8_t n_genes, uint8_t metric_colours, std::vector<Set_Metrics>& metrics,
+   Set_to_Genome& set_to_genome, StochasticPhenotypeTable* pt);

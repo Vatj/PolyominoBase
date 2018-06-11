@@ -3,6 +3,7 @@
 #include <iterator>
 #include <functional>
 #include <set>
+#include <algorithm>
 
 std::mt19937 RNG_Engine(std::random_device{}());
 
@@ -11,20 +12,20 @@ void SampleMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t co
   uint64_t good_genotypes=0, generated_genotypes=0;
   std::string file_path(file_path_c),file_details="_N"+std::to_string(n_genes)+"_C"+std::to_string(colours)+".txt";
   std::ofstream fout(file_path + "SampledGenotypes" + file_details);
-
-  std::ifstream pheno_in(file_path + "PhenotypeTable" + file_details);
-  std::ofstream pheno_out(file_path + "PhenotypeTable" + file_details);
-
   std::ofstream logut(file_path+"log"+file_details);
 
   GenotypeGenerator ggenerator = GenotypeGenerator(n_genes, colours);
   ggenerator.init();
   StochasticPhenotypeTable pt;
-  // uint8_t k_builds = 50;
-  // Phenotype_ID death_pID = {0, 0}, loop_pID = {255, 0};
+  uint8_t k_builds = 20;
+  std::vector<Phenotype_ID> loop_pID = {{255, 0}};
   std::vector<Phenotype_ID> pIDs;
   Genotype nullg;
-  // LoadExistingTable(pheno_in, &pt_it);
+
+  std::ifstream pheno_in(file_path + "PhenotypeTable" + file_details);
+  // if(pheno_in)
+  //   LoadExistingTable(pheno_in, &pt);
+
 
 #pragma omp parallel firstprivate(pIDs)
   while(true)
@@ -62,10 +63,8 @@ void SampleMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t co
       continue;
 
     // pIDs = GetSetPIDs(genotype, k_builds, &pt);
-
-    // if(pIDs.size() > 0)
-    //   if ((pIDs.front() == death_pID) || (pIDs.back() == loop_pID))
-    //     continue;
+    if(GetSetPIDs(genotype, k_builds, &pt) == loop_pID)
+      continue;
 
     #pragma omp atomic update
       ++good_genotypes;
@@ -81,58 +80,191 @@ void SampleMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t co
   }
 }
 
+std::vector<Genotype> SampleMinimalGenotypes(uint8_t n_genes, uint8_t colours,
+  const uint32_t N_SAMPLES, bool allow_duplicates, StochasticPhenotypeTable* pt)
+{
+  uint64_t good_genotypes=0, generated_genotypes=0;
+  std::vector<Genotype> genomes(N_SAMPLES + 4);
+
+  std::cout << "Generating " <<+ N_SAMPLES << " samples \n";
+
+  GenotypeGenerator ggenerator = GenotypeGenerator(n_genes, colours);
+  ggenerator.init();
+
+  uint8_t k_builds = 20;
+  std::vector<Phenotype_ID> loop_pID = {{255, 0}};
+  std::vector<Phenotype_ID> pIDs;
+
+#pragma omp parallel firstprivate(pIDs)
+  while(true)
+  {
+    uint64_t local_counter, local_generated;
+    Genotype genotype;
+    std::vector<uint32_t> states;
+
+#pragma omp atomic read
+    local_counter = good_genotypes;
+#pragma omp atomic read
+    local_generated = generated_genotypes;
+
+    if(local_counter >= N_SAMPLES)
+      break;
+
+#pragma omp atomic update
+  ++generated_genotypes;
+
+    uint32_t lbound_neck=0;
+    for(uint8_t neck_ind=0; neck_ind < n_genes; ++neck_ind)
+    {
+      lbound_neck = std::uniform_int_distribution<uint32_t>{lbound_neck, ggenerator.n_necklaces-1}(RNG_Engine);
+      states.emplace_back(lbound_neck);
+      if(!allow_duplicates)
+      {
+        if((lbound_neck + n_genes - neck_ind) > ggenerator.n_necklaces)
+          continue;
+        ++lbound_neck;
+      }
+    }
+
+    for(auto state : states)
+      genotype.insert(genotype.end(), ggenerator.necklaces[state].begin(), ggenerator.necklaces[state].end());
+
+    if(!ggenerator.valid_genotype(genotype))
+      continue;
+
+    // pIDs = GetSetPIDs(genotype, k_builds, &pt);
+    if(GetSetPIDs(genotype, k_builds, pt) == loop_pID)
+      continue;
+
+      #pragma omp critical
+        genomes[good_genotypes] = genotype;
+
+      #pragma omp atomic update
+        ++good_genotypes;
+
+      local_counter++;
+      if(local_counter % 100 == 0)
+        std::cout << "Found " <<+ local_counter << " out of " <<+ local_generated << " generated \n";
+    }
+
+  // std::sort(std::begin(genomes), std::end(genomes));
+  // auto last = std::unique(std::begin(genomes), std::end(genomes));
+  // genomes.erase(last, std::end(genomes));
+
+  while(genomes.size() > N_SAMPLES)
+    genomes.pop_back();
+
+  std::cout << "Final Values : Found " <<+ genomes.size() << " out of " <<+ generated_genotypes << " generated \n";
+
+  return genomes;
+}
 
 
 /****************/
 /***** MAIN *****/
 /****************/
-int main()
+// int main()
+// {
+//
+//   StochasticPhenotypeTable pt;
+//   uint8_t k_builds=5;
+//   double UND_frac=.1;
+//
+//   for(auto g: Stochastic::AssemblePlasticGenotype({0,0,0,1, 2,1,0,0, 0,0,2,2, 2,2,2,2}, k_builds, &pt, UND_frac))
+//   {
+//       std::cout<<+g.first<<" "<<g.second<<std::endl;
+//   }
+//
+//   return 0;
+// }
+
+
+
+std::vector<Genotype> ExhaustiveMinimalGenotypes(uint8_t n_genes, uint8_t colours, StochasticPhenotypeTable* pt)
 {
+  std::vector<Genotype> genomes;
 
-  StochasticPhenotypeTable pt;
-  uint8_t k_builds=5;
-  double UND_frac=.1;
-
-  for(auto g: Stochastic::AssemblePlasticGenotype({0,0,0,1, 2,1,0,0, 0,0,2,2, 2,2,2,2}, k_builds, &pt, UND_frac))
-  {
-      std::cout<<+g.first<<" "<<g.second<<std::endl;
-  }
-
-  return 0;
-}
-
-
-
-void ExhaustiveMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours)
-{
-  std::string file_path(file_path_c), file_details="_N" + std::to_string(n_genes) + "_C" + std::to_string(colours)+".txt";
-  std::ofstream fout(file_path + "ExhaustiveGenotypes" + file_details);
+  std::cout << "Generating all minimal samples\n";
 
   GenotypeGenerator ggenerator = GenotypeGenerator(n_genes, colours);
   ggenerator.init();
-  StochasticPhenotypeTable pt;
-  uint8_t k_builds=5;
+  uint8_t k_builds=100;
   Genotype genotype, nullg;
-
+  Phenotype_ID rare_pID = {0, 0}, loop_pID = {255, 0};
+  std::vector<Phenotype_ID> pIDs;
+  uint64_t good_genotypes = 0, generated_genotypes = 0;
 
   while((genotype=ggenerator())!=nullg)
   {
-    bool all_zero_phen=true;
-    for(uint8_t seed=0;seed<n_genes;++seed)
-    {
-      uint8_t phen_size = Stochastic::Analyse_Genotype_Outcome(genotype,k_builds,&pt,seed).first;
-      if(phen_size==255)
-        continue;
-      if(phen_size>0)
-        all_zero_phen=false;
-    }
-    if(all_zero_phen)
+    generated_genotypes++;
+    if(!ggenerator.valid_genotype(genotype))
       continue;
-    for(auto g : genotype)
-      fout<<+g<<" ";
-    fout<<"\n";
+
+    pIDs = GetSetPIDs(genotype, k_builds, pt);
+    if(pIDs.front() == rare_pID || pIDs.back() == loop_pID)
+      continue;
+
+    good_genotypes++;
+    genomes.emplace_back(genotype);
+
+    if(good_genotypes % 100 == 0)
+      std::cout << "Found " <<+ good_genotypes << " out of " <<+ generated_genotypes << " generated \n";
   }
+
+  std::cout << "Final Values : Found " <<+ genomes.size() << " out of " <<+ generated_genotypes << " generated \n";
+  return genomes;
 }
+
+std::vector<Genotype> ExhaustiveFullGenotypes2(uint8_t colours, StochasticPhenotypeTable* pt)
+{
+  std::vector<Genotype> genomes;
+
+  // GenotypeGenerator ggenerator = GenotypeGenerator(n_genes, colours);
+  // ggenerator.init();
+  uint8_t k_builds=100;
+  // Genotype genotype(2 * 4);
+  Phenotype_ID rare_pID = {0, 0}, loop_pID = {255, 0};
+  std::vector<Phenotype_ID> pIDs;
+  uint64_t good_genotypes = 0, generated_genotypes = 0;
+
+  for(int i=0;i<colours;++i) {
+    for(int j=0;j<colours;++j) {
+      for(int k=0;k<colours;++k) {
+        for(int l=0;l<colours;++l) {
+          for(int q=0;q<colours;++q) {
+            for(int w=0;w<colours;++w) {
+              for(int e=0;e<colours;++e) {
+                for(int r=0;r<colours;++r) {
+
+                  Genotype genotype = {i,j,k,l,q,w,e,r};
+                  Genotype copy = {i,j,k,l,q,w,e,r};
+                  generated_genotypes++;
+
+                  pIDs = GetSetPIDs(genotype, k_builds, pt);
+
+                  if (pIDs.front() != rare_pID && pIDs.back() != loop_pID)
+                  {
+                    good_genotypes++;
+                    genomes.emplace_back(copy);
+
+                    if(good_genotypes % 10000 == 0)
+                      std::cout << "Found " <<+ good_genotypes << " out of " <<+ generated_genotypes << " generated \n";
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::cout << "Final Values : Found " <<+ genomes.size() << " out of " <<+ generated_genotypes << " generated \n";
+  return genomes;
+}
+
+
+
 
 // Member functions of the NecklaceFactory structure
 void NecklaceFactory::GenNecklaces(uint8_t c)

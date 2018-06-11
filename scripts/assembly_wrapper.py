@@ -15,9 +15,16 @@ def GetPhenotypesIDs_wrapper(file_path, file_name, ngenes, colours):
     Poly_Lib.GetPhenotypesIDs.argtypes = [ctypes.POINTER(ctypes.c_char), ctypes.POINTER(ctypes.c_char), ctypes.c_uint8, ctypes.c_uint8]
     c_ = ctypes.c_buffer(file_path)
     o_ = ctypes.c_buffer(file_name)
-    assert os.path.isfile(file_path+file_name), "not a valid file"
 
     Poly_Lib.GetPhenotypesIDs(c_, o_, ngenes, colours)
+
+def PreProcessWrite_wrapper(file_path, file_name, ngenes, colours):
+    Poly_Lib.PreProcessWrite.restype = None
+    Poly_Lib.PreProcessWrite.argtypes = [ctypes.POINTER(ctypes.c_char), ctypes.POINTER(ctypes.c_char), ctypes.c_uint8, ctypes.c_uint8]
+    c_ = ctypes.c_buffer(file_path)
+    o_ = ctypes.c_buffer(file_name)
+
+    Poly_Lib.PreProcessWrite(c_, o_, ngenes, colours)
 
 
 def ExhaustiveMinimalMethod_wrapper(file_path, ngenes, colours):
@@ -40,38 +47,10 @@ def GPMap_wrapper(file_path, ngenes, rcolours, colours):
     c_ = ctypes.c_buffer(file_path)
     Poly_Lib.GP_MapSampler(c_, ngenes, rcolours, colours)
 
-def GPMap_wrapper_new(file_path, ngenes, rcolours, colours):
-    Poly_Lib.GP_MapSampler.restype = None
-    Poly_Lib.GP_MapSampler.argtypes = [ctypes.POINTER(ctypes.c_char), ctypes.c_uint8, ctypes.c_uint8, ctypes.c_uint8]
-    c_ = ctypes.c_buffer(file_path)
-    Poly_Lib.GP_MapSampler_new(c_, ngenes, rcolours, colours)
-
-
-def PreProcessGenotypesTopology_wrapper(file_path, ngenes, colours):
-    Poly_Lib.PreProcessGenotypesTopology.restype = None
-    Poly_Lib.PreProcessGenotypesTopology.argtypes = [ctypes.POINTER(ctypes.c_char), ctypes.c_uint8, ctypes.c_uint8]
-    c_ = ctypes.c_buffer(file_path)
-    Poly_Lib.PreProcessGenotypesTopology(c_, ngenes, colours)
-
-def PreProcessGenotypes_wrapper(file_path, ngenes, colours):
-    Poly_Lib.PreProcessGenotypes.restype = None
-    Poly_Lib.PreProcessGenotypes.argtypes = [ctypes.POINTER(ctypes.c_char), ctypes.c_uint8, ctypes.c_uint8]
-    c_ = ctypes.c_buffer(file_path)
-    Poly_Lib.PreProcessGenotypes(c_, ngenes, colours)
-
-
-def GenerateGenotypesTopology(file_path, ngenes, colours, samples=-1):
-    if samples == -1:
-        ExhaustiveMinimalMethod_wrapper(file_path, ngenes, colours)
-        Trim_Topologies(file_path + 'SampledGenotypes_N{}_C{}.txt'.format(ngenes, colours))
-    else:
-        SampleMinimalMethod_wrapper(file_path, ngenes, colours, samples, True)
-        Trim_Topologies(file_path + 'SampledGenotypes_N{}_C{}.txt'.format(ngenes, colours).encode('utf-8'))
-    PreProcessGenotypesTopology_wrapper(file_path, ngenes, colours)
 
 def GenerateGenotypes(file_path, ngenes, colours, samples=-1):
     if samples == -1:
         ExhaustiveMinimalMethod_wrapper(file_path, ngenes, colours)
+        PreProcessWrite_wrapper(file_path, "ExhaustiveGenotypes".encode("utf-8"), ngenes, colours)
     else:
         SampleMinimalMethod_wrapper(file_path, ngenes, colours, samples, True)
-    # PreProcessGenotypes_wrapper(file_path, ngenes, colours)

@@ -3,6 +3,7 @@
 #include <iterator>
 #include <functional>
 #include <set>
+#include <algorithm>
 #include <cstring>
 
 std::mt19937 RNG_Engine1(std::random_device{}());
@@ -14,12 +15,12 @@ n_genes(n_genes), colours(colours)
   number_of_neighbours = (colours - 1) * n_genes * 4.;
 }
 
-void Genotype_Metrics::set_reference(Genotype& genotype, std::vector <Phenotype_ID> pIDs)
+void Genotype_Metrics::set_reference(Genotype& genotype, std::vector <Phenotype_ID> pIDs, double neutral)
 {
   ref_genotype = genotype;
   ref_pIDs = pIDs;
 
-  neutral_weight = NeutralSize(genotype, 1, colours - 1);
+  neutral_weight = neutral;
 
   // for (auto pID: pIDs)
   //   shapes.emplace_back(Shape_Metrics(pID));
@@ -42,8 +43,8 @@ void Genotype_Metrics::analyse_pIDs(std::vector <Phenotype_ID>& pIDs)
 
   union_evolvability += (double) (union_set.size() - ref_pIDs.size());
 
-  if (std::find(std::begin(pIDs), std::end(pIDs), death_pID) != std::end(pIDs))
-    death += 1.;
+  if (std::find(std::begin(pIDs), std::end(pIDs), rare_pID) != std::end(pIDs))
+    rare += 1.;
 
   if (std::find(std::begin(pIDs), std::end(pIDs), loop_pID) != std::end(pIDs))
     loop += 1.;
@@ -66,7 +67,7 @@ void Genotype_Metrics::save_to_file(std::ofstream& fout)
   fout <<+ strict_robustness / number_of_neighbours << " ";
   fout <<+ intersection_robustness / number_of_neighbours << " ";
   fout <<+ union_evolvability / number_of_neighbours << " ";
-  fout <<+ death / number_of_neighbours << " ";
+  fout <<+ rare / number_of_neighbours << " ";
   fout <<+ loop / number_of_neighbours << " ";
   fout <<+ diversity.size() << " ";
   fout <<+ neutral_weight << " ";
@@ -86,7 +87,7 @@ void Genotype_Metrics::save_to_file(std::ofstream& fout)
 
 void Genotype_Metrics::clear()
 {
-  strict_robustness = 0, union_evolvability = 0, death = 0;
+  strict_robustness = 0, union_evolvability = 0, rare = 0;
   intersection_robustness = 0, loop = 0;
 
   // shapes.clear();
@@ -107,7 +108,7 @@ void Shape_Metrics::robust_pID(std::vector <Phenotype_ID> pIDs)
 
 // Constructor of the Set_Metrics structure
 Set_Metrics::Set_Metrics(uint8_t n_genes, uint8_t colours):
-n_genes(n_genes), colours(colours)
+n_genes(n_genes), colours(colours), analysed(0)
 {}
 
 // Member functions of the Set_Metrics structure
@@ -116,18 +117,18 @@ void Set_Metrics::add_genotype_metrics(Genotype_Metrics& genome_metric)
 {
   double number_of_neighbours = (colours - 1) * n_genes * 4.;
 
+  analysed++;
+
   strict_robustnesses.emplace_back(genome_metric.strict_robustness / number_of_neighbours);
   intersection_robustnesses.emplace_back(genome_metric.intersection_robustness / number_of_neighbours);
   union_evolvabilities.emplace_back(genome_metric.union_evolvability / number_of_neighbours);
-  deaths.emplace_back(genome_metric.death / number_of_neighbours);
+  rares.emplace_back(genome_metric.rare / number_of_neighbours);
   loops.emplace_back(genome_metric.loop / number_of_neighbours);
 
   neutral_weightings.emplace_back(genome_metric.neutral_weight);
 
   for (auto pID: genome_metric.diversity)
-  {
     diversity.insert(pID);
-  }
 
   genome_metrics.emplace_back(genome_metric);
 }
@@ -139,41 +140,28 @@ void Set_Metrics::save_to_file(std::ofstream& set_out, std::ofstream& genome_out
 
   double total_neutral_size = std::accumulate(neutral_weightings.begin(), neutral_weightings.end(), uint64_t(0));
 
-  double average_strict_robustness = 0, average_intersection_robustness = 0;
-  double average_union_evolvability = 0, average_death = 0, average_loop = 0;
+  double average_strict_robustness = std::inner_product(std::begin(strict_robustnesses), std::end(strict_robustnesses), std::begin(neutral_weightings), 0) / total_neutral_size;
+  double average_intersection_robustness = std::inner_product(std::begin(intersection_robustnesses), std::end(intersection_robustnesses), std::begin(neutral_weightings), 0) / total_neutral_size;
+  double average_union_evolvability = std::inner_product(std::begin(union_evolvabilities), std::end(union_evolvabilities), std::begin(neutral_weightings), 0) / total_neutral_size;
+  double average_rare = std::inner_product(std::begin(rares), std::end(rares), std::begin(neutral_weightings), 0) / total_neutral_size;
+  double average_loop = std::inner_product(std::begin(loops), std::end(loops), std::begin(neutral_weightings), 0) / total_neutral_size;
 
-  for(size_t index = 0; index < strict_robustnesses.size(); ++index)
-  {
-     average_strict_robustness += strict_robustnesses[index] * (double) neutral_weightings[index] / total_neutral_size;
-     average_intersection_robustness += intersection_robustnesses[index] * (double) neutral_weightings[index] / total_neutral_size;
-     average_union_evolvability += union_evolvabilities[index] * (double) neutral_weightings[index] / total_neutral_size;
-     average_death += deaths[index] * (double) neutral_weightings[index] / total_neutral_size;
-     average_loop += loops[index] * (double) neutral_weightings[index] / total_neutral_size;
-  }
+  set_out <<+ average_strict_robustness << " " <<+ average_intersection_robustness << " ";
+  set_out <<+ average_union_evolvability << " " <<+ average_rare << " ";
+  set_out <<+ average_loop << " " <<+ analysed << " ";
+  set_out <<+ total_neutral_size << " " << diversity.size() << " ";
 
-  set_out <<+ average_strict_robustness << " ";
-  set_out <<+ average_intersection_robustness << " ";
-  set_out <<+ average_union_evolvability << " ";
-  set_out <<+ average_death << " ";
-  set_out <<+ average_loop << " ";
-  set_out <<+ diversity.size() << " ";
+  set_out << "{";
+  for (auto pID: ref_pIDs)
+    set_out <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
 
-  if(ref_pIDs.size() > 0)
-  {
-    set_out << "{";
-    for (auto pID: ref_pIDs)
-      set_out <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
-
-    set_out.seekp((long) set_out.tellp() - 1);
-    set_out << "}" << std::endl;
-  }
-  else
-    set_out << "{}" << std::endl;
+  set_out.seekp((long) set_out.tellp() - 1);
+  set_out << "}" << std::endl;
 }
 
 void Set_Metrics::clear()
 {
-  strict_robustnesses.clear(), union_evolvabilities.clear(), deaths.clear();
+  strict_robustnesses.clear(), union_evolvabilities.clear(), rares.clear();
   intersection_robustnesses.clear(), neutral_weightings.clear(), loops.clear();
 
   genome_metrics.clear();
@@ -182,146 +170,101 @@ void Set_Metrics::clear()
 
 // Sampling functions
 
-void GP_MapSampler(const char* file_path_c, uint8_t n_genes, uint8_t rcolours, uint8_t colours)
+void GP_MapSampler(uint8_t n_genes, uint8_t metric_colours, std::vector<Set_Metrics>& metrics,
+   Set_to_Genome& set_to_genome, StochasticPhenotypeTable* pt)
 {
-
   const uint8_t k_builds = 20;
   const uint32_t N_JIGGLE = 10;
-  StochasticPhenotypeTable pt;
-  Genotype genotype(n_genes * 4);
-
-  std::string file_path(file_path_c), file_details="_N"+std::to_string(n_genes)+"_C"+std::to_string(rcolours);
-  std::ifstream genome_in(file_path + "SampledGenotypes" + file_details + "_Processed.txt");
-  std::ifstream pheno_in(file_path + "PhenotypeTable" + file_details + ".txt");
-
-  LoadExistingTable(pheno_in, &pt);
-
-  file_details += "_Cx" + std::to_string(colours) + ".txt";
-
-  std::ofstream shape_metrics_out(file_path + "shape_metrics" + file_details);
-  std::ofstream genome_metrics_out(file_path + "genome_metrics" + file_details);
-  std::ofstream set_metrics_out(file_path + "set_metrics" + file_details);
-  std::ofstream pheno_out(file_path + "PhenotypeTable" + file_details);
-
-  Set_Metrics set_metrics(n_genes, colours);
-
-  std::string str, separator="x";
-
-  while (std::getline(genome_in, str))
-  {
-    if(str.compare(0, 1, separator) == 0)
-    {
-      set_metrics.save_to_file(set_metrics_out, genome_metrics_out);
-      set_metrics.clear();
-      continue;
-    }
-
-    std::istringstream is( str );
-    genotype.assign( std::istream_iterator<int>( is ), std::istream_iterator<int>() );
-
-    std::vector<Phenotype_ID> genotype_pIDs = GetSetPIDs(genotype, k_builds, &pt);
-    set_metrics.ref_pIDs = genotype_pIDs;
-
-    #pragma omp parallel for schedule(dynamic) firstprivate(genotype)
-    for(uint32_t nth_jiggle=0; nth_jiggle<N_JIGGLE; ++nth_jiggle)
-    {
-      Clean_Genome(genotype, 0, false);
-      JiggleGenotype(genotype, colours);
-
-      Genotype_Metrics genome_metric(n_genes, colours);
-      genome_metric.set_reference(genotype, genotype_pIDs);
-
-      for(Genotype neighbour : genotype_neighbourhood(genotype, n_genes, colours))
-      {
-         std::vector<Phenotype_ID> neighbour_pIDs = GetSetPIDs(neighbour, k_builds, &pt);
-         genome_metric.analyse_pIDs(neighbour_pIDs);
-       }
-
-      #pragma omp critical
-      {
-        set_metrics.add_genotype_metrics(genome_metric);
-      }
-    }
-  }
-  shape_metrics_out << "Done C++" << std::endl;
-  pt.PrintTable(pheno_out);
-}
-
-void GP_MapSampler_new(const char* file_path_c, uint8_t n_genes, uint8_t rcolours, uint8_t colours)
-{
-
-  const uint8_t k_builds = 20;
-  const uint32_t N_JIGGLE = 10;
-  StochasticPhenotypeTable pt;
-  Set_to_Genome set_to_genome;
   std::vector<Phenotype_ID> loop_pID = {{255, 0}};
 
-  std::string file_path(file_path_c), file_details="_N"+std::to_string(n_genes)+"_C"+std::to_string(rcolours);
-  std::ifstream genome_in(file_path+"SampledGenotypes"+ file_details + ".txt");
-  std::ifstream pheno_in(file_path + "PhenotypeTable" + file_details + ".txt");
-  std::ofstream pIDset_out(file_path + "SetTable" + file_details + ".txt");
+  // metrics.resize(set_to_genome.size(), Set_Metrics(n_genes, metric_colours));
 
-  if(pheno_in)
-    LoadExistingTable(pheno_in, &pt);
+  uint16_t number_of_genomes = 0;
+  for(Set_to_Genome::iterator iter = std::begin(set_to_genome); iter != std::end(set_to_genome); iter++)
+    number_of_genomes += (iter->second).size();
 
-  file_details += "_Cx" + std::to_string(colours) + ".txt";
+  std::cout << "There are " <<+ number_of_genomes << " genomes to jiggle! \n";
 
-  std::ofstream shape_metrics_out(file_path + "shape_metrics" + file_details);
-  std::ofstream genome_metrics_out(file_path + "genome_metrics" + file_details);
-  std::ofstream set_metrics_out(file_path + "set_metrics" + file_details);
-  std::ofstream pheno_out(file_path + "PhenotypeTable" + file_details);
-
-  PreProcessSampled(genome_in, set_to_genome, &pt, pIDset_out);
-
-  // This part is a disgrace, but I will make it more elegant or die trying
-  std::vector<Set_Metrics> metrics;
-  Set_Metrics temp_set_metrics(n_genes, colours);
-
-  for(uint32_t index = 0; index < set_to_genome.size(); index++)
-    metrics.emplace_back(temp_set_metrics);
-
-  Set_to_Genome::iterator iter = std::begin(set_to_genome);
-
-  #pragma omp parallel for //schedule(dynamic)
-  for(uint32_t index=0; index < set_to_genome.size(); ++index)
+  for(Set_to_Genome::iterator iter = std::begin(set_to_genome); iter != std::end(set_to_genome); iter++)
   {
-    Set_to_Genome::iterator iter = std::begin(set_to_genome);
-    std::advance(iter, index);
+    std::cout << "Currently processing " <<+ (iter->second).size() << " genomes for {";
+    for(auto pID: iter->first)
+      std::cout << "(" <<+ pID.first << ", " <<+ pID.second << "), ";
+    number_of_genomes -= (iter->second).size();
+    std::cout << "}. Only " <<+ number_of_genomes << " left! \n";
 
     if(iter->first == loop_pID)
       continue;
 
-    Set_Metrics set_metrics(n_genes, colours);
+    Set_Metrics set_metrics(n_genes, metric_colours);
     set_metrics.ref_pIDs = iter->first;
 
     for(auto genotype: iter->second)
     {
+      double neutral_weight = (double) NeutralSize(genotype, 1, metric_colours) / N_JIGGLE; // This weight will be counted N_JIGGLE time when added to form the total neutral weight
+
+      #pragma omp parallel for schedule(dynamic) firstprivate(genotype, neutral_weight)
       for(uint32_t nth_jiggle=0; nth_jiggle<N_JIGGLE; ++nth_jiggle)
       {
         Clean_Genome(genotype, 0, false);
-        JiggleGenotype(genotype, colours);
+        JiggleGenotype(genotype, metric_colours);
 
-        Genotype_Metrics genome_metric(n_genes, colours);
-        genome_metric.set_reference(genotype, iter->first);
+        Genotype_Metrics genome_metric(n_genes, metric_colours);
+        genome_metric.set_reference(genotype, iter->first, neutral_weight);
 
-        for(Genotype neighbour : genotype_neighbourhood(genotype, n_genes, colours))
+        for(Genotype neighbour : genotype_neighbourhood(genotype, n_genes, metric_colours))
         {
-           std::vector<Phenotype_ID> neighbour_pIDs = GetSetPIDs(neighbour, k_builds, &pt);
+           std::vector<Phenotype_ID> neighbour_pIDs = GetSetPIDs(neighbour, k_builds, pt);
            genome_metric.analyse_pIDs(neighbour_pIDs);
          }
-         set_metrics.add_genotype_metrics(genome_metric);
-       }
-     }
-    metrics[index] = set_metrics;
+         #pragma omp critical
+         {
+           set_metrics.add_genotype_metrics(genome_metric);
+         }
+      }
+    }
+    metrics.emplace_back(set_metrics);
   }
 
-  for (auto metric: metrics)
-    metric.save_to_file(set_metrics_out, genome_metrics_out);
 
-  pt.PrintTable(pheno_out);
-  shape_metrics_out << "Done C++" << std::endl;
+  // #pragma omp parallel for schedule(dynamic)
+  // for(uint32_t index=0; index < set_to_genome.size(); ++index)
+  // {
+  //   if ((index % 10) == 0)
+  //     std::cout << "iteration : " <<+ index << " out of " <<+ set_to_genome.size() << "\n";
+  //
+  //   Set_to_Genome::iterator iter = std::begin(set_to_genome);
+  //   std::advance(iter, index);
+  //
+  //   if(iter->first == loop_pID)
+  //     continue;
+  //
+  //   Set_Metrics set_metrics(n_genes, metric_colours);
+  //   set_metrics.ref_pIDs = iter->first;
+  //
+  //   for(auto genotype: iter->second)
+  //   {
+  //     for(uint32_t nth_jiggle=0; nth_jiggle<N_JIGGLE; ++nth_jiggle)
+  //     {
+  //       Clean_Genome(genotype, 0, false);
+  //       JiggleGenotype(genotype, metric_colours);
+  //
+  //       Genotype_Metrics genome_metric(n_genes, metric_colours);
+  //       genome_metric.set_reference(genotype, iter->first);
+  //
+  //       for(Genotype neighbour : genotype_neighbourhood(genotype, n_genes, metric_colours))
+  //       {
+  //          std::vector<Phenotype_ID> neighbour_pIDs = GetSetPIDs(neighbour, k_builds, pt);
+  //          genome_metric.analyse_pIDs(neighbour_pIDs);
+  //        }
+  //        set_metrics.add_genotype_metrics(genome_metric);
+  //      }
+  //    }
+  //   metrics[index] = set_metrics;
+  // }
 }
 
+// Subroutine of the GP_MapSampler
 
 void JiggleGenotype(Genotype& genotype, uint8_t max_colour)
 {

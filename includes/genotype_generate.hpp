@@ -3,11 +3,16 @@
 #include <iostream>
 
 /*External wrappers for python integration */
-extern "C"
-{
-  void ExhaustiveMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours);
-  void SampleMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours, const uint32_t N_SAMPLES, bool allow_duplicates);
-}
+// extern "C"
+// {
+//   void ExhaustiveMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours);
+//   void SampleMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours, const uint32_t N_SAMPLES, bool allow_duplicates);
+// }
+
+std::vector<Genotype> ExhaustiveMinimalGenotypes(uint8_t n_genes, uint8_t colours, StochasticPhenotypeTable* pt);
+std::vector<Genotype> SampleMinimalGenotypes(uint8_t n_genes, uint8_t colours,
+  const uint32_t N_SAMPLES, bool allow_duplicates, StochasticPhenotypeTable* pt);
+std::vector<Genotype> ExhaustiveFullGenotypes2(uint8_t colours, StochasticPhenotypeTable* pt);
 
 /*Minimal genotype methods*/
 struct NecklaceFactory

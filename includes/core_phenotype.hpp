@@ -1,6 +1,7 @@
 #include "core_genotype.hpp"
 
 #include <fstream>
+#include <iostream>
 #include <unordered_map>
 
 struct Phenotype
@@ -21,8 +22,10 @@ struct PhenotypeTable
 {
   std::unordered_map<uint8_t, std::vector<Phenotype>> known_phenotypes;
 
-  void PrintTable(std::ofstream& fout)
+  void PrintTable(std::string phenotype_file)
   {
+    std::cout << "Printing phenotypes to file : " << phenotype_file << "\n";
+    std::ofstream fout(phenotype_file);
     for(auto known_phens : known_phenotypes)
     {
       uint16_t n_phen=0;
