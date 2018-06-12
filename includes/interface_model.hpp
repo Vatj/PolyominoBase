@@ -88,8 +88,7 @@ namespace interface_model
           if(++undiscovered_phenotype_counts[new_phenotype_index]>=ceil(model_params::UND_threshold*simulation_params::phenotype_builds)) {
             new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
             known_phenotypes[phenotype_size].push_back(phen);
-            std::gamma_distribution<double> fitness_dist(sqrt(phenotype_size),1./sqrt(phenotype_size));
-            phenotype_fitnesses[phenotype_size].emplace_back(fitness_dist(RNG_Engine));
+            phenotype_fitnesses[phenotype_size].emplace_back(std::gamma_distribution<double>(phenotype_size,std::pow(phenotype_size,-.5))(RNG_Engine));
             new_phenotype_xfer[phenotype_size].emplace_back(phenotype_fitnesses[phenotype_size].size()-1);
             
             return std::make_pair(phenotype_size,phenotype_fitnesses[phenotype_size].size()-1);
@@ -140,7 +139,7 @@ namespace interface_model
     void ReassignFitness() {
       for(std::unordered_map<uint8_t,std::vector<double> >::iterator fit_iter=phenotype_fitnesses.begin();fit_iter!=phenotype_fitnesses.end();++fit_iter) {
 	if(fit_iter->first) {
-	  std::gamma_distribution<double> fitness_dist(sqrt(fit_iter->first),1./sqrt(fit_iter->first));
+	  std::gamma_distribution<double> fitness_dist(fit_iter->first,std::pow(fit_iter->first,-.5));
 	  for(double& fitness : fit_iter->second)
 	    fitness=fitness_dist(RNG_Engine);
 	}

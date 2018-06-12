@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from matplotlib.patches import Patch
+from matplotlib.patches import Patch,Rectangle
 import numpy as np
 
 import icy;icy.Use_Seaborn()
@@ -10,10 +10,12 @@ from colorsys import hsv_to_rgb
 from random import uniform,choice
 from interface_analysis import qBFS, loadManyResults, concatenateResults,RandomWalk,BindingStrength, set_length
 from scipy.stats import linregress,binom,scoreatpercentile
-from itertools import combinations_with_replacement as cwr
+from itertools import combinations_with_replacement as cwr,product
 from random import choice
 from math import ceil
 from copy import deepcopy
+from collections import defaultdict
+
 
 """RANDOM THEORY SECTION """
 def plotRandomTheory(I_size,g_len):
@@ -162,7 +164,7 @@ def plotPhylogeny(mae,mai,ms,called=False,use_offset=False):
 
 def bootstrap(data, n_boot=10000, ci=68):
      boot_dist = []
-     for i in range(int(n_boot)):
+     for i in xrange(int(n_boot)):
           resampler = np.random.randint(0, data.shape[0], data.shape[0])
           sample = data.take(resampler, axis=0)
           sample=sample.astype(float)
@@ -296,3 +298,58 @@ def plotTransitions(phen_trans,cdict=None):
      plt.show(block=False)
      
      return cdict
+
+def plotTransitionsDetailed(pt):
+     scaled_count=defaultdict(dict)
+     scaled_count[1][(1,1,1)]=None
+     for k,v in pt.iteritems():
+          scaled_count[np.count_nonzero(k[2:])][k]=v
+     #return scaled_count
+     
+     fig,ax = plt.subplots(1)
+
+     for i,c in enumerate(sorted(scaled_count.keys())):
+          offset=0 if len(scaled_count[c])%2==1 else .5
+          for j,phen in enumerate(sorted(scaled_count[c])):
+               AddPhenotypePatch(ax,phen,(i,len(scaled_count[c])/2 - j -offset))
+               if i==0:
+                    continue
+               total_weight=sum(scaled_count[c][phen].values())
+               for connector,weight in scaled_count[c][phen].iteritems():
+                    
+                    con_x=np.count_nonzero(connector[2:])-1
+                    offset2=0 if len(scaled_count[con_x+1])%2==1 else .5
+                    con_y=len(scaled_count[con_x+1])/2-sorted(scaled_count[con_x+1]).index(connector)-offset2
+
+                    #plt.plot([con_x+.25,i-.25],[con_y,len(scaled_count[c])/2 - j -offset])
+                    ax.arrow(con_x+.25,con_y,(i-.25)-(con_x+.25),(len(scaled_count[c])/2 - j -offset)-con_y,head_width=0.05, head_length=0.1, fc='k', ec='k',length_includes_head=True,lw=float(weight)/total_weight)
+                         
+ 
+          
+               
+     ax.set_aspect(1)
+     ax.relim()
+     ax.autoscale_view()
+
+     ax.grid(False)
+     plt.axis('off')
+     plt.show(block=False)
+
+def AddPhenotypePatch(ax,shape,xy):
+     ar_offsets={0:(0,-.25,0,.25),1:(-.25,0,.25,0),2:(0,.25,0,-.25),3:(.25,0,-.25,0)}
+     cols=['darkgreen','royalblue','firebrick','goldenrod','mediumorchid']
+     dx=shape[0]
+     dy=shape[1]
+     scale=.5/max(dx,dy)
+     for i,j in product(xrange(dx),xrange(dy)):
+          if(shape[2+i+j*dx]):
+               new_x=xy[0]+(i-dx/2.)*scale
+               new_y=xy[1]+(dy/2.-j)*scale-(1.*scale)
+               ax.add_patch(Rectangle((new_x,new_y), scale, scale, facecolor=cols[(shape[2+i+j*dx]-1)/4],edgecolor='slategrey',fill=True,hatch='////',lw=0))
+               ax.add_patch(Rectangle((new_x,new_y), scale, scale,edgecolor='maroon',fill=False,lw=2.5))
+               theta=(shape[2+i+j*dx]-1)%4;
+               ax.arrow(new_x+(.5+ar_offsets[theta][0])*scale,new_y+(.5+ar_offsets[theta][1])*scale, ar_offsets[theta][2]*scale, ar_offsets[theta][3]*scale, head_width=0.075*scale, head_length=0.15*scale, fc='k', ec='k')
+
+def AddPhenotypeTransition(ax,connectors):
+     return
+     

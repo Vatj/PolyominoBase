@@ -172,7 +172,7 @@ def loadResults(I,M,t,offset=0):
 def loadManyResults(I,M,t,runs):
      bulk_results=[]
      for run in runs:
-          bulk_results.extend(loadResults(I,M,t,run))
+          bulk_results.extend(loadResults(I,float(M),t,run))
      return bulk_results
 
 def concatenateResults(data_struct,trim_gen=True):
