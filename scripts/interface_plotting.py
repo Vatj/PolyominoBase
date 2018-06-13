@@ -321,8 +321,29 @@ def plotTransitionsDetailed(pt):
                     offset2=0 if len(scaled_count[con_x+1])%2==1 else .5
                     con_y=len(scaled_count[con_x+1])/2-sorted(scaled_count[con_x+1]).index(connector)-offset2
 
-                    #plt.plot([con_x+.25,i-.25],[con_y,len(scaled_count[c])/2 - j -offset])
-                    ax.arrow(con_x+.25,con_y,(i-.25)-(con_x+.25),(len(scaled_count[c])/2 - j -offset)-con_y,head_width=0.05, head_length=0.1, fc='k', ec='k',length_includes_head=True,lw=float(weight)/total_weight)
+                    spline_points=np.array([[con_x+.25,con_y],[i-.25,len(scaled_count[c])/2-j-offset]])
+                    spline_points=np.insert(spline_points,1,spline_points[0]+[.05,0],axis=0)
+                    spline_points=np.insert(spline_points,-1,spline_points[-1]-[.05,0],axis=0)
+                    temp_i=i
+                    dy=spline_points[0,1]-spline_points[-1,1]
+                    dy_accum=0
+                    while (temp_i-con_x)>1:
+                         offset3=-.5 if len(scaled_count[temp_i+1])%2==1 else 0
+                         dy_new=0
+                         if dy>0 and dy_accum<dy:
+                              dy_accum-=1 if offset3!=offset2 else .5
+                         elif dy<0 and dy_accum<dy:
+                              dy_accum+=1 if offset3!=offset2 else .5
+                         print "slicing in ",-(i-temp_i+2)," for ",temp_i-1," and ", spline_points[-1,1],"-",-dy_accum,"+",offset3
+                         spline_points=np.insert(spline_points,-(i-temp_i+2),[temp_i-1,spline_points[-1,1]-dy_accum+offset3],axis=0)
+
+
+                         temp_i-=1
+                         
+                    print phen,connector
+                    print spline_points
+                    AddConnectionPatch(ax,spline_points)
+                    #ax.arrow(con_x+.25,con_y,(i-.25)-(con_x+.25),(len(scaled_count[c])/2 - j -offset)-con_y,head_width=0.05, head_length=0.1, fc='k', ec='k',length_includes_head=True,lw=float(weight)/total_weight)
                          
  
           
@@ -335,6 +356,8 @@ def plotTransitionsDetailed(pt):
      plt.axis('off')
      plt.show(block=False)
 
+
+     
 def AddPhenotypePatch(ax,shape,xy):
      ar_offsets={0:(0,-.25,0,.25),1:(-.25,0,.25,0),2:(0,.25,0,-.25),3:(.25,0,-.25,0)}
      cols=['darkgreen','royalblue','firebrick','goldenrod','mediumorchid']
@@ -352,4 +375,20 @@ def AddPhenotypePatch(ax,shape,xy):
 
 def AddPhenotypeTransition(ax,connectors):
      return
+     
+from scipy.interpolate import splprep, splev
+
+def AddConnectionPatch(ax,pts):
+
+     tck, u = splprep(pts.T, u=None, s=0.0,k=3, per=False) 
+     u_new = np.linspace(u.min(), u.max(), 1000)
+     x_new, y_new = splev(u_new, tck, der=0)
+     ax.arrow(x_new[x_new.shape[0]/2],y_new[y_new.shape[0]/2],x_new[x_new.shape[0]/2+1]-x_new[x_new.shape[0]/2],y_new[y_new.shape[0]/2+1]-y_new[y_new.shape[0]/2], shape='full', lw=0, length_includes_head=True, head_width=.05)
+ 
+
+
+     #plt.plot(pts[:,0], pts[:,1], 'ro')
+     ax.plot(x_new, y_new, 'b--')
+     #plt.show(block=False)
+
      
