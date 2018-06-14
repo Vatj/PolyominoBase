@@ -299,9 +299,22 @@ def plotTransitions(phen_trans,cdict=None):
      
      return cdict
 
+
+
 def plotTransitionsDetailed(pt):
      scaled_count=defaultdict(dict)
      scaled_count[1][(1,1,1)]=None
+     connection_subsets=defaultdict(list)
+     for phen in pt.keys():
+          if phen==(1,1,1):
+               continue
+          for sub_phen in pt[phen].keys():
+               connection_subsets[phen].append((phen,sub_phen))
+
+
+
+
+     #return connection_subsets
      for k,v in pt.iteritems():
           scaled_count[np.count_nonzero(k[2:])][k]=v
      size_counts={i:len(scaled_count[v]) for i,v in enumerate(sorted(scaled_count.keys()))}
@@ -309,11 +322,12 @@ def plotTransitionsDetailed(pt):
 
      
      fig,ax = plt.subplots(1)
-
+     connection_dict={}
+     phen_dict={}
      for i,c in enumerate(sorted(scaled_count.keys())):
           offset=0 if len(scaled_count[c])%2==1 else .5
           for j,phen in enumerate(sorted(scaled_count[c])):
-               AddPhenotypePatch(ax,phen,(i,len(scaled_count[c])/2 - j -offset))
+               phen_dict[phen]=AddPhenotypePatch(ax,phen,(i,len(scaled_count[c])/2 - j -offset))
                if i==0:
                     continue
                total_weight=sum(scaled_count[c][phen].values())
@@ -323,48 +337,28 @@ def plotTransitionsDetailed(pt):
                     offset2=0 if len(scaled_count[con_x+1])%2==1 else .5
                     con_y=len(scaled_count[con_x+1])/2-sorted(scaled_count[con_x+1]).index(connector)-offset2
 
-                    spline_points=np.array([[con_x+.25,con_y],[i-.25,len(scaled_count[c])/2-j-offset]])
-                    spline_points=np.insert(spline_points,1,spline_points[0]+[.05,0],axis=0)
-                    spline_points=np.insert(spline_points,-1,spline_points[-1]-[.05,0],axis=0)
-                    temp_i=i
+                    spline_points=np.array([[con_x+.25,con_y],[con_x+.3,con_y],[i-.3,len(scaled_count[c])/2-j-offset],[i-.25,len(scaled_count[c])/2-j-offset]])
                     dx_f=i-con_x
                     dy_f=spline_points[-1,1]-spline_points[0,1]
-                    #print "new connector"
-                    #print dx_f,dy_f
                     dx=1
                     dy= np.sign(dy_f) if abs(dy_f)>=1 else 0
-                    #print "DY: ",dy, "f",dy_f
-                    while dx<dx_f:
 
+                    while dx<dx_f:
                          if int(spline_points[dx,1]*2)%2==size_counts[con_x+dx]%2:
                               bump_factor= 0
                          else:
                               bump_factor=.5 if np.sign(spline_points[-1,1]-spline_points[dx,1])>0 else -.5
-                         #print "BF",bump_factor, "// ",con_x+dx
-                         #print "from ",int(spline_points[dx,1]*2),size_counts[con_x+dx]
                          adjustment_factor=dy+bump_factor
                          if abs(adjustment_factor)>1:
                               adjustment_factor=np.sign(adjustment_factor)*(adjustment_factor%1)
-                         #print "knotting at ",dx+1,"with ",con_x+dx," and ",spline_points[dx,1], "with +",adjustment_factor
                          spline_points=np.insert(spline_points,dx+1,[con_x+dx,spline_points[dx,1]+adjustment_factor],axis=0)
-
-                              
-                         #print "slicing in ",-(i-temp_i+2)," for ",temp_i-1," and ", spline_points[-1,1],"-",-dy_accum,"+",offset3
-                         
-                         #spline_points=np.insert(spline_points,-(i-temp_i+2),[temp_i-1,spline_points[-1,1]-dy_accum+offset3],axis=0)
-
-
                          dx+=1
                          dy=dy-(np.sign(dy_f)) if abs(dy)>=1 else 0
-
-                    print phen,connector
-                    print spline_points
-                    AddConnectionPatch(ax,spline_points)
+                    connection_dict[(phen,connector)]=AddConnectionPatch(ax,spline_points,float(weight)/total_weight)
                     
-                    #ax.arrow(con_x+.25,con_y,(i-.25)-(con_x+.25),(len(scaled_count[c])/2 - j -offset)-con_y,head_width=0.05, head_length=0.1, fc='k', ec='k',length_includes_head=True,lw=float(weight)/total_weight)
+
                          
  
-          
                
      ax.set_aspect(1)
      ax.relim()
@@ -372,41 +366,79 @@ def plotTransitionsDetailed(pt):
 
      ax.grid(False)
      plt.axis('off')
+     def onpick(event):
+          artis=event.artist
+          coords=artis.get_bbox()
+
+          mean_click=np.mean(coords.get_points(),axis=0)
+          patch_coord=[int(np.round(mean_click[0])),np.round(mean_click[1]*2)/2.]
+          if abs(patch_coord[1])<.25:
+               patch_coord[1]=0
+               
+          phen_slices=scaled_count[sorted(scaled_count.keys())[patch_coord[0]]]
+          j=int(len(phen_slices)/2-(0 if len(phen_slices)%2==1 else .5)-patch_coord[1])
+
+          phen_key=sorted(phen_slices.keys())[j]
+          print phen_key
+          phen_set=set()
+          phen_set.add(phen_key)
+          for phen_pairing, artists in connection_dict.iteritems():
+               if phen_key==phen_pairing[0]:
+                    phen_set.add(phen_pairing[1])
+               alpha_v=1 if phen_key in phen_pairing else .1
+               for artist in artists:
+                    artist.set_alpha(alpha_v)
+               for phen in phen_pairing:
+                    for artist in phen_dict[phen]:
+                         artist.set_alpha(.1)
+
+          for phen in phen_set:
+               for artist in phen_dict[phen]:
+                    artist.set_alpha(1)
+
+                    
+
+                    
+          fig.canvas.draw()
+          return True
+
+     fig.canvas.mpl_connect('pick_event', onpick)
      plt.show(block=False)
 
 
-     
+
+
+  
 def AddPhenotypePatch(ax,shape,xy):
      ar_offsets={0:(0,-.25,0,.25),1:(-.25,0,.25,0),2:(0,.25,0,-.25),3:(.25,0,-.25,0)}
      cols=['darkgreen','royalblue','firebrick','goldenrod','mediumorchid']
      dx=shape[0]
      dy=shape[1]
+     artists=[]
      scale=.5/max(dx,dy)
      for i,j in product(xrange(dx),xrange(dy)):
           if(shape[2+i+j*dx]):
                new_x=xy[0]+(i-dx/2.)*scale
                new_y=xy[1]+(dy/2.-j)*scale-(1.*scale)
-               ax.add_patch(Rectangle((new_x,new_y), scale, scale, facecolor=cols[(shape[2+i+j*dx]-1)/4],edgecolor='slategrey',fill=True,hatch='////',lw=0))
-               ax.add_patch(Rectangle((new_x,new_y), scale, scale,edgecolor='maroon',fill=False,lw=2.5))
+               artists.append(ax.add_patch(Rectangle((new_x,new_y), scale, scale, facecolor=cols[(shape[2+i+j*dx]-1)/4],edgecolor='slategrey',fill=True,hatch='////',lw=0,picker=10,alpha=0.1)))
+               artists.append(ax.add_patch(Rectangle((new_x,new_y), scale, scale,edgecolor='maroon',fill=False,lw=2.5,alpha=0.1)))
                theta=(shape[2+i+j*dx]-1)%4;
-               ax.arrow(new_x+(.5+ar_offsets[theta][0])*scale,new_y+(.5+ar_offsets[theta][1])*scale, ar_offsets[theta][2]*scale, ar_offsets[theta][3]*scale, head_width=0.075*scale, head_length=0.15*scale, fc='k', ec='k')
+               artists.append(ax.arrow(new_x+(.5+ar_offsets[theta][0])*scale,new_y+(.5+ar_offsets[theta][1])*scale, ar_offsets[theta][2]*scale, ar_offsets[theta][3]*scale, head_width=0.075*scale, head_length=0.15*scale, fc='k', ec='k',alpha=0.1))
+     return artists
 
-def AddPhenotypeTransition(ax,connectors):
-     return
      
 from scipy.interpolate import splprep, splev
 
-def AddConnectionPatch(ax,pts):
+def AddConnectionPatch(ax,pts,weight):
 
      tck, u = splprep(pts.T, u=None, s=0.0,k=3, per=False) 
-     u_new = np.linspace(u.min(), u.max(), 1000)
+     u_new = np.linspace(u.min(), u.max(), 50)
      x_new, y_new = splev(u_new, tck, der=0)
-     ax.arrow(x_new[x_new.shape[0]/2],y_new[y_new.shape[0]/2],x_new[x_new.shape[0]/2+1]-x_new[x_new.shape[0]/2],y_new[y_new.shape[0]/2+1]-y_new[y_new.shape[0]/2], shape='full', lw=0, length_includes_head=True, head_width=.05)
- 
-
-
-     #plt.plot(pts[:,0], pts[:,1], 'ro')
-     ax.plot(x_new, y_new, 'b--')
-     #plt.show(block=False)
+     
+     ar=ax.arrow(x_new[x_new.shape[0]/2],y_new[y_new.shape[0]/2],x_new[x_new.shape[0]/2+1]-x_new[x_new.shape[0]/2],y_new[y_new.shape[0]/2+1]-y_new[y_new.shape[0]/2], shape='full', lw=0, length_includes_head=True, head_width=.05,alpha=0.1)
+     ln=ax.plot(x_new, y_new, 'b--',lw=weight*2,alpha=0.1)[0]
+     return (ln,ar)
 
      
+def getD():
+     return {(2,1,1,5):{(1,1,1):10,(2,1,1,3):5},(2,1,1,3):{(1,1,1):5},(2,2,1,2,4,3):{(1,1,1):5,(2,1,1,5):5},(1,1,1):{}}
