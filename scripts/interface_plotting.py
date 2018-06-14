@@ -304,7 +304,9 @@ def plotTransitionsDetailed(pt):
      scaled_count[1][(1,1,1)]=None
      for k,v in pt.iteritems():
           scaled_count[np.count_nonzero(k[2:])][k]=v
-     #return scaled_count
+     size_counts={i:len(scaled_count[v]) for i,v in enumerate(sorted(scaled_count.keys()))}
+     #return scaled_count,size_counts
+
      
      fig,ax = plt.subplots(1)
 
@@ -325,24 +327,40 @@ def plotTransitionsDetailed(pt):
                     spline_points=np.insert(spline_points,1,spline_points[0]+[.05,0],axis=0)
                     spline_points=np.insert(spline_points,-1,spline_points[-1]-[.05,0],axis=0)
                     temp_i=i
-                    dy=spline_points[0,1]-spline_points[-1,1]
-                    dy_accum=0
-                    while (temp_i-con_x)>1:
-                         offset3=-.5 if len(scaled_count[temp_i+1])%2==1 else 0
-                         dy_new=0
-                         if dy>0 and dy_accum<dy:
-                              dy_accum-=1 if offset3!=offset2 else .5
-                         elif dy<0 and dy_accum<dy:
-                              dy_accum+=1 if offset3!=offset2 else .5
-                         print "slicing in ",-(i-temp_i+2)," for ",temp_i-1," and ", spline_points[-1,1],"-",-dy_accum,"+",offset3
-                         spline_points=np.insert(spline_points,-(i-temp_i+2),[temp_i-1,spline_points[-1,1]-dy_accum+offset3],axis=0)
+                    dx_f=i-con_x
+                    dy_f=spline_points[-1,1]-spline_points[0,1]
+                    #print "new connector"
+                    #print dx_f,dy_f
+                    dx=1
+                    dy= np.sign(dy_f) if abs(dy_f)>=1 else 0
+                    #print "DY: ",dy, "f",dy_f
+                    while dx<dx_f:
 
+                         if int(spline_points[dx,1]*2)%2==size_counts[con_x+dx]%2:
+                              bump_factor= 0
+                         else:
+                              bump_factor=.5 if np.sign(spline_points[-1,1]-spline_points[dx,1])>0 else -.5
+                         #print "BF",bump_factor, "// ",con_x+dx
+                         #print "from ",int(spline_points[dx,1]*2),size_counts[con_x+dx]
+                         adjustment_factor=dy+bump_factor
+                         if abs(adjustment_factor)>1:
+                              adjustment_factor=np.sign(adjustment_factor)*(adjustment_factor%1)
+                         #print "knotting at ",dx+1,"with ",con_x+dx," and ",spline_points[dx,1], "with +",adjustment_factor
+                         spline_points=np.insert(spline_points,dx+1,[con_x+dx,spline_points[dx,1]+adjustment_factor],axis=0)
 
-                         temp_i-=1
+                              
+                         #print "slicing in ",-(i-temp_i+2)," for ",temp_i-1," and ", spline_points[-1,1],"-",-dy_accum,"+",offset3
                          
+                         #spline_points=np.insert(spline_points,-(i-temp_i+2),[temp_i-1,spline_points[-1,1]-dy_accum+offset3],axis=0)
+
+
+                         dx+=1
+                         dy=dy-(np.sign(dy_f)) if abs(dy)>=1 else 0
+
                     print phen,connector
                     print spline_points
                     AddConnectionPatch(ax,spline_points)
+                    
                     #ax.arrow(con_x+.25,con_y,(i-.25)-(con_x+.25),(len(scaled_count[c])/2 - j -offset)-con_y,head_width=0.05, head_length=0.1, fc='k', ec='k',length_includes_head=True,lw=float(weight)/total_weight)
                          
  
