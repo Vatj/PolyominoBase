@@ -2,7 +2,7 @@
 #include <iostream>
 
 /*External wrappers for python integration */
-void LoadExistingTable(std::ifstream& fin,StochasticPhenotypeTable* pt_it);
+void LoadExistingTable(std::ifstream& fin,PhenotypeTable* pt_it);
 
 extern "C"
 {

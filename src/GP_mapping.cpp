@@ -6,7 +6,7 @@ void GP_MapSampler(const char* file_path_c,uint8_t n_genes, uint8_t rcolours,uin
   
   const uint8_t k_builds=10;
   const uint32_t N_JIGGLE=100;
-  StochasticPhenotypeTable pt;
+  PhenotypeTable pt;
   Genotype genotype(n_genes*4);
 
   std::string file_path(file_path_c),str,file_details="_N"+std::to_string(n_genes)+"_C"+std::to_string(rcolours);

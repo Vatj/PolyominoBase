@@ -8,7 +8,7 @@ void GP_MapSampler(const char* file_path_c,uint8_t n_genes, uint8_t rcolours,uin
 }
 
 /*GP map calculations*/
-std::vector<Phenotype_ID> GetPhenotypeIDs(Genotype& genotype, uint8_t k_builds, StochasticPhenotypeTable* pt_it);
+std::vector<Phenotype_ID> GetPhenotypeIDs(Genotype& genotype, uint8_t k_builds, PhenotypeTable* pt_it);
 std::vector<Genotype> genotype_neighbourhood(const Genotype& genome, uint8_t ngenes, uint8_t colours);
 void JiggleGenotype(Genotype& genotype, uint8_t max_colour);
 

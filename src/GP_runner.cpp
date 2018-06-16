@@ -4,7 +4,7 @@
 #include <functional>
 #include <set>
 
-void LoadExistingTable(std::ifstream& fin,StochasticPhenotypeTable* pt_it) {
+void LoadExistingTable(std::ifstream& fin,PhenotypeTable* pt_it) {
   std::string str;
   while (std::getline(fin, str)) {
     std::stringstream iss(str);
@@ -20,7 +20,7 @@ void LoadExistingTable(std::ifstream& fin,StochasticPhenotypeTable* pt_it) {
   }
 }
 
-std::vector<Phenotype_ID> GetPhenotypeIDs(Genotype& genotype, uint8_t k_builds, StochasticPhenotypeTable* pt_it) {
+std::vector<Phenotype_ID> GetPhenotypeIDs(Genotype& genotype, uint8_t k_builds, PhenotypeTable* pt_it) {
   std::vector<Phenotype_ID> pIDs;
   Clean_Genome(genotype,0,false);
   const uint8_t n_genes=genotype.size()/4;
@@ -43,7 +43,7 @@ void GetPhenotypesIDs(const char* file_path_c,const char* file_name_c, uint8_t n
   std::ofstream gfout(file_path+"Genotype_Codes"+details, std::ios_base::out);
   std::ofstream pfout(file_path+"Phenotype_Table"+details, std::ios_base::out);
 
-  StochasticPhenotypeTable pt;
+  PhenotypeTable pt;
   uint8_t k_builds=10;
   Genotype genotype(n_genes*4);
   
@@ -69,12 +69,12 @@ void GetPhenotypesIDs(const char* file_path_c,const char* file_name_c, uint8_t n
 int main(int argc, char* argv[]) {
 
 
-  StochasticPhenotypeTable pt;
+  PhenotypeTable pt;
   Stochastic::STERIC_FORBIDDEN=true;
-  for(auto x: Stochastic::AssemblePlasticGenotype({0,0,0,1, 0,0,1,2, 0,3,0,3, 0,4,0,0},5,&pt,.1))
+  for(auto x: Stochastic::AssemblePlasticGenotype({0,0,0,1, 0,0,1,2, 0,3,0,3, 0,4,0,0},&pt))
     std::cout<<+x.first<<" "<<x.second<<std::endl;
   Stochastic::STERIC_FORBIDDEN=false;
-  for(auto x: Stochastic::AssemblePlasticGenotype({0,0,0,1, 0,0,1,2, 0,3,0,3, 0,4,0,0},5,&pt,.1))
+  for(auto x: Stochastic::AssemblePlasticGenotype({0,0,0,1, 0,0,1,2, 0,3,0,3, 0,4,0,0},&pt))
     std::cout<<+x.first<<" "<<x.second<<std::endl;
   return 0;
   
@@ -126,7 +126,7 @@ void PreProcessGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colou
   std::ifstream fin(file_path+"SampledGenotypes"+file_details+"_Iso.txt");
   std::ofstream fout(file_path+"SampledGenotypes"+file_details+"_Processed.txt");
   
-  StochasticPhenotypeTable pt;
+  PhenotypeTable pt;
   uint8_t k_builds=5;
   std::map<Phenotype_ID,std::vector<Genotype> > phen_sets;
   Genotype genotype;

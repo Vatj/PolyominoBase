@@ -24,7 +24,7 @@ void SampleMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t co
   
   GenotypeGenerator ggenerator = GenotypeGenerator(n_genes,colours);
   ggenerator.init();
-  StochasticPhenotypeTable pt;
+  PhenotypeTable pt;
   uint8_t k_builds=5;
 
 #pragma omp parallel
@@ -84,7 +84,7 @@ void ExhaustiveMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_
   
   GenotypeGenerator ggenerator = GenotypeGenerator(n_genes,colours);
   ggenerator.init();
-  StochasticPhenotypeTable pt;
+  PhenotypeTable pt;
   uint8_t k_builds=5;
   Genotype genotype,nullg;
 

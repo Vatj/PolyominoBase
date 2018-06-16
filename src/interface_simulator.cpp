@@ -28,7 +28,7 @@ void EvolvePopulation(std::string run_details) {
 
   if(simulation_params::random_initilisation) {
     std::uniform_int_distribution<interface_type> dist;
-    auto interface_filler = std::bind(dist, std::ref(interface_model::RNG_Engine));
+    auto interface_filler = std::bind(dist, std::ref(model_params::RNG_Engine));
     for(auto& species : evolving_population)
       std::generate(species.genotype.begin(),species.genotype.end(),interface_filler);
 
@@ -37,14 +37,14 @@ void EvolvePopulation(std::string run_details) {
 
   /* Median time to complete interface mutation, characteristic time for fitness re-assignment */
   std::poisson_distribution<uint16_t> landscape_changer(log(1-pow(2,-1./model_params::interface_size))/log(1-model_params::mu_prob/(4*simulation_params::n_tiles*model_params::interface_size)));
-  uint16_t fitness_jiggle=landscape_changer(interface_model::RNG_Engine);
+  uint16_t fitness_jiggle=landscape_changer(model_params::RNG_Engine);
 
   /* Start main evolution loop */
   
   for(uint32_t generation=0;generation<simulation_params::generation_limit;++generation) {
     if(fitness_jiggle--==0) {
       //pt.ReassignFitness(); /* NOTE JIGGLER OFF */
-      fitness_jiggle=landscape_changer(interface_model::RNG_Engine);
+      fitness_jiggle=landscape_changer(model_params::RNG_Engine);
     }
     if(generation+100>=simulation_params::generation_limit)
       record_strengths=false;
@@ -102,7 +102,7 @@ void EvolvePopulation(std::string run_details) {
     
   } /* End main evolution loop */
   
-  pt.PrintTable(fout_phenotype);  
+  pt.PrintTable(fout_phenotype);
   
   fout_fitness.close();
   fout_strength.close();
@@ -134,7 +134,7 @@ std::vector<uint16_t> RouletteWheelSelection(std::vector<double>& fitnesses) {
   std::vector<uint16_t> selected_indices(simulation_params::population_size);
   std::uniform_real_distribution<double> random_interval(0,fitnesses.back());
   for(uint16_t nth_selection=0; nth_selection<simulation_params::population_size; ++nth_selection) 
-    selected_indices[nth_selection]=static_cast<uint16_t>(std::lower_bound(fitnesses.begin(),fitnesses.end(),random_interval(interface_model::RNG_Engine))-fitnesses.begin());
+    selected_indices[nth_selection]=static_cast<uint16_t>(std::lower_bound(fitnesses.begin(),fitnesses.end(),random_interval(model_params::RNG_Engine))-fitnesses.begin());
   std::sort(selected_indices.begin(),selected_indices.end());
   return selected_indices;
 }

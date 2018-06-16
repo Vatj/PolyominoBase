@@ -10,6 +10,7 @@ namespace simulation_params
 
 namespace model_params
 {
+  std::mt19937 RNG_Engine(std::random_device{}());
   bool fixed_seed=true;
   double temperature=1,binding_threshold=1,mu_prob=0.2,fitness_factor=1,UND_threshold=0.2,interface_threshold=0.2;
   std::binomial_distribution<uint8_t> b_dist(interface_size,mu_prob);
@@ -19,9 +20,7 @@ namespace model_params
 
 
 namespace interface_model
-{  
- 
-  std::mt19937 RNG_Engine(std::random_device{}());
+{   
   
   inline interface_type reverse_bits(interface_type v) {
     interface_type s(model_params::interface_size);
@@ -46,8 +45,8 @@ namespace interface_model
     std::vector<uint8_t> interface_indices(model_params::interface_size);
     std::iota(interface_indices.begin(),interface_indices.end(),0);
     for(interface_type& base : binary_genome) {
-      std::shuffle(interface_indices.begin(), interface_indices.end(), RNG_Engine);
-      for(uint8_t nth=0;nth<model_params::b_dist(RNG_Engine);++nth) 
+      std::shuffle(interface_indices.begin(), interface_indices.end(), model_params::RNG_Engine);
+      for(uint8_t nth=0;nth<model_params::b_dist(model_params::RNG_Engine);++nth) 
         base ^= (interface_type(1) << interface_indices[nth]);
     }
   }
@@ -65,7 +64,7 @@ namespace interface_model
         for(auto interacting_pair : interacting_indices)
 	  ++phenotype_interactions[Phenotype_IDs.back()][interacting_pair];
         phen=SpatialGrid(assembly_information);
-        Phenotype_IDs.emplace_back(pt->PhenotypeCheck(phen));
+        Phenotype_IDs.emplace_back(pt->GetPhenotypeID(phen));
 	
       }
       else
@@ -73,7 +72,7 @@ namespace interface_model
       interacting_indices.clear();
     }
     pt->RelabelPhenotypes(Phenotype_IDs,phenotype_interactions);
-    auto ID_counter=pt->PhenotypeFrequencies(Phenotype_IDs);
+    std::map<Phenotype_ID,uint8_t> ID_counter=pt->PhenotypeFrequencies(Phenotype_IDs);
     pid=std::max_element(ID_counter.begin(),ID_counter.end(),[] (const auto & p1, const auto & p2) {return p1.second < p2.second;})->first;
     for(auto& imap : phenotype_interactions[pid]) 
       if(imap.second>=static_cast<uint8_t>(simulation_params::phenotype_builds*model_params::interface_threshold))
@@ -98,10 +97,10 @@ namespace interface_model
       y=growing_perimeter.back();growing_perimeter.pop_back();
       x=growing_perimeter.back();growing_perimeter.pop_back();
       
-      std::shuffle(genome_bases.begin(), genome_bases.end(), RNG_Engine);
+      std::shuffle(genome_bases.begin(), genome_bases.end(), model_params::RNG_Engine);
       
       for(uint8_t base : genome_bases) {
-        if(model_params::real_dist(RNG_Engine)<model_params::binding_probabilities[SammingDistance(binary_genome[tile*4+orientation],binary_genome[base])]) {
+        if(model_params::real_dist(model_params::RNG_Engine)<model_params::binding_probabilities[SammingDistance(binary_genome[tile*4+orientation],binary_genome[base])]) {
 	  interacting_indices.insert(std::minmax(static_cast<uint8_t>(tile*4+orientation),base));
           placed_tiles.insert(placed_tiles.end(),{x,y,static_cast<int8_t>(base%4+((GAUGE==4)*(-2*(base%4)+(direction-base%4+4)%4+1)))});
 	  PerimeterGrowth(x,y,(4+direction-(base%4))%4,direction,base/4,growing_perimeter,placed_tiles);
@@ -143,14 +142,14 @@ namespace interface_model
         }
       }
       if(!occupied_site)
-        growing_perimeter.insert(growing_perimeter.begin()+5*index_randomizer(RNG_Engine),{static_cast<int8_t>(x+dx),static_cast<int8_t>(y+dy),static_cast<int8_t>((f+2)%4),tile_type,static_cast<int8_t>((4+f-theta)%4)});      
+        growing_perimeter.insert(growing_perimeter.begin()+5*index_randomizer(model_params::RNG_Engine),{static_cast<int8_t>(x+dx),static_cast<int8_t>(y+dy),static_cast<int8_t>((f+2)%4),tile_type,static_cast<int8_t>((4+f-theta)%4)});      
     }
   }
   
   std::vector<int8_t> AssembleProteinNew(const BGenotype& binary_genome,std::set<interaction_pair>& interacting_indices) {
     int8_t seed=1;
     if(!model_params::fixed_seed)
-      seed=1+4*(std::uniform_int_distribution<uint8_t>(1,binary_genome.size()/4)(interface_model::RNG_Engine)-1);
+      seed=1+4*(std::uniform_int_distribution<uint8_t>(1,binary_genome.size()/4)(model_params::RNG_Engine)-1);
       
     std::vector<int8_t> placed_tiles{0,0,seed},growing_perimeter;
     std::vector<double> strengths,strengths_cdf;
@@ -162,7 +161,7 @@ namespace interface_model
       strengths_cdf.resize(strengths.size());
       std::partial_sum(strengths.begin(), strengths.end(), strengths_cdf.begin());
       std::uniform_real_distribution<double> random_interval(0,strengths_cdf.back());
-      size_t selected_choice=static_cast<size_t>(std::lower_bound(strengths_cdf.begin(),strengths_cdf.end(),random_interval(interface_model::RNG_Engine))-strengths_cdf.begin());
+      size_t selected_choice=static_cast<size_t>(std::lower_bound(strengths_cdf.begin(),strengths_cdf.end(),random_interval(model_params::RNG_Engine))-strengths_cdf.begin());
       //place new tile
       const int8_t f_x=*(growing_perimeter.begin()+selected_choice*3),f_y=*(growing_perimeter.begin()+selected_choice*3+1),f_t=*(growing_perimeter.begin()+selected_choice*3+2);
       placed_tiles.insert(placed_tiles.end(),growing_perimeter.begin()+selected_choice*3,growing_perimeter.begin()+selected_choice*3+3);
