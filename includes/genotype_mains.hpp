@@ -6,5 +6,5 @@ void ExhaustiveFast();
 void Quick();
 void Duplicate();
 void ExhaustiveMetricsAndPrint();
-void FullFast();
+// void FullFast();
 void QuickFromIso();

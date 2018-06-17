@@ -2,17 +2,22 @@
 #include "genotype_phenotype.hpp"
 #include <iostream>
 
-/*External wrappers for python integration */
-// extern "C"
-// {
-//   void ExhaustiveMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours);
-//   void SampleMinimalGenotypes(const char* file_path_c, uint8_t n_genes, uint8_t colours, const uint32_t N_SAMPLES, bool allow_duplicates);
-// }
+namespace model_params
+{
+  extern uint8_t n_genes, colours;
+}
 
-std::vector<Genotype> ExhaustiveMinimalGenotypes(uint8_t n_genes, uint8_t colours, StochasticPhenotypeTable* pt);
-std::vector<Genotype> SampleMinimalGenotypes(uint8_t n_genes, uint8_t colours,
-  const uint32_t N_SAMPLES, bool allow_duplicates, StochasticPhenotypeTable* pt);
-std::vector<Genotype> ExhaustiveFullGenotypes2(uint8_t colours, StochasticPhenotypeTable* pt);
+namespace simulation_params
+{
+  extern std::mt19937 RNG_Engine;
+  extern uint8_t phenotype_builds;
+  extern uint32_t n_samples;
+  extern bool allow_duplicates;
+}
+
+std::vector<Genotype> ExhaustiveMinimalGenotypes(PhenotypeTable* pt);
+std::vector<Genotype> SampleMinimalGenotypes(PhenotypeTable* pt);
+std::vector<Genotype> ExhaustiveFullGenotypes2(uint8_t colours, PhenotypeTable* pt);
 
 /*Minimal genotype methods*/
 struct NecklaceFactory

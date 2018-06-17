@@ -4,6 +4,18 @@
 #include <string>
 #include <utility>
 
+void PrintConfigFile(std::string config_file)
+{
+  std::ofstream fout(config_file);
+
+  fout << "n_genes : " <<+ model_params::n_genes << "\n";
+  fout << "colours : " <<+ model_params::colours << "\n";
+  fout << "metric_colours : " <<+ model_params::metric_colours << "\n";
+  fout << "n_samples : " <<+ simulation_params::n_samples << "\n";
+  fout << "Threshold : " <<+ simulation_params::UND_threshold << "\n";
+  fout << "Phenotype builds : " <<+ simulation_params::phenotype_builds << "\n";
+  fout << "n_jiggle : " <<+ simulation_params::n_jiggle << "\n";
+}
 
 void PrintGenomeFile(std::string genome_file, std::vector<Genotype>& genomes)
 {
@@ -115,7 +127,7 @@ void LoadPreProcessFile(std::string preprocess_file, Set_to_Genome& set_to_genom
   }
 }
 
-void LoadPhenotypeTable(std::string phenotype_file, StochasticPhenotypeTable* pt_it)
+void LoadPhenotypeTable(std::string phenotype_file, PhenotypeTable* pt_it)
 {
   std::ifstream pheno_in(phenotype_file);
   std::string str;

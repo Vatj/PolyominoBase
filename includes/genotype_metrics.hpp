@@ -1,87 +1,23 @@
 #include "genotype_generate.hpp"
 #include <iostream>
 
-/*External wrappers for python integration */
-// extern "C"
-// {
-//   void GP_MapSampler(const char* file_path_c,uint8_t n_genes, uint8_t rcolours,uint8_t colours);
-// }
+namespace model_params
+{
+  extern uint8_t n_genes, colours, metric_colours;
+}
 
-/*GP map calculations*/
-// std::vector<Phenotype_ID> GetPhenotypeIDs(Genotype& genotype, uint8_t k_builds, StochasticPhenotypeTable* pt_it);
-std::vector<Genotype> genotype_neighbourhood(const Genotype& genome, uint8_t ngenes, uint8_t colours);
-void JiggleGenotype(Genotype& genotype, uint8_t max_colour);
+namespace simulation_params
+{
+  extern uint32_t n_jiggle;
+  extern std::mt19937 RNG_Engine;
+}
+
+void GP_MapSampler(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_genome, PhenotypeTable* pt);
+
+std::vector<Genotype> genotype_neighbourhood(const Genotype& genome);
+void JiggleGenotype(Genotype& genotype);
 
 /*Neutral size calculations*/
 uint64_t NeutralSize(Genotype genotype,uint32_t N_neutral_colours,uint32_t N_possible_interacting_colours);
 uint64_t combination_with_repetiton(uint8_t space_size , uint8_t sample_size);
 uint64_t nChoosek(uint8_t n, uint8_t k);
-
-struct Shape_Metrics
-{
-  Phenotype_ID pID;
-  uint32_t robustness;
-
-  Shape_Metrics(Phenotype_ID pID);
-
-  void robust_pID(std::vector <Phenotype_ID> pIDs);
-};
-
-typedef struct Shape_Metrics Shape_Metrics;
-
-struct Genotype_Metrics
-{
-  uint8_t n_genes, colours;
-
-
-  Genotype ref_genotype;
-  std::vector <Phenotype_ID> ref_pIDs;
-
-  Phenotype_ID rare_pID = {0, 0}, loop_pID = {255, 0};
-
-  double number_of_neighbours;
-  double strict_robustness = 0, intersection_robustness = 0, union_evolvability = 0;
-  double rare = 0, loop = 0, neutral_weight=0;
-
-  std::vector <Shape_Metrics> shapes;
-  std::set <Phenotype_ID> diversity;
-
-  Genotype_Metrics(uint8_t ngenes, uint8_t colours);
-
-  void set_reference(Genotype& genotype, std::vector <Phenotype_ID> pIDs, double neutral);
-
-  void clear();
-
-  void analyse_pIDs(std::vector <Phenotype_ID>& pIDs);
-
-  void save_to_file(std::ofstream& fout);
-};
-
-typedef struct Genotype_Metrics Genotype_Metrics;
-
-struct Set_Metrics
-{
-  uint8_t n_genes, colours, analysed;
-
-  std::vector <Phenotype_ID> ref_pIDs;
-
-  std::vector <double> strict_robustnesses, union_evolvabilities;
-  std::vector <double> intersection_robustnesses, rares, loops;
-  std::vector <double> neutral_weightings;
-  std::vector <Genotype_Metrics> genome_metrics;
-
-  std::set <Phenotype_ID> diversity;
-
-  Set_Metrics(uint8_t n_genes, uint8_t colours);
-
-  void add_genotype_metrics(Genotype_Metrics& gmetrics);
-
-  void save_to_file(std::ofstream& set_out, std::ofstream& genome_out);
-
-  void clear();
-};
-
-typedef struct Set_Metrics Set_Metrics;
-
-void GP_MapSampler(uint8_t n_genes, uint8_t metric_colours, std::vector<Set_Metrics>& metrics,
-   Set_to_Genome& set_to_genome, StochasticPhenotypeTable* pt);
