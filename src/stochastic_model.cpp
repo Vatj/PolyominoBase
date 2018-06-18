@@ -15,35 +15,29 @@ namespace Stochastic
   bool STERIC_FORBIDDEN = false;
 
   std::vector<Phenotype_ID> AssemblePlasticGenotype(Genotype genotype, PhenotypeTable* pt) {
+    std::vector<Phenotype> raw_phenotypes;raw_phenotypes.reserve(simulation_params::phenotype_builds);
     std::vector<Phenotype_ID> Phenotype_IDs;Phenotype_IDs.reserve(simulation_params::phenotype_builds);
+    std::map<Phenotype_ID,uint8_t> ID_counter;
     const uint8_t THRESHOLD_SIZE=(genotype.size()*genotype.size())/4;
     for(uint8_t kth=0;kth<simulation_params::phenotype_builds;++kth) {
       std::vector<int8_t> placed_tiles=Stochastic_Polyomino_Builder(genotype,THRESHOLD_SIZE,kth%(genotype.size()/4));
-      if(placed_tiles.size()>0) {
-	Phenotype phen=Generate_Spatial_Occupancy(placed_tiles,3);
+      if(placed_tiles.size()>0)
+	raw_phenotypes.emplace_back(Generate_Spatial_Occupancy(placed_tiles,3));
+    }   
+
 #pragma omp critical(phenotype_lookup)
-	{
-	  Phenotype_IDs.emplace_back(pt->GetPhenotypeID(phen));
-	}
-      }
-      else {
-	Phenotype_IDs.emplace_back(std::make_pair(255,0));
-      }
-    }
-
-
-    pt->RelabelPhenotypes(Phenotype_IDs);
-    std::map<Phenotype_ID,uint8_t> ID_counter=pt->PhenotypeFrequencies(Phenotype_IDs);
+    {
+      for(Phenotype& phen : raw_phenotypes)
+	Phenotype_IDs.emplace_back(pt->GetPhenotypeID(phen));
+      Phenotype_IDs.insert(Phenotype_IDs.end(),simulation_params::phenotype_builds-Phenotype_IDs.size(),std::make_pair(255,0));
+      pt->RelabelPhenotypes(Phenotype_IDs);
+      ID_counter=pt->PhenotypeFrequencies(Phenotype_IDs);
+    }     
+    
+    
     std::vector<Phenotype_ID> plastic_phenotypes;
-    bool rare_phen=false;
-    for(auto kv : ID_counter) {
-      if(kv.second>static_cast<uint8_t>(ceil(simulation_params::phenotype_builds*model_params::UND_threshold)))
-	plastic_phenotypes.emplace_back(kv.first);
-      else
-	rare_phen=true;
-    }
-    if(rare_phen)
-      plastic_phenotypes.emplace_back(std::make_pair(0,0));
+    for(auto kv : ID_counter)
+      plastic_phenotypes.emplace_back(kv.first);
 
     return plastic_phenotypes; 
   }
