@@ -83,8 +83,6 @@ struct PhenotypeTable {
     for(std::vector<Phenotype_ID >::const_iterator ID_iter = pids.begin(); ID_iter!=pids.end(); ++ID_iter) {
       if(ID_iter->second < known_phenotypes[ID_iter->first].size())
 	++ID_counter[std::make_pair(ID_iter->first,ID_iter->second)];
-      else
-	++ID_counter[std::make_pair(0,0)];
     }
     return ID_counter;
   }

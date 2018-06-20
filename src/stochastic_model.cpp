@@ -18,7 +18,8 @@ namespace Stochastic
     
     
     std::vector<Phenotype_ID> plastic_phenotypes;
-    bool rare_phenotypes=false;
+    bool rare_phenotypes=false,unbound_phenotypes=false;
+    
     
     std::map<Phenotype_ID,uint8_t> ID_counter;
     const uint8_t THRESHOLD_SIZE=(genotype.size()*genotype.size())/4;
@@ -30,31 +31,31 @@ namespace Stochastic
 	std::vector<int8_t> placed_tiles=Stochastic_Polyomino_Builder(genotype,THRESHOLD_SIZE,seed);
 	if(placed_tiles.size()>0)
 	  raw_phenotypes.emplace_back(Generate_Spatial_Occupancy(placed_tiles,3));
+	else
+	  unbound_phenotypes=true;
       }   
 
 #pragma omp critical(phenotype_lookup)
       {
 	for(Phenotype& phen : raw_phenotypes)
 	  Phenotype_IDs.emplace_back(pt->GetPhenotypeID(phen));
-	Phenotype_IDs.insert(Phenotype_IDs.end(),simulation_params::phenotype_builds-Phenotype_IDs.size(),std::make_pair(255,0));
 	pt->RelabelPhenotypes(Phenotype_IDs);
 	ID_counter=pt->PhenotypeFrequencies(Phenotype_IDs);
       }         
 
-      
       for(auto kv : ID_counter) {
 	if(kv.second >=static_cast<uint16_t>(simulation_params::phenotype_builds*model_params::UND_threshold)) {
-	  if(std::find(plastic_phenotypes.begin(),plastic_phenotypes.end(),kv.first)!=plastic_phenotypes.end()) {
+	  if(std::find(plastic_phenotypes.begin(),plastic_phenotypes.end(),kv.first)==plastic_phenotypes.end())
 	    plastic_phenotypes.emplace_back(kv.first);
-	  }
 	}
 	else
 	  rare_phenotypes=true;
       }
     }
-    if(rare_phenotypes && std::find(plastic_phenotypes.begin(),plastic_phenotypes.end(),std::make_pair(uint8_t(0),uint16_t(0)))!=plastic_phenotypes.end())
+    if(rare_phenotypes)
       plastic_phenotypes.emplace_back(std::make_pair(0,0));
-  
+    if(unbound_phenotypes)
+      plastic_phenotypes.emplace_back(std::make_pair(255,0));
 
     return plastic_phenotypes; 
   }

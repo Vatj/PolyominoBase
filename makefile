@@ -22,7 +22,12 @@ DEPEXT      := d
 OBJEXT      := o
 
 #Flags, Libraries and Includes
-CXXFLAGS    := -std=gnu++14 -Wall -Wextra -pedantic -pipe -O3 -fopenmp -march=haswell -flto-partition=none $(cmdflag)  #-fprofile-use -fprofile-correction -fprofile-dir=$(PROFDIR)/
+CXXFLAGS    := -std=gnu++14 -Wall -Wextra -pedantic -pipe -march=haswell -flto-partition=none $(cmdflag)
+ifndef DEBUG
+CXXFLAGS += -O3 -fopenmp
+else
+CXXFLAGS += -p -g -ggdb
+endif
 INC         := -I$(INCDIR)
 INCDEP      := -I$(INCDIR)
 
