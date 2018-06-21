@@ -93,17 +93,27 @@ def RandomWalk(I_size=64,n_steps=1000,phi=0.5,T_star=0.6,renorm=False,return_pro
           renorm=True
      s_hats=np.linspace(0,1,I_size+1)
      N=int(I_size*(1-T_star))+1
+     analytic_states=getSteadyStates(mmatrix(N,phi,s_hats[-N:]))[1]
+     steady_state=np.sum(s_hats[-N:]*analytic_states)
+     print steady_state
      states=np.zeros(N)
      states[0]=1
+     
      progressive_states=[np.sum(s_hats[-N:]*states)]
 
      for i in xrange(n_steps):
           states=UpdateStates(states,s_hats[-N:],phi,renorm)
           progressive_states.append(np.sum(s_hats[-N:]*states))
+          #print progressive_states
+          if progressive_states[-1]>=steady_state*.995:
+               print i
+               return i
           
      if not renorm:
           states/=np.sum(states)
-     analytic_states=getSteadyStates(mmatrix(N,phi,s_hats[-N:]))[1]
+     
+
+     return mmatrix(N,phi,s_hats[-N:])
      #print analytic_states
      
      if return_prog:

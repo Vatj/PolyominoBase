@@ -168,6 +168,7 @@ int main(int argc, char* argv[]) {
   std::vector<int8_t> a;
   Phenotype phen,phen1{4,4,{0,1,0,0, 0,5,6,2, 4,8,7,0, 0,0,3,0}},phen2{4,4,{0,0,1,0, 4,5,6,0, 0,8,7,2, 0,3,0,0}};
   Phenotype phen3{3,2,{0,0,1, 2,5,9}},phen4{3,2,{1,0,0,5,9,4}};
+  std::ofstream apple("distrs.txt", std::ios_base::out);
   switch(run_option) {
   case 'E':
     EvolutionRunner();
@@ -204,6 +205,19 @@ int main(int argc, char* argv[]) {
     break;
   case 'D':
     std::cout<<"ProteinEvolution -E -N 2 -P 100 -K 250 -B 25 -S 1 -R 0 -F 1 -X 1 -T 0.000001 -M 0.25 -D 1"<<std::endl;
+    break;
+  case 'J':
+    std::cout<<log(1-pow(2,-1./model_params::interface_size))/log(1-model_params::mu_prob/(4*simulation_params::n_tiles*model_params::interface_size))<<std::endl;
+    break;
+  case 'Q':
+    
+    for(int s=1;s<30;++s) {
+      std::gamma_distribution<double> oranger(s*2,1/2.*std::pow(s,-.5));
+      for(int i=0;i<50000;++i) {
+	apple << oranger(model_params::RNG_Engine)<<" ";
+      }
+      apple<<"\n";
+    }
     break;
   case '?':
     for(auto b : model_params::binding_probabilities)

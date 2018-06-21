@@ -72,13 +72,7 @@ namespace interface_model
 
   struct InterfacePhenotypeTable : PhenotypeTable {
     std::unordered_map<uint8_t,std::vector<double> > phenotype_fitnesses{{0,{0}}};
-    
-    
-
-    
-
-    
-
+         
     /* Replace previously undiscovered phenotype IDs with new phenotype ID */
     void RelabelPhenotypes(std::vector<Phenotype_ID >& pids,std::map<Phenotype_ID, std::map<interaction_pair, uint8_t> >& p_ints) { 
       for(std::unordered_map<uint8_t,std::vector<uint16_t> >::iterator x_iter=new_phenotype_xfer.begin();x_iter!=new_phenotype_xfer.end();++x_iter) 
@@ -87,8 +81,16 @@ namespace interface_model
 	    p_ints[std::make_pair(x_iter->first,*(r_iter+1))][imap.first]+=imap.second;
 	
       PhenotypeTable::RelabelPhenotypes(pids);
-      
     }
+
+    std::map<Phenotype_ID,uint8_t> PhenotypeFrequencies(std::vector<Phenotype_ID >& pids) {
+    std::map<Phenotype_ID, uint8_t> ID_counter;
+    for(std::vector<Phenotype_ID >::const_iterator ID_iter = pids.begin(); ID_iter!=pids.end(); ++ID_iter) {
+      if(ID_iter->second < known_phenotypes[ID_iter->first].size())
+	++ID_counter[std::make_pair(ID_iter->first,ID_iter->second)];
+    }
+    return ID_counter;
+  }
     
     
 

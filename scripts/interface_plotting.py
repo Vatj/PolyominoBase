@@ -18,6 +18,20 @@ from collections import defaultdict
 
 
 """RANDOM THEORY SECTION """
+def plotFitnessFunc():
+     data=np.loadtxt('../distrs.txt')
+     bin_range=(0,10)
+     bin_count=500
+     hists=np.apply_along_axis(lambda a: np.histogram(a, range=bin_range,bins=bin_count,density=True)[0], 1, data)
+     plt.figure()
+     for row in hists:
+          plt.plot(np.linspace(*bin_range,num=bin_count),row)
+
+     plt.xlabel('Fitness')
+     plt.ylabel('PDF')
+     plt.show(block=False)
+     
+
 def plotRandomTheory(I_size,g_len):
      
      b_asym=binom(I_size,.5)
@@ -199,20 +213,26 @@ def tsplotboot(ax,data,title='',**kw):
 def plotData(cc,I_size,t_star,mu=1,g_size=12):
      fig,axs = plt.subplots(3)
      for (k,v),ax in zip(cc.iteritems(),axs):
-          print k,len(v)
-          if v.size:
+          #print k,len(v)
+          if v:#.size:
                v=np.array(v)
-               v=v[v[:,0]==t_star]
+              # v=v[v[:,0]==t_star]
                #v=v[np.count_nonzero(np.isnan(v),axis=1)<1000]
-               tsplotboot(ax,v,k+' {}'.format(len(v)))
+               #tsplotboot(ax,v,k+' {}'.format(len(v)))
                
                
-               gen_length=v[0].shape[0]
+               gen_length=2000#v[0].shape[0]
                co_factor=2 if 'S' in k else 1
                step_length=int(g_size/(2.*mu/co_factor))
                N_steps=int(ceil(gen_length/float(step_length)))
                pgs=RandomWalk(I_size/co_factor,N_steps,.5,t_star,1,1)
                ax.plot(range(0,(N_steps+1)*step_length,step_length),pgs[:-1],'r--')
+               ax.plot([0,gen_length],[pgs[-1]]*2,'k--',alpha=0.5)
+
+               step_length=1
+               N_steps=int(ceil(gen_length/float(step_length)))
+               pgs=RandomWalk(I_size/co_factor,N_steps,float(co_factor)/6,t_star,1,1)
+               ax.plot(range(0,(N_steps+1)*step_length,step_length),pgs[:-1],'b--')
                ax.plot([0,gen_length],[pgs[-1]]*2,'k--',alpha=0.5)
         
                     

@@ -77,7 +77,7 @@ namespace interface_model
     for(auto& imap : phenotype_interactions[pid]) 
       if(imap.second>=static_cast<uint8_t>(simulation_params::phenotype_builds*model_params::interface_threshold))
 	pid_interactions.emplace_back(imap.first);
-       
+    pt->AssignInitialFitnesses();
     return pt->GenotypeFitness(ID_counter);
   }
 
