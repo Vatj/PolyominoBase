@@ -8,14 +8,14 @@ const uint16_t printing_resolution=100; /* NOTE RESOLUTION IS 1 */
 void EvolvePopulation(std::string run_details) {
   /* Output files */
   std::string file_base_path="//scratch//asl47//Data_Runs//Bulk_Data//";    //"//rscratch//asl47//Bulk_Run//Interfaces//";
-  std::string file_simulation_details="I"+std::to_string(model_params::interface_size)+"_T"+std::to_string(model_params::temperature)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
+  std::string file_simulation_details="I"+std::to_string(model_params::interface_size)+"_T"+std::to_string(model_params::binding_threshold)+"_Mu"+std::to_string(model_params::mu_prob)+"_Gamma"+std::to_string(model_params::fitness_factor)+run_details+".txt";
     
   std::ofstream fout_strength(file_base_path+"Strengths_"+file_simulation_details, std::ios_base::out);
   std::ofstream fout_fitness(file_base_path+"Fitness_"+file_simulation_details, std::ios_base::out);
   std::ofstream fout_phenotype(file_base_path+"Phenotypes_"+file_simulation_details, std::ios_base::out);
   std::ofstream fout_genotype_history(file_base_path+"GenotypeHistory_"+file_simulation_details, std::ios_base::out);
   std::ofstream fout_phenotype_history(file_base_path+"PhenotypeHistory_"+file_simulation_details, std::ios_base::out);
-
+  
   interface_model::InterfacePhenotypeTable pt = interface_model::InterfacePhenotypeTable();
 
   std::vector<double> population_fitnesses(simulation_params::population_size);
@@ -28,22 +28,23 @@ void EvolvePopulation(std::string run_details) {
 
   if(simulation_params::random_initilisation) {
     std::uniform_int_distribution<interface_type> dist;
-    auto interface_filler = std::bind(dist, interface_model::RNG_Engine);
+    auto interface_filler = std::bind(dist, std::ref(model_params::RNG_Engine));
     for(auto& species : evolving_population)
       std::generate(species.genotype.begin(),species.genotype.end(),interface_filler);
+
   }
- 
+
 
   /* Median time to complete interface mutation, characteristic time for fitness re-assignment */
   std::poisson_distribution<uint16_t> landscape_changer(log(1-pow(2,-1./model_params::interface_size))/log(1-model_params::mu_prob/(4*simulation_params::n_tiles*model_params::interface_size)));
-  uint16_t fitness_jiggle=landscape_changer(interface_model::RNG_Engine);
+  uint16_t fitness_jiggle=landscape_changer(model_params::RNG_Engine);
 
   /* Start main evolution loop */
   
   for(uint32_t generation=0;generation<simulation_params::generation_limit;++generation) {
     if(fitness_jiggle--==0) {
       //pt.ReassignFitness(); /* NOTE JIGGLER OFF */
-      fitness_jiggle=landscape_changer(interface_model::RNG_Engine);
+      fitness_jiggle=landscape_changer(model_params::RNG_Engine);
     }
     if(generation+100>=simulation_params::generation_limit)
       record_strengths=false;
@@ -56,11 +57,10 @@ void EvolvePopulation(std::string run_details) {
 
       interface_model::MutateInterfaces(evolving_genotype.genotype);
 
-      std::vector<std::pair<interface_type,interface_type> > pid_interactions;
+      std::vector<interaction_pair> pid_interactions;
       population_fitnesses[nth_genotype]=interface_model::ProteinAssemblyOutcome(evolving_genotype.genotype,&pt,evolving_genotype.pid,pid_interactions);
-      if(evolving_genotype.pid.first>0)
-        for(auto x : pid_interactions)
-          fout_strength<<+x.first<<" "<<+x.second<<",";  
+      for(auto x : pid_interactions)
+        fout_strength<<+x.first<<" "<<+x.second<<",";  
       fout_strength<<".";
 
       if(record_strengths)
@@ -102,7 +102,7 @@ void EvolvePopulation(std::string run_details) {
     
   } /* End main evolution loop */
   
-  pt.PrintTable(fout_phenotype);  
+  pt.PrintTable(fout_phenotype);
   
   fout_fitness.close();
   fout_strength.close();
@@ -134,7 +134,7 @@ std::vector<uint16_t> RouletteWheelSelection(std::vector<double>& fitnesses) {
   std::vector<uint16_t> selected_indices(simulation_params::population_size);
   std::uniform_real_distribution<double> random_interval(0,fitnesses.back());
   for(uint16_t nth_selection=0; nth_selection<simulation_params::population_size; ++nth_selection) 
-    selected_indices[nth_selection]=static_cast<uint16_t>(std::lower_bound(fitnesses.begin(),fitnesses.end(),random_interval(interface_model::RNG_Engine))-fitnesses.begin());
+    selected_indices[nth_selection]=static_cast<uint16_t>(std::lower_bound(fitnesses.begin(),fitnesses.end(),random_interval(model_params::RNG_Engine))-fitnesses.begin());
   std::sort(selected_indices.begin(),selected_indices.end());
   return selected_indices;
 }
@@ -156,12 +156,6 @@ int main(int argc, char* argv[]) {
   if(argc<2) {
     std::cout<<"no Params"<<std::endl;
     run_option='H';
-    //std::vector<uint8_t> s{1,1,1, 0,1,0, 1,1,1};
-    //uint8_t dx=3,dy=3;
-    //std::cout<<+PhenotypeSymmetryFactor(s,dx,dy)<<std::endl;
-    for(auto g : SequenceDifference({0,1,2,3,4,9,6,7},{19,1,2,3,4,5,6,7}))
-      std::cout<<+g<<" ";
-    std::cout<<std::endl;
   }
   else {
     run_option=argv[1][1];
@@ -169,15 +163,61 @@ int main(int argc, char* argv[]) {
   }
   
   //auto a = BindingProbabilities();
+  BGenotype bg{0,0,0,0};//{15540537610786488263,3375271998381208445,0,2018349694661896724, 0,0,3375271998381208445,4697909892076606603};
+  std::set<interaction_pair > aa;
+  std::vector<int8_t> a;
+  Phenotype phen,phen1{4,4,{0,1,0,0, 0,5,6,2, 4,8,7,0, 0,0,3,0}},phen2{4,4,{0,0,1,0, 4,5,6,0, 0,8,7,2, 0,3,0,0}};
+  Phenotype phen3{3,2,{0,0,1, 2,5,9}},phen4{3,2,{1,0,0,5,9,4}};
+  std::ofstream apple("distrs.txt", std::ios_base::out);
   switch(run_option) {
   case 'E':
     EvolutionRunner();
     break;
+  case 'T':
+    for(auto x:phen3.tiling)
+      std::cout<<+x<<" ";
+    std::cout<<std::endl;
+    GetMinPhenRepresentation(phen3);
+    for(auto x:phen3.tiling)
+      std::cout<<+x<<" ";
+    std::cout<<std::endl;
+    for(auto x:phen4.tiling)
+      std::cout<<+x<<" ";
+    std::cout<<std::endl;
+    GetMinPhenRepresentation(phen4);
+    for(auto x:phen4.tiling)
+      std::cout<<+x<<" ";
+    std::cout<<std::endl;
+    
   case 'X':
+    a=interface_model::AssembleProteinNew(bg,aa);
+    for(auto qqqq :a)
+      std::cout<<+qqqq<<" ";
+    std::cout<<std::endl;
+    for(auto qq : aa)
+      std::cout<<+qq.first<<"/"<<+qq.second<<std::endl;
     std::cout<<"Unused at this time"<<std::endl;
+    phen=SpatialGrid(a);
+    std::cout<<"phen: "<<+phen.dx<<", "<<+phen.dy<<", ";
+    for(auto qqqqqq: phen.tiling)
+      std::cout<<+qqqqqq<<", ";
+    std::cout<<std::endl;
     break;
   case 'D':
     std::cout<<"ProteinEvolution -E -N 2 -P 100 -K 250 -B 25 -S 1 -R 0 -F 1 -X 1 -T 0.000001 -M 0.25 -D 1"<<std::endl;
+    break;
+  case 'J':
+    std::cout<<log(1-pow(2,-1./model_params::interface_size))/log(1-model_params::mu_prob/(4*simulation_params::n_tiles*model_params::interface_size))<<std::endl;
+    break;
+  case 'Q':
+    
+    for(int s=1;s<30;++s) {
+      std::gamma_distribution<double> oranger(s*2,1/2.*std::pow(s,-.5));
+      for(int i=0;i<50000;++i) {
+	apple << oranger(model_params::RNG_Engine)<<" ";
+      }
+      apple<<"\n";
+    }
     break;
   case '?':
     for(auto b : model_params::binding_probabilities)
@@ -209,9 +249,11 @@ void SetRuntimeConfigurations(int argc, char* argv[]) {
       case 'R': simulation_params::random_initilisation=std::stoi(argv[arg+1])>0;break; 
         
       case 'F': model_params::fitness_factor=std::stod(argv[arg+1]);break;
-      
+
+      case 'S': model_params::fixed_seed=std::stoi(argv[arg+1])>0;break;
       case 'M': model_params::mu_prob=std::stod(argv[arg+1]);break;
       case 'T': model_params::temperature=std::stod(argv[arg+1]);break;
+      case 'Y': model_params::binding_threshold=double(static_cast<uint8_t>(ceil(model_params::interface_size*std::stod(argv[arg+1]))))/model_params::interface_size;break;
       case 'X': model_params::UND_threshold=std::stod(argv[arg+1]);break;
       case 'I': model_params::interface_threshold=std::stod(argv[arg+1]);break;
 	
