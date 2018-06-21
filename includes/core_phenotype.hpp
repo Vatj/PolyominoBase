@@ -153,11 +153,13 @@ struct PhenotypeTable {
   }
 
   /* Count each ID frequency */
-  std::map<Phenotype_ID,uint8_t> PhenotypeFrequencies(std::vector<Phenotype_ID >& pids) {
+  std::map<Phenotype_ID,uint8_t> PhenotypeFrequencies(std::vector<Phenotype_ID >& pids, bool& rare_phenotypes) {
     std::map<Phenotype_ID, uint8_t> ID_counter;
     for(std::vector<Phenotype_ID >::const_iterator ID_iter = pids.begin(); ID_iter!=pids.end(); ++ID_iter) {
       if(ID_iter->second < known_phenotypes[ID_iter->first].size())
 	++ID_counter[std::make_pair(ID_iter->first,ID_iter->second)];
+      else
+	rare_phenotypes=true;
     }
     return ID_counter;
   }

@@ -30,7 +30,7 @@ std::vector<Phenotype_ID> AssemblePlasticGenotype(Genotype genotype, PhenotypeTa
 	for(Phenotype& phen : raw_phenotypes)
 	  Phenotype_IDs.emplace_back(pt->GetPhenotypeID(phen));
 	pt->RelabelPhenotypes(Phenotype_IDs);
-	ID_counter=pt->PhenotypeFrequencies(Phenotype_IDs);
+	ID_counter=pt->PhenotypeFrequencies(Phenotype_IDs,rare_phenotypes);
       }
 
       for(auto kv : ID_counter) {
@@ -48,7 +48,7 @@ std::vector<Phenotype_ID> AssemblePlasticGenotype(Genotype genotype, PhenotypeTa
       plastic_phenotypes.emplace_back(std::make_pair(0,0));
     if(unbound_phenotypes)
       plastic_phenotypes.emplace_back(std::make_pair(255,0));
-      
+
     return plastic_phenotypes;
   }
 
