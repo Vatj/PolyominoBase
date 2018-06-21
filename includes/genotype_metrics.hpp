@@ -13,6 +13,7 @@ namespace simulation_params
 }
 
 void GP_MapSampler(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_genome, PhenotypeTable* pt);
+void GP_MapSimple(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_genome, PhenotypeTable* pt);
 
 std::vector<Genotype> genotype_neighbourhood(const Genotype& genome);
 void JiggleGenotype(Genotype& genotype);

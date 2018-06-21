@@ -12,7 +12,6 @@ void GP_MapSampler(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_geno
 {
   Phenotype_ID loop_pID = {255, 0}, rare_pID = {0, 0};
   double neutral_weight = 0;
-  Genotype_Metrics genome_metric(model_params::n_genes, model_params::metric_colours);
 
   uint32_t number_of_genomes = 0;
   for(Set_to_Genome::iterator iter = std::begin(set_to_genome); iter != std::end(set_to_genome); iter++)
@@ -38,12 +37,13 @@ void GP_MapSampler(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_geno
     {
       neutral_weight = ((double) NeutralSize(genotype, 1, model_params::metric_colours - 1)) / simulation_params::n_jiggle; // This weight will be counted n_jiggle time when added to form the total neutral weight
 
-      #pragma omp parallel for schedule(dynamic) firstprivate(genotype, neutral_weight, genome_metric)
+      #pragma omp parallel for schedule(dynamic) firstprivate(genotype, neutral_weight)
       for(uint32_t nth_jiggle=0; nth_jiggle<simulation_params::n_jiggle; ++nth_jiggle)
       {
         Clean_Genome(genotype, 0, false);
         JiggleGenotype(genotype);
 
+        Genotype_Metrics genome_metric(model_params::n_genes, model_params::metric_colours);
         genome_metric.set_reference(genotype, iter->first, neutral_weight);
 
         for(Genotype neighbour : genotype_neighbourhood(genotype))
@@ -60,6 +60,52 @@ void GP_MapSampler(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_geno
     metrics.emplace_back(set_metrics);
   }
 }
+
+void GP_MapSimple(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_genome, PhenotypeTable* pt)
+{
+  // Phenotype_ID loop_pID = {255, 0}, rare_pID = {0, 0};
+  double neutral_weight = 0;
+
+  uint32_t number_of_genomes = 0;
+  for(Set_to_Genome::iterator iter = std::begin(set_to_genome); iter != std::end(set_to_genome); iter++)
+    number_of_genomes += (iter->second).size();
+
+  std::cout << "There are " <<+ number_of_genomes << " genomes to analyse! \n";
+
+  for(Set_to_Genome::iterator iter = std::begin(set_to_genome); iter != std::end(set_to_genome); iter++)
+  {
+    std::cout << "Currently processing " <<+ (iter->second).size() << " genomes for {";
+    for(auto pID: iter->first)
+      std::cout << "(" <<+ pID.first << ", " <<+ pID.second << "), ";
+    number_of_genomes -= (iter->second).size();
+    std::cout << "}. Only " <<+ number_of_genomes << " left! \n";
+
+    Set_Metrics set_metrics(model_params::n_genes, model_params::metric_colours);
+    set_metrics.ref_pIDs = iter->first;
+
+    for(auto genotype: iter->second)
+    {
+      neutral_weight = ((double) NeutralSize(genotype, 1, model_params::metric_colours - 1));
+
+      Genotype_Metrics genome_metric(model_params::n_genes, model_params::metric_colours);
+      genome_metric.set_reference(genotype, iter->first, neutral_weight);
+
+      for(Genotype neighbour : genotype_neighbourhood(genotype))
+      {
+         std::vector<Phenotype_ID> neighbour_pIDs = GetSetPIDs(neighbour, pt);
+         genome_metric.analyse_pIDs(neighbour_pIDs);
+      }
+      set_metrics.add_genotype_metrics(genome_metric);
+    }
+    metrics.emplace_back(set_metrics);
+  }
+}
+
+
+
+
+
+
 
 // Subroutine of the GP_MapSampler
 

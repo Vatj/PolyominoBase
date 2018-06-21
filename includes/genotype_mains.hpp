@@ -2,9 +2,10 @@
 
 int main();
 
-void ExhaustiveFast();
-void Quick();
+void JustExhaustive();
+void QuickRandom();
+void QuickFromFile();
 void Duplicate();
-void ExhaustiveMetricsAndPrint();
-// void FullFast();
-void QuickFromIso();
+void ExhaustiveMetricsPrintAll();
+void DuplicateJiggle();
+void AnalysisJiggleFromFile();

@@ -4,26 +4,44 @@
 #include <iterator>
 
 
-std::vector<Genotype> GenomesDuplication(std::vector<Genotype> genomes, uint8_t n_genes)
+std::vector<Genotype> GenomesDuplication(std::vector<Genotype> genomes)
 {
   std::vector<Genotype> genomes_dup;
-  std::cout << "Adding duplicate genes to " <<+ genomes.size() << "genomes \n";
+  std::cout << "Adding duplicate genes to " <<+ genomes.size() << " genomes \n";
 
   for(auto genome: genomes)
-    for(auto duplicate: GeneDuplication(genome, n_genes))
+    for(auto duplicate: GeneDuplication(genome))
       genomes_dup.emplace_back(duplicate);
 
   return genomes_dup;
 }
 
+void GenomesJiggleDuplication(std::vector<Genotype>& genomes, std::vector<Genotype>& jiggle_genomes, std::vector<Genotype>& duplicates)
+{
+  std::cout << "Adding duplicate genes to " <<+ genomes.size() << " genomes \n";
 
-std::vector<Genotype> GeneDuplication(Genotype& genotype, uint8_t n_genes)
+  for(auto genome: genomes)
+  {
+    for(uint32_t nth_jiggle=0; nth_jiggle<simulation_params::n_jiggle; ++nth_jiggle)
+    {
+      Clean_Genome(genome, 0, false);
+      JiggleGenotype(genome);
+      jiggle_genomes.emplace_back(genome);
+
+      for(auto duplicate: GeneDuplication(genome))
+        duplicates.emplace_back(duplicate);
+    }
+  }
+}
+
+
+std::vector<Genotype> GeneDuplication(Genotype& genotype)
 {
   std::vector <Genotype> duplicates;
 
-  for(uint8_t index=0; index < n_genes; ++index)
+  for(uint8_t index=0; index < model_params::n_genes; ++index)
   {
-    Genotype duplicate(4 * n_genes);
+    Genotype duplicate(4 * model_params::n_genes);
     std::copy(std::begin(genotype), std::end(genotype), std::begin(duplicate));
 
     for(uint8_t tail=0; tail < 4; tail++)

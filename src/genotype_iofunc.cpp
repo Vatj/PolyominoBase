@@ -19,7 +19,7 @@ void PrintConfigFile(std::string config_file)
 
 void PrintGenomeFile(std::string genome_file, std::vector<Genotype>& genomes)
 {
-  std::cout << "Printing genomes to file : " << genome_file << "\n";
+  std::cout << "Printing " <<+ genomes.size() << " genomes to file : " << genome_file << "\n";
   std::ofstream fout(genome_file);
   for(auto genome: genomes)
   {

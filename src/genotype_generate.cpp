@@ -84,7 +84,44 @@ std::vector<Genotype> SampleMinimalGenotypes(PhenotypeTable* pt)
   return genomes;
 }
 
-std::vector<Genotype> ExhaustiveMinimalGenotypes(PhenotypeTable* pt)
+std::vector<Genotype> ExhaustiveMinimalGenotypesIL(PhenotypeTable* pt)
+{
+  std::vector<Genotype> genomes;
+
+  std::cout << "Generating all minimal samples \n";
+
+  GenotypeGenerator ggenerator = GenotypeGenerator(model_params::n_genes, model_params::colours);
+  ggenerator.init();
+  Genotype genotype, nullg;
+  Phenotype_ID loop_pID = {255, 0};
+  std::vector<Phenotype_ID> pIDs;
+  uint64_t good_genotypes = 0, generated_genotypes = 0;
+
+  std::cout << "Threshold is : " << (ceil(simulation_params::phenotype_builds * simulation_params::UND_threshold));
+  std::cout << " out of " <<+ simulation_params::phenotype_builds << " builds \n";
+
+  while((genotype=ggenerator())!=nullg)
+  {
+    generated_genotypes++;
+    if(!ggenerator.valid_genotype(genotype))
+      continue;
+
+    pIDs = GetSetPIDs(genotype, pt);
+    if(pIDs.back() == loop_pID)
+      continue;
+
+    good_genotypes++;
+    genomes.emplace_back(genotype);
+
+    if(good_genotypes % 100 == 0)
+      std::cout << "Found " <<+ good_genotypes << " out of " <<+ generated_genotypes << " generated \n";
+  }
+
+  std::cout << "Final Values : Found " <<+ genomes.size() << " out of " <<+ generated_genotypes << " generated \n";
+  return genomes;
+}
+
+std::vector<Genotype> ExhaustiveMinimalGenotypesFiltered(PhenotypeTable* pt)
 {
   std::vector<Genotype> genomes;
 
@@ -107,16 +144,7 @@ std::vector<Genotype> ExhaustiveMinimalGenotypes(PhenotypeTable* pt)
       continue;
 
     pIDs = GetSetPIDs(genotype, pt);
-    // std::cout <<+ generated_genotypes << " Current genome : ";
-    // for(auto base: genotype)
-    //   std::cout <<+ base << " ";
-    // std::cout << " pIDs : ";
-    // for(auto pID: pIDs)
-    //   std::cout <<+ pID.first << " " <<+ pID.second << " ";
-    // std::cout << "\n";
-
     if(pIDs.front() == rare_pID || pIDs.back() == loop_pID)
-      // std::cout << "Found a match \n";
       continue;
 
     good_genotypes++;
@@ -129,6 +157,7 @@ std::vector<Genotype> ExhaustiveMinimalGenotypes(PhenotypeTable* pt)
   std::cout << "Final Values : Found " <<+ genomes.size() << " out of " <<+ generated_genotypes << " generated \n";
   return genomes;
 }
+
 
 // std::vector<Genotype> ExhaustiveFullGenotypes2(uint8_t colours, InterfacePhenotypeTable* pt)
 // {
