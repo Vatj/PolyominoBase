@@ -39,6 +39,15 @@ std::array<double,model_params::interface_size+1> GenBindingProbsLUP();
 
 /* SPATIAL */
 Phenotype SpatialGrid(std::vector<int8_t>& placed_tiles);
+  extern std::binomial_distribution<uint8_t> b_dist;
+  extern std::uniform_real_distribution<double> real_dist;
+  extern std::array<double,model_params::interface_size+1> binding_probabilities;
+}
+
+std::array<double,model_params::interface_size+1> GenBindingProbsLUP();
+
+/* SPATIAL */
+Phenotype SpatialGrid(std::vector<int8_t>& placed_tiles);
 
 /* PRINTING */
 void PrintShape(Phenotype phen);
@@ -51,7 +60,6 @@ void InterfaceStrengths(BGenotype& interfaces, std::vector<uint32_t>& strengths)
 namespace interface_model
 {
   struct InterfacePhenotypeTable;
-
 
   interface_type reverse_bits(interface_type v);
   uint8_t ArbitraryPopcount(interface_type face1);
@@ -67,17 +75,8 @@ namespace interface_model
   void ExtendPerimeter(const BGenotype& binary_genome,uint8_t tile_detail, int8_t x,int8_t y, std::vector<int8_t>& placed_tiles,std::vector<int8_t>& potential_sites,std::vector<double>& binding_strengths,std::vector<interaction_pair>& interaction_pairs);
 
 
-
-
-
   struct InterfacePhenotypeTable : PhenotypeTable {
     std::unordered_map<uint8_t,std::vector<double> > phenotype_fitnesses{{0,{0}}};
-
-
-
-
-
-
 
     /* Replace previously undiscovered phenotype IDs with new phenotype ID */
     void RelabelPhenotypes(std::vector<Phenotype_ID >& pids,std::map<Phenotype_ID, std::map<interaction_pair, uint8_t> >& p_ints) {
@@ -87,8 +86,16 @@ namespace interface_model
 	    p_ints[std::make_pair(x_iter->first,*(r_iter+1))][imap.first]+=imap.second;
 
       PhenotypeTable::RelabelPhenotypes(pids);
-
     }
+
+    std::map<Phenotype_ID,uint8_t> PhenotypeFrequencies(std::vector<Phenotype_ID >& pids) {
+    std::map<Phenotype_ID, uint8_t> ID_counter;
+    for(std::vector<Phenotype_ID >::const_iterator ID_iter = pids.begin(); ID_iter!=pids.end(); ++ID_iter) {
+      if(ID_iter->second < known_phenotypes[ID_iter->first].size())
+	++ID_counter[std::make_pair(ID_iter->first,ID_iter->second)];
+    }
+    return ID_counter;
+  }
 
 
 

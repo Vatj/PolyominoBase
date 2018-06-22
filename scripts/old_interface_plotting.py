@@ -13,7 +13,8 @@ import glob
 
 #BASE_FILE_PATH='/scratch/asl47/Data_Runs/Interface_Cron/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
 #BASE_FILE_PATH='/rscratch/asl47/Bulk_Run/Interfaces/{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
-BASE_FILE_PATH='../{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+BASE_FILE_PATH='/home/icyhawaiian/Documents/Data/{0}_I{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
+#'../{0}_{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
 
 def GetMaxRun(r_type,temperature,mu,gamma):
      return max([int(s[s.rindex('Run')+3:-4]) for s in glob.glob(BASE_FILE_PATH.format('Sizes',r_type,temperature,mu,gamma,'*'))])
@@ -21,8 +22,8 @@ def GetMaxRun(r_type,temperature,mu,gamma):
 def VisualisePhenotypes(r_type,temperature,mu,gamma,run):
      line_count=0
      page_max=24
-     shapes_data=sorted([[int(i) for i in line.split()] for line in open(BASE_FILE_PATH.format('Phenotypes',r_type,temperature,mu,gamma,run))],key=lambda z: sum(z[4:]))
-     return shapes_data
+     shapes_data=sorted([[int(i) for i in line.split()] for line in open(BASE_FILE_PATH.format('Phenotypes',64,temperature,mu,gamma,run))],key=lambda z: sum(z[4:]))
+     #return shapes_data
      for shape in shapes_data:
           if line_count%page_max==0:
                fig, axarr = plt.subplots(6,4,figsize=(8.27,11.69))
@@ -506,7 +507,7 @@ def HistoryDiagram(IDs,selections,low=-1,high=-1):
      plt.xlim([-1,len(selections[0])+1])
      plt.show(block=False)
 
-from interface_analysis import LoadT,RandomHistorySampling
+#from interface_analysis import LoadT,RandomHistorySampling
 from itertools import groupby
 def PlotAnalysis(gz,N_samps=50,normed=False):
      

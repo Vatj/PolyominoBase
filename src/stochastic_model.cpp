@@ -2,20 +2,20 @@
 
 namespace Stochastic
 {
-
   bool STERIC_FORBIDDEN = false;
 
-std::vector<Phenotype_ID> AssemblePlasticGenotype(Genotype genotype, PhenotypeTable* pt) {
+  std::vector<Phenotype_ID> AssemblePlasticGenotype(Genotype genotype, PhenotypeTable* pt) {
 
-  std::vector<Phenotype_ID> plastic_phenotypes;
-  bool rare_phenotypes=false,unbound_phenotypes=false;
 
-  std::map<Phenotype_ID,uint8_t> ID_counter;
-  const uint8_t THRESHOLD_SIZE=(genotype.size()*genotype.size())/4;
-  for(uint8_t seed=0;seed<genotype.size()/4;++seed)
-  {
-    std::vector<Phenotype> raw_phenotypes;raw_phenotypes.reserve(simulation_params::phenotype_builds);
-    std::vector<Phenotype_ID> Phenotype_IDs;Phenotype_IDs.reserve(simulation_params::phenotype_builds);
+    std::vector<Phenotype_ID> plastic_phenotypes;
+    bool rare_phenotypes=false,unbound_phenotypes=false;
+
+
+    std::map<Phenotype_ID,uint8_t> ID_counter;
+    const uint8_t THRESHOLD_SIZE=(genotype.size()*genotype.size())/4;
+    for(uint8_t seed=0;seed<genotype.size()/4;++seed) {
+      std::vector<Phenotype> raw_phenotypes;raw_phenotypes.reserve(simulation_params::phenotype_builds);
+      std::vector<Phenotype_ID> Phenotype_IDs;Phenotype_IDs.reserve(simulation_params::phenotype_builds);
 
       for(uint8_t kth=0;kth<simulation_params::phenotype_builds;++kth) {
 	std::vector<int8_t> placed_tiles=Stochastic_Polyomino_Builder(genotype,THRESHOLD_SIZE,seed);
@@ -34,8 +34,7 @@ std::vector<Phenotype_ID> AssemblePlasticGenotype(Genotype genotype, PhenotypeTa
       }
 
       for(auto kv : ID_counter) {
-	if(kv.second >=static_cast<uint16_t>(simulation_params::phenotype_builds*simulation_params::UND_threshold))
-  {
+	if(kv.second >=static_cast<uint16_t>(simulation_params::phenotype_builds*simulation_params::UND_threshold)) {
 	  if(std::find(plastic_phenotypes.begin(),plastic_phenotypes.end(),kv.first)==plastic_phenotypes.end())
 	    plastic_phenotypes.emplace_back(kv.first);
 	}
@@ -43,15 +42,13 @@ std::vector<Phenotype_ID> AssemblePlasticGenotype(Genotype genotype, PhenotypeTa
 	  rare_phenotypes=true;
       }
     }
-
-    if(rare_phenotypes || plastic_phenotypes.empty ())
+    if(rare_phenotypes || plastic_phenotypes.empty())
       plastic_phenotypes.emplace_back(std::make_pair(0,0));
     if(unbound_phenotypes)
       plastic_phenotypes.emplace_back(std::make_pair(255,0));
 
     return plastic_phenotypes;
   }
-
 
   Phenotype_ID Analyse_Genotype_Outcome(Genotype genome, uint8_t N_Repeated_Checks, PhenotypeTable* pt,uint8_t seed) {
     const uint8_t THRESHOLD_SIZE=(genome.size()*genome.size())/4;
@@ -109,7 +106,7 @@ std::vector<Phenotype_ID> AssemblePlasticGenotype(Genotype genotype, PhenotypeTa
 
         uint8_t conjugate_count=std::count(genome.begin(),genome.end(),next_binds[Noptions*4+2]);
         std::uniform_int_distribution<uint8_t> Random_Count(0,conjugate_count-1);
-        int nth_conjugate=Random_Count(simulation_params::RNG_Engine);
+        int nth_conjugate=Random_Count(model_params::RNG_Engine);
         auto current_conjugate=std::find(genome.begin(),genome.end(),next_binds[Noptions*4+2]);
         for(uint8_t conj_cnt=1;conj_cnt<=nth_conjugate;++conj_cnt)
           current_conjugate=std::find(current_conjugate+1,genome.end(),next_binds[Noptions*4+2]);
@@ -126,7 +123,6 @@ std::vector<Phenotype_ID> AssemblePlasticGenotype(Genotype genotype, PhenotypeTa
             Interacting_Adjacency(next_binds,temp_Face,(new_Face+face+rotation)%4,placed_X,placed_Y);
         }
         break;
-
       }
     }
     return Placed_Tiles;
@@ -149,7 +145,7 @@ std::vector<Phenotype_ID> AssemblePlasticGenotype(Genotype genotype, PhenotypeTa
       break;
     }
     uint8_t conjugate_Face=Interaction_Matrix(interacting_Face);
-    next_binds.insert(next_binds.begin()+std::uniform_int_distribution<size_t>{0,next_binds.size()/4}(simulation_params::RNG_Engine)*4,{static_cast<int8_t>(X+X_OFFSET),static_cast<int8_t>(Y+Y_OFFSET),static_cast<int8_t>(conjugate_Face),static_cast<int8_t>((face_index+2)%4)});
+    next_binds.insert(next_binds.begin()+std::uniform_int_distribution<size_t>{0,next_binds.size()/4}(model_params::RNG_Engine)*4,{static_cast<int8_t>(X+X_OFFSET),static_cast<int8_t>(Y+Y_OFFSET),static_cast<int8_t>(conjugate_Face),static_cast<int8_t>((face_index+2)%4)});
   }
 
 

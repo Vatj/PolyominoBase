@@ -26,7 +26,18 @@ void PreProcessSampled(std::vector<Genotype> genomes, Set_to_Genome& set_to_geno
   for(uint64_t index=0; index < genomes.size(); index++)
   {
     genotype = genomes[index];
+
+    // std::cout <<+ index << " Current genome : ";
+    // for(auto base: genotype)
+    //   std::cout <<+ base << " ";
+    // // std::cout << " pIDs : ";
+    // // for(auto pID: pIDs)
+    // //   std::cout <<+ pID.first << " " <<+ pID.second << " ";
+    // std::cout << "\n";
+
     pIDs = GetSetPIDs(genotype, pt);
+
+
 
     if(index % 100 ==0)
       std::cout << "Currently preprocessing genome : " <<+ index << " out of " <<+ genomes.size() << "\n";
