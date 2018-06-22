@@ -29,7 +29,7 @@ def setBasePath(path):
           BASE_FILE_PATH='/home/icyhawaiian/Documents/Data/{0}_I{1}_T{2:.6f}_Mu{3:.6f}_Gamma{4:.6f}_Run{5}.txt'
 
 setBasePath('rscratch')
-          
+
 interface_length=64
 interface_type={8:np.uint8,16:np.uint16,32:np.uint32,64:np.uint64}[interface_length]
 
@@ -38,7 +38,7 @@ def set_length(length):
      interface_length=length
      global interface_type
      interface_type={8:np.uint8,16:np.uint16,32:np.uint32,64:np.uint64}[interface_length]
-     
+
 def convint(x):
      return interface_type(x)
 
@@ -47,7 +47,7 @@ def BindingStrength(base1,base2):
 
 def revbits(x):
      return interface_type(int(bin(~convint(x))[2:].zfill(interface_length)[::-1], 2))
- 
+
 def LoadEvolutionHistory(temperature=0.000001,mu=1,gamma=1,run=0):
      phen_line=True
      phenotype_IDs=[]
@@ -59,7 +59,7 @@ def LoadEvolutionHistory(temperature=0.000001,mu=1,gamma=1,run=0):
                phen_line=False
           else:
                selections.append(converted)
-               phen_line=True     
+               phen_line=True
      return phenotype_IDs,np.array(selections,np.uint16)
 
 def LoadGenotypeHistory(n_tiles,temperature=0.000001,mu=1,gamma=1,run=0):
@@ -98,7 +98,7 @@ def RandomWalk(I_size=64,n_steps=1000,phi=0.5,T_star=0.6,renorm=False,return_pro
      print steady_state
      states=np.zeros(N)
      states[0]=1
-     
+
      progressive_states=[np.sum(s_hats[-N:]*states)]
 
      for i in xrange(n_steps):
@@ -108,19 +108,19 @@ def RandomWalk(I_size=64,n_steps=1000,phi=0.5,T_star=0.6,renorm=False,return_pro
           if progressive_states[-1]>=steady_state*.995:
                print i
                return i
-          
+
      if not renorm:
           states/=np.sum(states)
-     
+
 
      return mmatrix(N,phi,s_hats[-N:])
      #print analytic_states
-     
+
      if return_prog:
           progressive_states.append(np.sum(s_hats[-N:]*analytic_states))
           return progressive_states
      return analytic_states,s_hats[-N:]
-     
+
      fig, ax1 = plt.subplots()
      msize=12
      ax1.plot(np.linspace(T_star,1,N),states,marker='x',ls='',mew=1,ms=14,mec='orangered',mfc='None')
@@ -133,12 +133,12 @@ def RandomWalk(I_size=64,n_steps=1000,phi=0.5,T_star=0.6,renorm=False,return_pro
      #ax1.axes.get_yaxis().set_visible(False)
      #ax1.set_xlim((.3,1.05))
      plt.show(block=False)
-     
+
 
 
 def UpdateStates(states,val,phi=0.25,renorm=False):
      states_updating=deepcopy(states)
-     for i in xrange(states.shape[0]):
+     for i in range(states.shape[0]):
           states_updating[i]-=states[i]*phi
           if i!=0:
                states_updating[i]+=states[i-1]*phi*(1-val[i-1])
@@ -148,7 +148,7 @@ def UpdateStates(states,val,phi=0.25,renorm=False):
 
 def mmatrix(N_states,mu,val):
      rows=[[1-mu,mu*(1-val[0])]+[0]*(N_states-2)]
-     for i in xrange(1,N_states-1):
+     for i in range(1,N_states-1):
           rows.append([0]*(i-1)+[mu*val[i],1-mu,mu*(1-val[i])]+[0]*(N_states-2-i))
      rows.append([0]*(N_states-2)+[mu*val[-1],1-mu])
      return np.vstack(rows).T
@@ -157,11 +157,11 @@ def getSteadyStates(matrix):
      eigval,eigvec=LA.eig(matrix)
      for va,ve in zip(eigval,eigvec.T):
           if np.all(np.sign(ve)==-1) or np.all(np.sign(ve)==1):
-               return va,ve/sum(ve)          
+               return va,ve/sum(ve)
 
 
 
-""" PHYLOGENCY SECTION """     
+""" PHYLOGENCY SECTION """
 
 def writeResults(I,M,t,runs,offset=0):
      global interface_length
@@ -170,7 +170,7 @@ def writeResults(I,M,t,runs,offset=0):
      interface_type={8:np.uint8,16:np.uint16,32:np.uint32,64:np.uint64}[interface_length]
      setBasePath('scratch')
      pool = Pool()
-     data_struct=pool.map(partial(AnalysePhylogeneticStrengths, mu=M,t=t), xrange(offset,offset+runs)) 
+     data_struct=pool.map(partial(AnalysePhylogeneticStrengths, mu=M,t=t), range(offset,offset+runs))
      pool.close()
      with open('I{}Mu{}T{}O{}.pkl'.format(I,M,t,offset), 'wb') as f:
           pickle.dump(data_struct, f)
@@ -196,6 +196,7 @@ def concatenateResults(data_struct,trim_gen=True):
      phen_trans=defaultdict(lambda: defaultdict(int))
      first_trans=defaultdict(lambda: defaultdict(int))
      slice_start=1 if trim_gen else 0
+
      for outer_index,run_data in enumerate(data_struct):
           for k,v in run_data.iteritems():
                if 'Neutral' in k:
@@ -214,7 +215,7 @@ def concatenateResults(data_struct,trim_gen=True):
                elif k=='PhenFirsts':
                     for sub_k,sub_v in v.iteritems():
                          first_trans[sub_k][sub_v]+=1
-              
+
 
      for stren_type,stren_matrix in strengths.iteritems():
           for k in xrange(len(stren_matrix)):
@@ -223,23 +224,22 @@ def concatenateResults(data_struct,trim_gen=True):
                length = len(sorted(stren_matrix,key=len, reverse=True)[0])
                for i,strens in enumerate(stren_matrix):
                     strengths[stren_type][i]=np.array([np.sum([a*b for a,b in value.iteritems()])/np.sum(value.values()) for value in strens]+[np.nan]*(length-len(strens)),dtype=np.double)
-               smarr=np.array(stren_matrix)     
+               smarr=np.array(stren_matrix)
                strengths[stren_type]=smarr[~np.all(np.isnan(smarr),axis=1)]
-                         
+
      return strengths,neutrals,{k:dict(v) for k,v in phen_trans.iteritems()},{k:dict(v) for k,v in first_trans.iteritems()}
 #dict(phen_trans),dict(first_trans)#,bindings,fatal_phens
 
-          
 def AnalysePhylogeneticStrengths(r,mu,t):
      g,s,p,st=LoadT(mu=mu,t=t,run=r)
      phen_table=LoadPhenotypeTable(temperature=t,mu=mu,run=r)
 
      trans_probs,first_trans= PhenOrderTail(g,phen_table,p,s,st)
-     mae,mai,ms,wa,ws,cnt_ai,fp=qBFS(g,p,s,st)                   
-                      
+     mae,mai,ms,wa,ws,cnt_ai,fp=qBFS(g,p,s,st)
+
      return {'Stren_E':mae,'Stren_I':mai,'Stren_S':ms,'Neutral_Asym':wa,'Neutral_Sym':ws,'PhenTrans':trans_probs,'PhenFirsts':first_trans}#,'N_binds':cnt_ai,'Unbounds':fp
-     
-     
+
+
 def qBFS(genotypes,phenotypes,selections,strengths):
      #ANALYSIS PARAMETERS
      WEAKNESS_GOBACK=50
@@ -260,7 +260,7 @@ def qBFS(genotypes,phenotypes,selections,strengths):
                if phenotypes[generation][index][0]!=0:
                     temp_count[len(strengths[generation][index])]+=1
           active_interfaces.append(temp_count)
-               
+
      for generation in xrange(gen_limit-1):
           fatal_phens.append(0)
           for index in xrange(pop_size):
@@ -280,8 +280,8 @@ def qBFS(genotypes,phenotypes,selections,strengths):
                     weak_a,weak_s=qWeak(strengths[generation][index],genotypes[generation][index])
                     W_a+=weak_a
                     W_s+=weak_s
-          
      return filter(None,MSE_ae),filter(None,MSE_ai),filter(None,MSE_s),dict(W_a),dict(W_s),active_interfaces,fatal_phens
+
 
 def qDFS(index,new_bond,genotypes,selections,strengths):
      detailed_distr=True
@@ -315,7 +315,7 @@ def qDFS(index,new_bond,genotypes,selections,strengths):
                mean_str.append(dict(str_temp))
           elif str_temp:
                mean_str.append(np.mean(str_temp))
-          
+
      return mean_str if len(mean_str)>MIN_LEN else None
 
 def qWeak(strength,genotype):
@@ -331,9 +331,9 @@ def qWeak(strength,genotype):
      return weak_asym,weak_sym
 
 """ Phenotype Matching """
-def PhenOrderTail(genotypes,phen_table,phenotype_IDs,selections,strengths):    
+def PhenOrderTail(genotypes,phen_table,phenotype_IDs,selections,strengths):
      gen_limit=len(genotypes)
-     pop_size=len(genotypes[0])        
+     pop_size=len(genotypes[0])
 
      transition_probabilities=defaultdict(lambda:defaultdict(int))
      tree_found_states=[(0,p,[(1,0)]) for p in xrange(pop_size)]
@@ -351,7 +351,7 @@ def PhenOrderTail(genotypes,phen_table,phenotype_IDs,selections,strengths):
                     if pid not in states_local:
                          transition_probabilities[pid][phenotype_IDs[generation][index]]+=1
                          states_local.append(pid)
-                    
+
                if generation<(gen_limit-2):
                     tree_found_states.append((generation+1,child,states_local))
 
@@ -371,9 +371,9 @@ def PurgeDescendents(generation,index,selections,phenotype_IDs):
                descendents_temp.extend(np.where(selections[gen_index]==descendent)[0])
           descendents=descendents_temp
           gen_index+=1
-     
-     
-     
+
+
+
 def main(argv):
      writeResults(int(argv[1]),*(float(i) for i in argv[2:4]),runs=int(argv[4]),offset=int(argv[5]))
      return
@@ -393,4 +393,3 @@ def PhenotypicTransitions(phen_trans,N=40,crit_factor=0.5):
           if not common_transitions[key]:
                del common_transitions[key]
      return common_transitions
-

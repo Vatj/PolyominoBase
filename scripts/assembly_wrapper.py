@@ -11,13 +11,13 @@ from graph_methods import Trim_Topologies
 
 Poly_Lib=ctypes.cdll.LoadLibrary('./AGF.so')
 
-def GetPhenotypesIDs_wrapper(file_path,file_name,ngenes,cols,g_or_i): 
+def GetPhenotypesIDs_wrapper(file_path,file_name,ngenes,cols,g_or_i):
     Poly_Lib.GetPhenotypesIDs.restype=None
     Poly_Lib.GetPhenotypesIDs.argtypes=[ctypes.POINTER(ctypes.c_char),ctypes.POINTER(ctypes.c_char),ctypes.c_uint8,ctypes.c_uint8,ctypes.c_bool]
     c_=ctypes.c_buffer(file_path)
     o_=ctypes.c_buffer(file_name)
     assert os.path.isfile(file_path+file_name), "not a valid file"
-    
+
     Poly_Lib.GetPhenotypesIDs(c_,o_,ngenes,cols,g_or_i)
 
 def ExhaustiveMinimalMethod_wrapper(file_path,ngenes,cols,g_or_i):
@@ -38,7 +38,7 @@ def GPMap_wrapper(file_path,ngenes,rcols,cols,g_or_i):
     Poly_Lib.GP_MapSampler.argtypes=[ctypes.POINTER(ctypes.c_char),ctypes.c_uint8,ctypes.c_uint8,ctypes.c_uint8,ctypes.c_bool]
     c_=ctypes.c_buffer(file_path)
     Poly_Lib.GP_MapSampler(c_,ngenes,rcols,cols,g_or_i)
-    
+
 def PreProcessGenotypes_wrapper(file_path,ngenes,cols,g_or_i):
     Poly_Lib.PreProcessGenotypes.restype=None
     Poly_Lib.PreProcessGenotypes.argtypes=[ctypes.POINTER(ctypes.c_char),ctypes.c_uint8,ctypes.c_uint8,ctypes.c_bool]
@@ -54,5 +54,3 @@ def GenerateGenotypes(file_path,ngenes,cols,samples=-1):
         SampleMinimalMethod_wrapper(file_path,ngenes,cols,samples,True,True)
         Trim_Topologies(file_path+'SampledGenotypes_N{}_C{}.txt'.format(ngenes,cols))
     PreProcessGenotypes_wrapper(file_path,ngenes,cols,True)
-    
-

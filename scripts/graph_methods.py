@@ -1,6 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-from collections import defaultdict,deque,Counter
+from collections import defaultdict, deque, Counter
 import itertools
 import seaborn as sns
 import numpy as np
@@ -9,7 +9,7 @@ def Transform_Graph_From_List(tile_kit):
     graph_kit=nx.MultiDiGraph()
     graph_kit.add_nodes_from(xrange(len(tile_kit)))
 
-    ## Add edges for internal structure in clockwise orientation 
+    ## Add edges for internal structure in clockwise orientation
     for internal_edge in xrange(len(tile_kit)/4):
         graph_kit.add_edge(internal_edge*4+0,internal_edge*4+1)#,color='k')
         graph_kit.add_edge(internal_edge*4+1,internal_edge*4+2)#,color='k')
@@ -26,8 +26,8 @@ def Transform_Graph_From_List(tile_kit):
                 search_offset+=tile_kit[index+search_offset:].index(Interaction_Matrix(face))
                 graph_kit.add_edge(index,index+search_offset)#,color='r')
                 graph_kit.add_edge(index+search_offset,index)#,color='r')
-                search_offset+=1                               
-                
+                search_offset+=1
+
     return graph_kit
 
 def Interaction_Matrix(colour):
@@ -44,10 +44,10 @@ def Draw_Graph(graph,kit):
 
 def StripIsomorphisms(file_in):
     tile_kits=[[int(i) for i in line.rstrip('\n').split()] for line in open(file_in)]
-    assembly_graphs=zip(range(len(tile_kits)),[Transform_Graph_From_List(tile_kit) for tile_kit in tile_kits])
+    assembly_graphs=list(zip(list(range(len(tile_kits))),[Transform_Graph_From_List(tile_kit) for tile_kit in tile_kits]))
 
     unique_assembly_graphs_indices=[]
-    
+
     while len(assembly_graphs)>1:
         unique_assembly_graphs_indices.append(assembly_graphs[0][0])
         assembly_graphs[:]=[assembly_graph for assembly_graph in assembly_graphs[1:] if not nx.is_isomorphic(assembly_graph[1],assembly_graphs[0][1])]
@@ -62,20 +62,20 @@ def StripInParallel(runs):
     pool = Pool(processes=4)
     pool.map_async(StripIsomorphisms,["A2_T20_C200_N500_Mu0.003125_O25_K15000_Run{}_Genotype".format(r) for r in runs])
     pool.close()
-    
 
-    
+
+
 
 
 def Load_Tiles(fileN):
     Raw_Topologies_Input = [line.rstrip('\n') for line in open(fileN)]
     Raw_Topologies = [[int(face) for face in line.split()] for line in Raw_Topologies_Input]
     topology_dict=defaultdict(list)
-    
+
     for tile_kit in Raw_Topologies:
         zeroes=Order_By_Zeroes(tile_kit)
         topology_dict[zeroes].append(tile_kit)
-        
+
     return topology_dict
 
 
@@ -102,9 +102,9 @@ def Trim_Topologies(fin):
                 genotype_str= ' '.join(map(str,genotype))+'\n'
                 outfile.write(genotype_str)
 
-    
-        
-                
+
+
+
 def Order_By_Zeroes(tile_kit):
     z_Map=defaultdict(int)
     for i in xrange(len(tile_kit)/4):
@@ -113,7 +113,7 @@ def Order_By_Zeroes(tile_kit):
             z_Map[tile.count(0)]+=1
         else:
             z_Map[0]+=1
-                       
+
     return (z_Map[0],z_Map[1],z_Map[2],z_Map[3],z_Map[4])
 
 
@@ -127,14 +127,14 @@ def Order_By_Zeroes(tile_kit):
 def Enumerate_Topology(tile_kit):
     queue_kit=[deque(tile) for tile in tile_kit]
 
-    
+
     for tile_rot in xrange(4**len(tile_kit)):
         for tile_index in xrange(len(tile_kit)-1,-1,-1):
             if tile_rot%(4**tile_index)==0:
                 queue_kit[tile_index].rotate(-1)
                 yield itertools.permutations(queue_kit)
                 break
-            
+
 
 def cycle_tile(tile):
     for rotation in xrange(4):
@@ -152,7 +152,7 @@ def Hamming_Distance_Of_Topologies(T1,T2):
     for i in Enumerate_Topology(T2):
         for j in i:
             Possibles.append([item for sublist in j for item in sublist])
-            
+
     return  min([Hamming_Distance(Flat_T1,trial) for trial in Possibles])
 
 def dump(C):
@@ -179,15 +179,17 @@ def dump2():
                 for i in T2:
                     x+=str(i)+' '
                 f.write(x[:-1]+'\n')
-                
+
 
 def Phenotype_Hamming_Distances():
     BP_Genotypes_Input = [line.rstrip('\n') for line in open('/rscratch/asl47/BP_Genotypes.txt')]
     BP_Genotypes = [[int(face) for face in line.split()] for line in BP_Genotypes_Input]
     Loop_Genotypes_Input = [line.rstrip('\n') for line in open('/rscratch/asl47/Loop_Genotypes.txt')]
     Loop_Genotypes = [[int(face) for face in line.split()] for line in Loop_Genotypes_Input]
+
     print "loops",len(Loop_Genotypes)
     print "BPs",len(BP_Genotypes)
+
     H_D=[]
     with open('/scratch/asl47/Hamming_Distance.txt','w') as f:
         for n,BP in enumerate(BP_Genotypes):
@@ -197,7 +199,7 @@ def Phenotype_Hamming_Distances():
                 f.write(str(Hamming_Distance_Of_Topologies([BP[x:x+4] for x in xrange(0,len(BP),4)],[LP[x:x+4] for x in xrange(0,len(LP),4)]))+'\n')
     print "all finished"
     return True
-                        
+
     Counts=Counter(H_D)
     np_H=np.array(H_D)
     print Counts
@@ -208,8 +210,8 @@ def Phenotype_Hamming_Distances():
     print np.std(np_H)
     ax = sns.violinplot(x=H_D)
     plt.show(block=False)
-         
-     
+
+
 if __name__ == "__main__":
     #Trim_Topologies()
     #dump2()
@@ -227,7 +229,7 @@ def Use_Seaborn():
     plt.rc('font', family='serif')
 
 
-    
+
 
 def Plot_Method_Testing(Ts,R):
     Use_Seaborn()
@@ -235,12 +237,12 @@ def Plot_Method_Testing(Ts,R):
     plt.rc('font', family='serif')
     #timing_list=[defaultdict(list) for i in xrange(3)]
     #accuracy_list=[defaultdict(list) for i in xrange(3)]
-    
+
     timing_list=[{K:np.zeros((Ts,R)) for K in [0,5,10,20]} for i in xrange(3)]
     accuracy_list=[{K:np.zeros((Ts,R)) for K in [0,5,10,20]} for i in xrange(3)]
-    
-    
-    
+
+
+
     for T in xrange(1,Ts+1):
         lines=[]
         lines2=[]
@@ -249,7 +251,7 @@ def Plot_Method_Testing(Ts,R):
             lines2=[line.rstrip('\n') for line in open('/rscratch/asl47/Method_Analysis_V3_T{}.txt'.format(T))]
         if T>10:
             lines=[line.rstrip('\n') for line in open('/rscratch/asl47/Method_Analysis_V3_T{}.txt'.format(T))]
-            
+
         load_time=0
         condition=0
         Run_Total=0
@@ -262,25 +264,25 @@ def Plot_Method_Testing(Ts,R):
             if 'condition' in line:
                 Run_Quantity=int(line.split()[1])
                 condition=int(line.split()[4])
-                
+
             if 'STARTING RUN' in line:
                 RUN=int(line.split()[2])
             if RUN>=R:
                 continue
-                
+
             if 'Load time' in line:
                 load_time=float(line.split()[-1])
-                
+
             if 'B/D' in line:
                 Run_Total=int(line.split()[1])+int(line.split()[-1])
-            
+
             if 'Runtime' in line:
                 timing_list[condition][int(line.split()[3])][T-1][RUN]=(float(line.split()[7])-load_time)*(1000000./Run_Quantity)
-            
-                
+
+
             if 'Over' in line:
                 accuracy_list[condition][int(line.split()[1])][T-1][RUN]=(float(line.split()[3])*(1000000./Run_Quantity))
-            
+
     figT, Ax_Arr_T = plt.subplots(3, 2)#, sharex=True, sharey='row')
 
     column_titles=['Runtime (s) per million','Errors per million']
@@ -289,24 +291,24 @@ def Plot_Method_Testing(Ts,R):
     K_ms={0:'o',5:'D',20:'X',10:'s'}
     z_orders={0:10,5:9,10:8,20:7}
     Ks=[0,10]
-    
+
     #return timing_list
     #return accuracy_list
     for n,ax in enumerate(Ax_Arr_T.reshape(-1)):
         #print "on ax ",n
         if n<2:
-            ax.set_title(column_titles[n])                 
+            ax.set_title(column_titles[n])
         if n%2==0:
             ax.set_ylabel(row_titles[n/2])
-        
+
         if n%2==0: #Timing plots
             results=timing_list[n/2]
-            
+
         else: #Accuracy plots
             results=accuracy_list[n/2]
         for K in Ks:
             ax.plot([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),markeredgecolor=k_colours[K],ls='',markeredgewidth=1.25,markerfacecolor='none',marker=K_ms[K],markersize=7,zorder=z_orders[K])
-                
+
             ax.plot([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),c=k_colours[K],ls='--',lw=0.75,alpha=0.75,zorder=z_orders[K])
             ax.errorbar([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),yerr=np.std(results[K],axis=1,ddof=1)/np.sqrt(R),c=k_colours[K],ls='--',zorder=z_orders[K],lw=2)
             if K==20 and n==5:
@@ -317,14 +319,14 @@ def Plot_Method_Testing(Ts,R):
             #if n==0 and K==0:
             #    return results[K],np.std(results[K],axis=1,ddof=1)/np.sqrt(R)
 
-                
+
         if n%2==0:
             ax.set_yscale('log',nonposy='mask')
             #ax.set_xscale('log',nonposy='mask')
         if n%2==1:
             ax.set_yscale('log',nonposy='mask')
-        
-        
+
+
     for n,ax in enumerate(Ax_Arr_T.reshape(-1)):
         if n<4:
             ax.set_xticks([])
@@ -335,7 +337,7 @@ def Plot_Method_Testing(Ts,R):
             #continue
         if n>=4:
             ax.xaxis.set(ticks=[T*4 for T in xrange(1,Ts+1)],ticklabels=[T for T in xrange(1,Ts+1)])
-            
+
     ax0=Ax_Arr_T.reshape(-1)[0]
     ax0.text(30,37.5,'Graph-like',ha='left',va='center',fontsize=15)
     ax0.text(30,250,'K=5',ha='left',va='center',fontsize=15)
@@ -350,14 +352,14 @@ def Plot_Method_Testing(Ts,R):
     results=timing_list[2]
     for K in Ks:
         S_ax.plot([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),markeredgecolor=k_colours[K],ls='',markeredgewidth=1.25,markerfacecolor='none',marker=K_ms[K],markersize=7,zorder=z_orders[K])
-        
+
         S_ax.plot([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),c=k_colours[K],ls='',lw=0.75,alpha=0.75,zorder=z_orders[K])
         S_ax.errorbar([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),yerr=np.std(results[K],axis=1,ddof=1)/np.sqrt(R),c=k_colours[K],ls='',zorder=z_orders[K],lw=2)
 
     results=accuracy_list[2]
     for K in Ks:
         A_ax.plot([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),markeredgecolor=k_colours[K],ls='',markeredgewidth=1.25,markerfacecolor='none',marker=K_ms[K],markersize=7,zorder=z_orders[K])
-        
+
         A_ax.plot([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),c=k_colours[K],ls='',lw=0.75,alpha=0.75,zorder=z_orders[K])
         A_ax.errorbar([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),yerr=np.std(results[K],axis=1,ddof=1)/np.sqrt(R),c=k_colours[K],ls='',zorder=z_orders[K],lw=2)
 
@@ -377,9 +379,6 @@ def Plot_Method_Testing(Ts,R):
     results=timing_list[2]
     rats=np.mean(results[10],axis=1)/np.mean(results[0],axis=1)
     plt.plot(range(1,Ts+1),rats)
-    
-    
-    
 
     plt.show(block=False)
     #return accuracy_list[2]
@@ -397,7 +396,7 @@ def LoadNewtimings(sbst):
         if len(tempL)==3:
             timings.append(tempL)
             tempL=[]
-            
+
     raw=np.array(timings)
     raw[:,1]-=raw[:,0]
     raw[:,2]-=raw[:,0]
@@ -446,11 +445,11 @@ def LoadNewGCs(T):
             if len(errors)==2:
                 raw_err.append(errors)
                 errors=[]
-                
+
     raw=np.array(raw_time)
     ratios=raw[:,1]/raw[:,0]
     var=np.mean(ratios)*np.sqrt( (stats.sem(raw[:,0])/np.mean(raw[:,0]))**2 + (stats.sem(raw[:,1])/np.mean(raw[:,1]))**2 )
-    
+
     rawe=np.array(raw_err)
     return raw[:,:2]
     return np.mean(ratios),var,np.mean(rawe[:,1]),stats.sem(rawe[:,1])
@@ -462,18 +461,18 @@ def PlotNewSimple():
     ts=np.empty((T_max,2))
     for i in range(1,T_max+1):#+[7,9,11]:
         ts[i-1]=np.mean(LoadNewGCs(i),axis=0)
-        
+
     #plt.plot(range(1,16),ts[:,0],lw=2,ls='--',c='royalblue')
     #plt.plot(range(1,16),ts[:,1],lw=2,ls='-',c='firebrick')
 
     plt.plot(range(1,T_max+1),40*ts[:,0],marker='o',ls='',c='royalblue')
     plt.plot(range(1,T_max+1),40*ts[:,1],marker='s',ls='',c='firebrick')
-    
+
     plt.yscale('log')
     sns.despine(right=1,top=1)
 
     plt.show(block=False)
-    
+
 def PlotNewComp():
     gs = gridspec.GridSpec(1, 2, width_ratios=[6, 1])
     fig = plt.figure(figsize=(8, 6))
@@ -513,15 +512,14 @@ def PlotNewComp():
     ax2.yaxis.tick_right()
 
     d = .015  # how big to make the diagonal lines in axes coordinates
-  
+
     kwargs = dict(transform=ax.transAxes, color='k', clip_on=False)
     ax.plot((1 - d, 1 + d),(1 - d, 1 + d), **kwargs)        # top-left diagonal
     ax.plot((1 - d, 1 + d), (-d, +d), **kwargs)  # top-right diagonal
 
     kwargs.update(transform=ax2.transAxes)  # switch to the bottom axes
     ax2.plot((-d*4, +d*4), (1 - d, 1 + d), **kwargs)  # bottom-left diagonal
-    ax2.plot((-d*4, +d*4),(-d, +d), **kwargs) 
+    ax2.plot((-d*4, +d*4),(-d, +d), **kwargs)
 
 
     plt.show(block=False)
-    

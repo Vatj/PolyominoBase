@@ -30,7 +30,7 @@ def AlignFiles(r_type,temperature,mu,gamma):
     run_splits= np.split(runs, np.where(np.diff(runs) > 1)[0]+1)
     #print run_splits
     #return run_splits
-    file_deltas=np.cumsum([run_splits[i+1][0]-run_splits[i][-1]-1 for i in xrange(len(run_splits)-1)])
+    file_deltas=np.cumsum([run_splits[i+1][0]-run_splits[i][-1]-1 for i in range(len(run_splits)-1)])
     for splits,delta in zip(run_splits[1:],file_deltas):
         for run in splits:
             #print BASE_FILE_PATH.format('Sizes',r_type,temperature,mu,gamma,str(run-delta))

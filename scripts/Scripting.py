@@ -5,21 +5,21 @@ def ya():
     for comb in itertools.combinations_with_replacement([0,1,2,3,4,5,6,7],4):
         num+=1
         #print comb
-    print num
+    print(num)
     for comb in itertools.product([0,1,2],repeat=3):
-        print comb
+        print(comb)
         num2+=1
-    print num2
+    print(num2)
 
     
-    for i in xrange(3):
-        for j in xrange(i,3):
-            print "hi"
+    for i in range(3):
+        for j in range(i,3):
+            print("hi")
 
 
         
 def w():
-    print "w"
+    print("w")
 
 
 def pointless():
@@ -27,9 +27,9 @@ def pointless():
     from math import factorial
     upperL=31
     tiles=8
-    plt.plot(xrange(1,upperL),[factorial(n+tiles-1)/(factorial(n-1)*factorial(tiles)*1.) for N in xrange(1,upperL)])
-    plt.plot(xrange(1,upperL),[n**tiles for n in xrange(1,upperL)])
-    plt.plot(xrange(1,upperL),[(n**tiles)/(factorial(n+tiles-1)/(factorial(n-1)*factorial(tiles)*1.)) for n in xrange(1,upperL)])
+    plt.plot(range(1,upperL),[factorial(n+tiles-1)/(factorial(n-1)*factorial(tiles)*1.) for N in range(1,upperL)])
+    plt.plot(range(1,upperL),[n**tiles for n in range(1,upperL)])
+    plt.plot(range(1,upperL),[(n**tiles)/(factorial(n+tiles-1)/(factorial(n-1)*factorial(tiles)*1.)) for n in range(1,upperL)])
     plt.yscale('log')
     plt.show()
 
@@ -37,23 +37,23 @@ def z():
     from collections import deque
     x=set()
     N=0
-    for i in xrange(0,2):
+    for i in range(0,2):
         jrange=(1-i%2)*(i+1) + (i%2)*(i+2)
         #print jrange
-        for j in xrange(0,jrange+1):
+        for j in range(0,jrange+1):
             krange=(1-max(i,j)%2)*(max(i,j)+1) + (max(i,j)%2)*(max(i,j)+2)
-            for k in xrange(0,krange+1):
+            for k in range(0,krange+1):
                 lrange=(1-max(k,max(i,j))%2)*(max(k,max(i,j))+1) + (max(k,max(i,j))%2)*(max(k,max(i,j))+2)
-                for l in xrange(0,lrange+1):
+                for l in range(0,lrange+1):
                     qrange=(1-max([i,j,k,l])%2)*(max([i,j,k,l])+1) + (max([i,j,k,l])%2)*(max([i,j,k,l])+2)
-                    for q in xrange(0,qrange+1):
+                    for q in range(0,qrange+1):
                         wrange=(1-max([i,j,k,l,q])%2)*(max([i,j,k,l,q])+1) + (max([i,j,k,l,q])%2)*(max([i,j,k,l,q])+2)
-                        for w in xrange(0,wrange+1):
+                        for w in range(0,wrange+1):
                             erange=(1-max([i,j,k,l,q,w])%2)*(max([i,j,k,l,q,w])+1) + (max([i,j,k,l,q,w])%2)*(max([i,j,k,l,q,w])+2)
-                            for e in xrange(0,erange+1):
+                            for e in range(0,erange+1):
                                 rrange=(1-max([i,j,k,l,q,w,e])%2)*(max([i,j,k,l,q,w,e])+1) + (max([i,j,k,l,q,w,e])%2)*(max([i,j,k,l,q,w,e])+2)
                                 #print max([i,j,k,l,q,w,e])
-                                for r in xrange(0,rrange+1):
+                                for r in range(0,rrange+1):
                                     d=deque([i,j,k,l,q,w,e,r])
                                     rot=0
                                     while rot>-8:
@@ -67,8 +67,8 @@ def z():
                                         x.add((i,j,k,l,q,w,e,r))
                                         #print i,j,k,l
                                     N+=1
-    print N
-    print len(x)
+    print(N)
+    print(len(x))
     return x
 
 from collections import deque
@@ -94,7 +94,7 @@ def zzz(depth,seq,inrange,maxdepth=12,maxcolor=13,N=0,y=set()):
         #N+=1
         return N
 
-    for i in xrange(0,inrange+1):
+    for i in range(0,inrange+1):
         #print "on i:",i,"  max depth is ",depth
         if depth>=1:
             seq.append(i)
@@ -116,19 +116,19 @@ def zzz(depth,seq,inrange,maxdepth=12,maxcolor=13,N=0,y=set()):
     
 def x():
     N=0
-    for i in xrange(1,-1,-1):
+    for i in range(1,-1,-1):
         jrange=(1-i%2)*(i+1) + (i%2)*(i+2)
-        for j in xrange(jrange,i-1,-1):
+        for j in range(jrange,i-1,-1):
             krange=(1-j%2)*(j+1) + (j%2)*(j+2)
             
-            for k in xrange(krange,j-1,-1):
+            for k in range(krange,j-1,-1):
                 lrange=(1-k%2)*(k+1) + (k%2)*(k+2)
-                for l in xrange(lrange,k-1,-1):
-                    print i,j,k,l
+                for l in range(lrange,k-1,-1):
+                    print(i,j,k,l)
                     N+=1
 
                     
-    print N
+    print(N)
     
 def xxx(depth,seq,inrange,minV,maxdepth=12,maxcolor=13,N=0):
     
@@ -138,7 +138,7 @@ def xxx(depth,seq,inrange,minV,maxdepth=12,maxcolor=13,N=0):
         N+=1
         return N
 
-    for i in xrange(inrange,minV-1,-1):
+    for i in range(inrange,minV-1,-1):
         jrange=min(maxcolor,(1-i%2)*(i+1) + (i%2)*(i+2))
         le=len(seq)
         seq.append(i)
@@ -163,8 +163,8 @@ import numpy as np
 def mmm():
 
     #plt.contour(xrange(20),xrange(50),np.array([xxx(0,[],1,0,i,j,0) for i in xrange(40) for j in xrange(50)]).reshape(40,-1),20)
-    for i in xrange(4,20,4):
-        plt.plot(xrange(i*3),[xxx(0,[],1,0,i,j,0) for j in xrange(i*3)],label=i)
+    for i in range(4,20,4):
+        plt.plot(range(i*3),[xxx(0,[],1,0,i,j,0) for j in range(i*3)],label=i)
     plt.legend()
     plt.yscale('log')
     plt.show()
@@ -174,12 +174,12 @@ def mmm():
 def ppp():
     #x=np.linspace(0.01,.1,10);
     x=np.logspace(-2,-1,15);
-    print x
+    print(x)
     #y=np.linspace(.1,1,10);
     y=np.logspace(-1,0,20);
     z=np.logspace(0,1,15);
-    print y
-    print z
+    print(y)
+    print(z)
     q=np.array([]);
     q=np.append(q,x);
     q=np.append(q,y);
@@ -195,7 +195,7 @@ def ppp():
 def fukm():
     lineF=[line.rstrip('\n') for line in open("RunConfigs/TileTest_2_16.txt")]
     lineI=[[int(i) for i in line.split(" ")] for line in lineF]
-    print "Starting off with ",len(lineI)," possibilities"
+    print("Starting off with ",len(lineI)," possibilities")
     lineT=[[line[:4],line[4:]] for line in lineI]
     #return lineT[:10]
     uniques=[]
@@ -203,22 +203,22 @@ def fukm():
     for i,line in enumerate(lineT):
         #print "HERE",line
         if(i%1000==0):
-            print "On ",i
+            print("On ",i)
             #print uniques
             
         for uniq in uniques:
             tuple1=line[0]
             tuple2=line[1]
             if tuple1 in uniq and tuple2 in uniq and tuple1!=tuple2:
-                print tuple1,"and",tuple2," are in ",line
+                print(tuple1,"and",tuple2," are in ",line)
                 #print line
                 dups+=1
                 break
         else:
             uniques.append([line[0],line[1]])
     #print x
-    print "Reduced to ",len(uniques)," possibilities"
-    print "Dups found is ",dups
+    print("Reduced to ",len(uniques)," possibilities")
+    print("Dups found is ",dups)
     uniqs=[y[0]+y[1] for y in uniques]
     return uniqs
     with open("Output/Unique_2_8_Space.txt", "w") as text_file:
@@ -229,24 +229,24 @@ def fukm():
             text_file.write('\n')
 def tm(x):
     for ln in x:
-        print ln
-        print ln[:4]
-        print ln[4:]
+        print(ln)
+        print(ln[:4])
+        print(ln[4:])
         if [0,0,0,1] in ln and [0,0,0,0] in ln:
-            print "hi"
+            print("hi")
 
 
 ########################
 #SEARCH SPACE SIZE CODE#
 ########################
 def divisor_of(n):
-    for i in xrange(1,n+1):
+    for i in range(1,n+1):
         if n%i==0:
             yield i
 from fractions import gcd
 def Euler_Totient(d):
     total=0
-    for k in xrange(1,d+1):
+    for k in range(1,d+1):
         if gcd(d,k)==1:
             total+=1
     return total
@@ -263,7 +263,7 @@ def Effective_Numbering_Number(depth,seq,inrange,maxdepth=12,maxcolor=13,N=0):
         N+=1
         return N
 
-    for i in xrange(0,inrange+1):
+    for i in range(0,inrange+1):
         if depth>=1:
             seq.append(i)
             jrange=min(maxcolor,(1-max(seq)%2)*(max(seq)+1) + (max(seq)%2)*(max(seq)+2))
@@ -278,7 +278,7 @@ def Effective_Numbering_Number(depth,seq,inrange,maxdepth=12,maxcolor=13,N=0):
 def attempt(depth,max_D,C_max,C_MAX,inRange,N):
     if depth>=max_D:
         return N+1
-    for i in xrange(inRange+1):
+    for i in range(inRange+1):
         newRange=min(C_MAX,max(C_max,(1-i%2)*(i+1) + (i%2)*(i+2)))
 
         N=attempt(depth+1,max_D,max(C_max,(1-i%2)*(i+1) + (i%2)*(i+2)),C_MAX,newRange,N)
@@ -296,7 +296,7 @@ def N_Effective_Numbering(colours,tiles):
 import matplotlib.pyplot as plt
 def plot_Search_Spaces():
     f, (ax1,ax2) = plt.subplots(1, 2)
-    Tile_Space=xrange(1,6)
+    Tile_Space=range(1,6)
 
     N_1_8=57
     N_1_16=57
@@ -336,7 +336,7 @@ def plot_Search_Spaces():
     plt.show()
 import seaborn as sns
 def plot_Search_Spaces2():
-    Tile_Space=xrange(1,6)
+    Tile_Space=range(1,6)
     sns.set_context("paper",font_scale=2.2)
     sns.set_style("white",rc={"xtick.major.size": 8, "ytick.major.size": 8,"xtick.minor.size":5, "ytick.minor.size": 5,"axes.linewidth": 2,"axes.edgecolor":"darkgray","font.size":8,"axes.titlesize":8,"axes.labelsize":5})
     plt.rc('text', usetex=True)
@@ -432,14 +432,14 @@ def Check_Writing_Unique(currentTiles,checkingTile):
     else:
         possible=False
         earliest=len(currentTiles)
-        for index,prevTile in enumerate([currentTiles[i*4:i*4+4] for i in xrange(len(currentTiles)/4 - 1)]):
+        for index,prevTile in enumerate([currentTiles[i*4:i*4+4] for i in range(len(currentTiles)/4 - 1)]):
             if Is_Necklaceble(prevTile,checkingTile):
                 earliest=min(earliest,index)
                 possible=True
         else:
             if not possible:
                 return True
-            for prevTile in [currentTiles[jj*4:jj*4+4] for jj in xrange(earliest+1,len(currentTiles)/4)]:
+            for prevTile in [currentTiles[jj*4:jj*4+4] for jj in range(earliest+1,len(currentTiles)/4)]:
                 if List2Int(prevTile) > List2Int(checkingTile):
                     return False
                 
@@ -492,11 +492,11 @@ def FKM_CAT(N,K,K_prime,n,j,charray,shrink,shrinkMin,existingLine,fname):
 
         
         FKM_CAT(N,K,K_eff,n+1,j,charray,shrink,shrinkMin,existingLine,fname)
-        for i in xrange(charray[n-j]+1,K_eff):
+        for i in range(charray[n-j]+1,K_eff):
             charray[n]=i
             FKM_CAT(N,K,K_eff,n+1,n,charray,shrink,shrinkMin,existingLine,fname)
 def pr():
-    print Numm
+    print(Numm)
 
 import struct
 def Make_Primary_Necklaces(N,K):
@@ -505,7 +505,7 @@ def Make_Primary_Necklaces(N,K):
     #f=open("/scratch/asl47/Search_Spaces/{}.txt".format(fname),'w')
     squeezeFile=open("/scratch/asl47/Search_Spaces/SearchSpace_1_{}.txt".format(K),'wb')
     FKM_CAT(N,K,2,1,1,[0,0,0,0,0],True,0,-1,squeezeFile)
-    print "did this many ", Numm
+    print("did this many ", Numm)
     #f.close()
     squeezeFile.close()
     
@@ -527,8 +527,8 @@ def Make_Further_Necklaces(N,K,fame,T):
         fN.write(str(Numm)+'\n')
     f.close()
     fN.close()
-    print "!!!wooo finished!!!"
-    print "did"
+    print("!!!wooo finished!!!")
+    print("did")
     pr()
 
 
@@ -561,7 +561,7 @@ def Combine_Two_Tiles(K):
         tile2Gen=Read_Packed_Binary('SearchSpace_2_{}'.format(K))
         with open('/scratch/asl47/Search_Spaces/Test13.txt','w') as f:
             for tile1 in tile1Gen:
-                for t2 in xrange(numbers.pop(0)):
+                for t2 in range(numbers.pop(0)):
                     yield tile1+next(tile2Gen)
                     #fullT=tile1+next(tile2Gen)
                     #x=''
@@ -579,7 +579,7 @@ def Combine_Three_Tiles(K):
         tile3Gen=Read_Packed_Binary('SearchSpace_3_{}'.format(K))
             #with open('/scratch/asl47/Search_Spaces/Test14.txt','w') as f:
         for tile1 in Combine_Two_Tiles(16):
-            for t3 in xrange(numbers2.pop(0)):
+            for t3 in range(numbers2.pop(0)):
                 
                 yield tile1+next(tile3Gen)
                     #fullT=tile1+tile2+next(tile3Gen)
@@ -605,13 +605,13 @@ def Do_It():
         
     return full_list
 def main():
-    print "Starting on Run"
+    print("Starting on Run")
     #print "doing 4_8"
     #Make_Further_Necklaces(4,8,"SearchSpace_3_8",4)
     #print Effective_Numbering_Number(0,[],2,12,7,0)
     #print "doing 4_16"
     #print Effective_Numbering_Number(0,[],2,12,15,0)
-    print "Running on Local Scratch for 4 tiles 16 colours super mode"
+    print("Running on Local Scratch for 4 tiles 16 colours super mode")
     Make_Further_Necklaces(4,16,"SearchSpace993_998",4)
     #FKM_CAT(4,3,2,5,1,[0,0,0,0,0],False,1,3,2)
     #Make_Primary_Necklaces(4,16)
@@ -644,7 +644,7 @@ def Symmetry_Factor2(tile_Set):
         return 1
     elif len(set(tile_Set))==2:
         counted=Counter(tile_Set)
-        if counted.values()==[2,2]:
+        if list(counted.values())==[2,2]:
             if tile_Set[0]==tile_Set[2] or tile_Set[1]==tile_Set[3]:
                 return 2
             else:
@@ -673,10 +673,10 @@ def Symmetry_Factor(tile_Set):
         
 def IKNOW():
     les=[]
-    for i in xrange(8):
-        for j in xrange(8):
-            for k in xrange(8):
-                for l in xrange(8):
+    for i in range(8):
+        for j in range(8):
+            for k in range(8):
+                for l in range(8):
                     tile=[i,j,k,l]
                     les.append(tile)
 
@@ -687,12 +687,12 @@ def make_Degenerates(tile_SetR,colours,depth,swapsR,pairs):
     tile_Set=deepcopy(tile_SetR)
     swaps=deepcopy(swapsR)
     if depth==0:
-        for i in xrange(1,colours,2):
+        for i in range(1,colours,2):
             if i in tile_Set and (i+1) in tile_Set:
                 pairs.append(i+1)
                 
     if depth>=len(tile_Set):
-        print tile_Set
+        print(tile_Set)
         return
 
     tile=tile_Set[depth]
@@ -812,7 +812,7 @@ def B33():
                 lineFP[i]=-1
         if 1 in line:
             if line.count(2)>(line.count(1)+1):
-                print line
+                print(line)
                 lineFP[i]=-1
     with open('/scratch/asl47/Search_Spaces/SearchSpace_2_7_CleanMR.txt','w') as numbering:
         for line in lineFP:
@@ -878,13 +878,13 @@ def B0():
 def Tempester():
     lineRaw=[line.rstrip('\n') for line in open('/rscratch/asl47/SearchSpace_3_8.txt')]
     lineF=[[int(i) for i in line if i!=" "] for line in lineRaw]
-    print lineF[0]
+    print(lineF[0])
     Ls=[]
     for line in lineF:
         if line[0]==line[1] and line[4]==line[0] and line[5]==line[0] and line[8]==line[0] and line[9]==line[0] and line[0]==0 and line.count(0)==6:
             
             Ls.append(line)
-    print len(Ls)
+    print(len(Ls))
     return Ls
 
 def write_list(lis):
@@ -949,7 +949,7 @@ def Tikz(m,n):
 from scipy import stats
 from random import shuffle
 def MutateBlocks(I_length=16,mus=1):
-    faces=range(I_length)
+    faces=list(range(I_length))
     I=[0]*I_length
     g=0
     b=stats.binom(I_length,mus/float(I_length))
@@ -959,7 +959,7 @@ def MutateBlocks(I_length=16,mus=1):
     
     
         
-        for i in xrange(b.rvs()):
+        for i in range(b.rvs()):
             I[faces[i]]+=1
         if 0 not in I:
             break
@@ -972,10 +972,10 @@ def Theor(I_length=16,mus=1):
     
 def tot():
     plt.figure()
-    i= range(128,131,2)
+    i= list(range(128,131,2))
     #plt.plot(i,[Theor(j,1) for j in i],'r--')
-    plt.plot(i,[sum([MutateBlocks(j,.5) for _ in xrange(1000)])/(1000.*Theor(j,.5)) for j in i])
-    plt.plot(i,[sum([MutateBlocks(j,.5) for _ in xrange(1000)])/(1000.*j*H(j)*2.) for j in i])
+    plt.plot(i,[sum([MutateBlocks(j,.5) for _ in range(1000)])/(1000.*Theor(j,.5)) for j in i])
+    plt.plot(i,[sum([MutateBlocks(j,.5) for _ in range(1000)])/(1000.*j*H(j)*2.) for j in i])
     plt.show(block=False)
        
 def ppx(x,I,mu):
@@ -984,13 +984,13 @@ def ppx(x,I,mu):
 
 
 def H(n):
-    return sum(1./d for d in xrange(1, n+1))
+    return sum(1./d for d in range(1, n+1))
 
 def equaldistr(N,m):
     TOTAL=np.zeros(N)
-    for _ in xrange(m):
+    for _ in range(m):
         TOTAL+=np.array([int(i) for i in list(bin(randint(0,2**N-1))[2:].zfill(N))])
-        print TOTAL/float(m)
+        print(TOTAL/float(m))
 
 
 

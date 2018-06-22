@@ -48,7 +48,7 @@ def PlotMaximalOccupation():
     for (A,mu),ax in zip([(1,32),(2,32),(1,16),(2,16),(1,8),(2,8)],axarr.reshape(-1)):
         avg_data_total=np.empty((RUNS,K))
         avg_data=np.empty((RUNS,K))
-        for r in xrange(RUNS):
+        for r in range(RUNS):
             subfile_name='A{}_T20_C200_N100000_Mu{}_O{}_K{}_I0_Run{}'.format(A,Mu_Sets[mu],O,K,r)
             fitness_import=np.loadtxt('/scratch/asl47/Data_Runs/Robustness/{}_Fitness.txt'.format(subfile_name),dtype=np.uint32)
 
@@ -58,26 +58,26 @@ def PlotMaximalOccupation():
             #ax.plot(range(0,fitness_import.shape[0]),avg_data_total[r],lw=0.5,alpha=0.6,zorder=10)
 
 
-        ax.plot(range(0,fitness_import.shape[0]),np.mean(avg_data,axis=0,dtype=np.float64),lw=1,c='k',ls='--')
-        ax.fill_between(range(0,fitness_import.shape[0]),np.mean(avg_data,axis=0,dtype=np.float64)-np.std(avg_data,axis=0,dtype=np.float64),np.mean(avg_data,axis=0,dtype=np.float64)+np.std(avg_data,axis=0,dtype=np.float64))
+        ax.plot(list(range(0,fitness_import.shape[0])),np.mean(avg_data,axis=0,dtype=np.float64),lw=1,c='k',ls='--')
+        ax.fill_between(list(range(0,fitness_import.shape[0])),np.mean(avg_data,axis=0,dtype=np.float64)-np.std(avg_data,axis=0,dtype=np.float64),np.mean(avg_data,axis=0,dtype=np.float64)+np.std(avg_data,axis=0,dtype=np.float64))
      
-        ax.plot(range(0,fitness_import.shape[0]),np.mean(avg_data_total,axis=0,dtype=np.float64),lw=1,c='gray',ls='-')
-        ax.fill_between(range(0,fitness_import.shape[0]),np.mean(avg_data_total,axis=0,dtype=np.float64)-np.std(avg_data_total,axis=0,dtype=np.float64),np.mean(avg_data_total,axis=0,dtype=np.float64)+np.std(avg_data_total,axis=0,dtype=np.float64))
+        ax.plot(list(range(0,fitness_import.shape[0])),np.mean(avg_data_total,axis=0,dtype=np.float64),lw=1,c='gray',ls='-')
+        ax.fill_between(list(range(0,fitness_import.shape[0])),np.mean(avg_data_total,axis=0,dtype=np.float64)-np.std(avg_data_total,axis=0,dtype=np.float64),np.mean(avg_data_total,axis=0,dtype=np.float64)+np.std(avg_data_total,axis=0,dtype=np.float64))
         
-        ax.plot(range(0,O),[100000*(1-(1-vals[A][i/O%3][0])*(4./mu))*(1-vals[A][(i-1)/O%3][1]*(4./mu))**(i%O) for i in xrange(1,O+1)],lw=2,c='r',ls='',marker='o',alpha=0.5)
+        ax.plot(list(range(0,O)),[100000*(1-(1-vals[A][i/O%3][0])*(4./mu))*(1-vals[A][(i-1)/O%3][1]*(4./mu))**(i%O) for i in range(1,O+1)],lw=2,c='r',ls='',marker='o',alpha=0.5)
         
-        co_factors=[np.nanmean(avg_data_total,axis=0,dtype=np.float64)[o*O+1] for o in xrange(3)]
+        co_factors=[np.nanmean(avg_data_total,axis=0,dtype=np.float64)[o*O+1] for o in range(3)]
         #print co_factors
         
-        ax.plot(range(O,fitness_import.shape[0]),[co_factors[(i)/O%3]*(1-vals[A][(i)/O%3][1]*(4./mu))**(i%O) for i in xrange(O,fitness_import.shape[0])],lw=2,c='darkred',ls='',marker='o',alpha=0.5)
+        ax.plot(list(range(O,fitness_import.shape[0])),[co_factors[(i)/O%3]*(1-vals[A][(i)/O%3][1]*(4./mu))**(i%O) for i in range(O,fitness_import.shape[0])],lw=2,c='darkred',ls='',marker='o',alpha=0.5)
         
-        ax.plot(range(0,fitness_import.shape[0]),[100000*(1-(1-vals[A][i/O%3][0])*(4./mu)) for i in xrange(0,fitness_import.shape[0])],lw=2,c='g',ls='',marker='o',alpha=0.5)
+        ax.plot(list(range(0,fitness_import.shape[0])),[100000*(1-(1-vals[A][i/O%3][0])*(4./mu)) for i in range(0,fitness_import.shape[0])],lw=2,c='g',ls='',marker='o',alpha=0.5)
         
-        for t,c in zip(range(3),['r','b','g']):
+        for t,c in zip(list(range(3)),['r','b','g']):
             continue
-            slope, intercept, r_value, p_value, std_err = linregress(range(int(O*.2),int(O*.8)),np.log10(np.mean(avg_data_total,axis=0,dtype=np.float64)[O*t+int(O*.2):O*t+int(O*.8)]))
+            slope, intercept, r_value, p_value, std_err = linregress(list(range(int(O*.2),int(O*.8))),np.log10(np.mean(avg_data_total,axis=0,dtype=np.float64)[O*t+int(O*.2):O*t+int(O*.8)]))
             
-            print t,slope, intercept, r_value, p_value, std_err
+            print(t,slope, intercept, r_value, p_value, std_err)
             #for q in xrange(3):
             ax.plot(np.linspace(O*t,O*t+O,O+1),[10**(intercept+slope*i) for i in np.linspace(0,O,O+1)],lw=2.5,c=c)
     
@@ -110,22 +110,22 @@ def PlotMaximalOccupation2(mu):
 
     avg_data=np.empty((RUNS,100))
     avg_data_total=np.empty((RUNS,100))
-    for r in xrange(RUNS):
+    for r in range(RUNS):
         subfile_name='A3_T20_C200_N100000_Mu{}_O100_K100_I0_Run{}'.format(Mu_Sets[mu],r)
         fitness_import=np.loadtxt('/rscratch/asl47/Bulk_Run/Modular/{}_Fitness.txt'.format(subfile_name),dtype=np.uint32)
         avg_data[r]=fitness_import[:,1]
         avg_data_total[r]=fitness_import[:,1]
         #plt.plot(range(25000),avg_data[r],lw=0.5,alpha=0.6)
-        plt.plot(range(0,fitness_import.shape[0]),avg_data[r],lw=0.5,alpha=0.6)
-        plt.plot(range(0,fitness_import.shape[0]),avg_data_total[r],lw=0.5,alpha=0.6)
-    plt.plot(range(0,fitness_import.shape[0]),np.nanmean(avg_data,axis=0,dtype=np.float64),lw=2,c='k',ls='--')
-    plt.plot(range(0,fitness_import.shape[0]),np.nanmean(avg_data_total,axis=0,dtype=np.float64),lw=2,c='gray',ls='--')
+        plt.plot(list(range(0,fitness_import.shape[0])),avg_data[r],lw=0.5,alpha=0.6)
+        plt.plot(list(range(0,fitness_import.shape[0])),avg_data_total[r],lw=0.5,alpha=0.6)
+    plt.plot(list(range(0,fitness_import.shape[0])),np.nanmean(avg_data,axis=0,dtype=np.float64),lw=2,c='k',ls='--')
+    plt.plot(list(range(0,fitness_import.shape[0])),np.nanmean(avg_data_total,axis=0,dtype=np.float64),lw=2,c='gray',ls='--')
     r1=1-0.909
-    plt.plot(range(0,fitness_import.shape[0]),[100000*(1-(r1)*(4./mu))*(1-r1*(4./mu))**(i) for i in xrange(1,fitness_import.shape[0]+1)],lw=2,c='r',ls='',marker='o',alpha=0.4)
-    slope, intercept, r_value, p_value, std_err = linregress(range(100),np.log10(np.nanmean(avg_data_total,axis=0,dtype=np.float64)))
+    plt.plot(list(range(0,fitness_import.shape[0])),[100000*(1-(r1)*(4./mu))*(1-r1*(4./mu))**(i) for i in range(1,fitness_import.shape[0]+1)],lw=2,c='r',ls='',marker='o',alpha=0.4)
+    slope, intercept, r_value, p_value, std_err = linregress(list(range(100)),np.log10(np.nanmean(avg_data_total,axis=0,dtype=np.float64)))
             
-    print slope, intercept, r_value, p_value, std_err
-    plt.plot(range(100),[10**(intercept+slope*i) for i in xrange(100)],lw=2.5,marker='o',ls='')
+    print(slope, intercept, r_value, p_value, std_err)
+    plt.plot(list(range(100)),[10**(intercept+slope*i) for i in range(100)],lw=2.5,marker='o',ls='')
                 
     plt.title(r'Static (mu {})'.format(mu))
     plt.yscale('log',nonposy='mask')
@@ -138,12 +138,12 @@ def PlotSolutions():
     plt.figure()
     mu=16
     Mu_Sets={32:'0.001563',16:'0.003125',8:'0.006250',4:'0.012500',1:'0.050000'}
-    for r in xrange(1):
+    for r in range(1):
         subfile_name='A1_T20_C200_N1000_Mu{}_O25_K10000_I0_Run{}'.format(Mu_Sets[mu],r)
         fitness_import=np.loadtxt('/scratch/asl47/Data_Runs/Dynamic_V2/{}_Fitness.txt'.format(subfile_name),dtype=np.uint32)
-        for i,c in zip(range(7),['k','purple','g','darkorange','r','b','gold']):
+        for i,c in zip(list(range(7)),['k','purple','g','darkorange','r','b','gold']):
             #plt.plot(range(5000),fitness_import[:,i],color=c,marker='o',alpha=0.2)
-            plt.plot(range(10000),fitness_import[:,i],color=c,marker='o')
+            plt.plot(list(range(10000)),fitness_import[:,i],color=c,marker='o')
     plt.yscale('log',nonposy='mask')
 
     plt.xlabel('generations')
@@ -155,10 +155,10 @@ def PlotSolutions():
 
 def PlotTargetRates(data_frame,mu=16):
     fig,(ax1,ax2)=plt.subplots(2,1)
-    tab1_txt=[[] for x in xrange(7)]
-    tab2_txt=[[] for x in xrange(7)]
+    tab1_txt=[[] for x in range(7)]
+    tab2_txt=[[] for x in range(7)]
     i=0
-    for data_key,marker in zip(sorted(data_frame.keys(), key = lambda x: (x[1], int(x[3:]))),['^','v','>','s','D','o','x']):
+    for data_key,marker in zip(sorted(list(data_frame.keys()), key = lambda x: (x[1], int(x[3:]))),['^','v','>','s','D','o','x']):
         for row,c in zip((data_frame[data_key].T)[1:],['b','g','r']):
             hist, bins = np.histogram(row, bins=np.logspace(0,np.log10(50000),50))
             center = (bins[:-1] + bins[1:]) / 2
@@ -204,9 +204,9 @@ def PlotTargetRates(data_frame,mu=16):
 def PlotCDF(data_frame,runs=1000):
     labs={'A2O5':r'$\Omega^2_{5}$','A2O25':r'$\Omega^2_{25}$','A2O75':r'$\Omega^2_{75}$','A1O5':r'$\Omega^1_{5}$','A1O15':r'$\Omega^1_{15}$','A1O25':r'$\Omega^1_{25}$','A3O50000':r'$\Omega^3$'}
     plt.figure()
-    for data_key,marker in zip(sorted(data_frame.keys(),key = lambda x: (x[1], int(x[3:]))),['^','v','>','s','D','o','x']):
+    for data_key,marker in zip(sorted(list(data_frame.keys()),key = lambda x: (x[1], int(x[3:]))),['^','v','>','s','D','o','x']):
         hist,bins=np.histogram(data_frame[data_key][:,3],bins=np.logspace(np.log10(100),np.log10(50000),100))
-        print min(data_frame[data_key][:,3])
+        print(min(data_frame[data_key][:,3]))
         center = (bins[:-1] + bins[1:]) / 2
         plt.plot(center,np.cumsum(hist,dtype=np.float64)/runs,marker=marker,label=labs[data_key],mew=2,markersize=7)
         
@@ -251,7 +251,7 @@ def PlotRobustness(O,R,c_in):
                 continue
             else:
                 data_frame.append(np.array([float(i) for i in line.split()],dtype=np.float64))
-    plt.errorbar([i/5. for i in xrange(1,len(data_frame)+1)],[np.mean(data_frame[i]) for i in xrange(len(data_frame))],yerr=[sem(data_frame[i]) for i in xrange(len(data_frame))],c=c_in)
+    plt.errorbar([i/5. for i in range(1,len(data_frame)+1)],[np.mean(data_frame[i]) for i in range(len(data_frame))],yerr=[sem(data_frame[i]) for i in range(len(data_frame))],c=c_in)
 def PlotAll():
     plt.figure(figsize=(10,7))
     for o,r,c in zip([5]*13+[25]*16+[125]*13,[2,3,4,6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,3,6,7,8,9,10,11,12,13,14,15],['darkgreen']*13+['royalblue']*16+['firebrick']*13):
@@ -269,18 +269,18 @@ def PlotAll():
 from matplotlib_venn import venn3, venn3_circles
 def PlotGPVenns():
     file_bases='/rscratch/asl47/Bulk_Run/Modular'
-    avg_G_size=[[] for i in xrange(7)]
+    avg_G_size=[[] for i in range(7)]
 
-    for I in xrange(3):
-        for run in xrange(50):
+    for I in range(3):
+        for run in range(50):
             avg_G_size[I].append(file_len('{}/A1_T20_C200_N10000_Mu0.003125_O1_K{}000_I{}_Run{}_Genotype.txt'.format(file_bases,15 if I==0 else 20,I,run)))
 
             
-    for I in xrange(3):
-        for run in xrange(50):
+    for I in range(3):
+        for run in range(50):
             avg_G_size[3+I].append(file_len('{}/A2_T20_C200_N10000_Mu0.003125_O1_K20000_I{}_Run{}_Genotype.txt'.format(file_bases,I,run)))
 
-    for run in xrange(25):
+    for run in range(25):
             avg_G_size[6].append(file_len('{}/A3_T20_C200_N10000_Mu0.003125_O1_K20000_I0_Run{}_Genotype.txt'.format(file_bases,run)))
             
     
@@ -288,7 +288,7 @@ def PlotGPVenns():
     # Abc # aBc # ABc # abC # AbC # aBC # ABC
     #return avg_G_size
     s = list(np.mean(G)/norming for G,norming in zip(avg_G_size,[50,50,50,50,50,50,25])) #(square_only,cross_only,square_cross, tetris_only,square_tetris,cross_tetris,complete)
-    print s
+    print(s)
     v = venn3(subsets=s, set_labels=('A', 'B', 'C'))
 
     # Subset labels
@@ -330,7 +330,7 @@ def PlotHistogram(data,bins='empty',c_in='hotpink',mark_in='o',label_in='Default
         bins=int(np.sqrt(len(data)+0.5))
     hist,bins=np.histogram(data,bins=np.logspace(2,np.log10(10000),bins))#np.log10(min(data)*0.9)
 
-    xs=np.mean(zip(bins,bins[1:]),axis=1)
+    xs=np.mean(list(zip(bins,bins[1:])),axis=1)
     histC=np.cumsum(hist)/(1.*RUNS)
 
 
@@ -355,13 +355,13 @@ def PlotPartialHistogram(data,bins='empty',c_in='hotpink',mark_in='o',label_in='
         bins=int(np.sqrt(len(data)+0.5))
     hist,bins=np.histogram(data,bins=np.logspace(np.log10(500),np.log10(25000),bins))#np.log10(min(data)*0.9)
     if label_on:
-        return plt.scatter(np.mean(zip(bins,bins[1:]),axis=1),np.cumsum(hist)/(1.*RUNS),c=c_in,marker=mark_in,s=50,label=label_in,zorder=10)
+        return plt.scatter(np.mean(list(zip(bins,bins[1:])),axis=1),np.cumsum(hist)/(1.*RUNS),c=c_in,marker=mark_in,s=50,label=label_in,zorder=10)
     else:
-        return plt.scatter(np.mean(zip(bins,bins[1:]),axis=1),np.cumsum(hist)/(1.*RUNS),c=c_in,marker=mark_in,s=50,zorder=10)
+        return plt.scatter(np.mean(list(zip(bins,bins[1:])),axis=1),np.cumsum(hist)/(1.*RUNS),c=c_in,marker=mark_in,s=50,zorder=10)
 
 def GetHistCoords(data,bins):
     hist,bin_edges=np.histogram(data,bins=np.logspace(np.log10(500),np.log10(25000),bins))
-    return zip(np.mean(zip(bin_edges,bin_edges[1:]),axis=1),np.cumsum(hist)/(1.*RUNS))
+    return list(zip(np.mean(list(zip(bin_edges,bin_edges[1:])),axis=1),np.cumsum(hist)/(1.*RUNS)))
 
 
 plot_params={
@@ -399,10 +399,10 @@ def PlotFilledFractions(mu,needles=[5,50,100,500]):
             #data_dict[run_t]+=data_dict2[run_t]
             PlotPartialHistogram(data_dict[run_t],bins,label_on=False,**plot_params[run_t])
             if needle==needles[0]:
-                data_frame_locs,data_frame_low[run_t]=zip(*GetHistCoords(data_dict[run_t],bins))
+                data_frame_locs,data_frame_low[run_t]=list(zip(*GetHistCoords(data_dict[run_t],bins)))
 
             elif needle==needles[-1]:
-                data_frame_locs,data_frame_high[run_t]=zip(*GetHistCoords(data_dict[run_t],bins))
+                data_frame_locs,data_frame_high[run_t]=list(zip(*GetHistCoords(data_dict[run_t],bins)))
                 plt.fill_between(data_frame_locs,data_frame_low[run_t],data_frame_high[run_t],alpha=0.5,label=plot_params[run_t]['label_in'],color=plot_params[run_t]['c_in'],zorder=1)
 
     plt.plot([25000,25000],[-1,2],'k-',lw=3)
@@ -433,7 +433,7 @@ def PlotManyHistograms(needle,mu,bins=35):
     fig=plt.figure(figsize=(10,10))
     scatters=[]
     for run_t in sorted_keys:
-        print run_t
+        print(run_t)
         scatters.append(PlotPartialHistogram(data_dict[run_t],bins,**plot_params[run_t]))
         
     plt.plot([5000,5000],[-1,2],'k-',lw=3)
@@ -476,19 +476,19 @@ def PlotFitnessOverTime(x,needle_length=50):
     needle=np.array([1]*needle_length,dtype=np.float64)
     plt.figure()
     c=['r','g','b','k']
-    for r in xrange(4*x,4*x+4):
+    for r in range(4*x,4*x+4):
         subfile_name='Modular{}_T20_C200_N1000_Mu0.003125_B5000_Run{}'.format(RUN_TYPE,r)
         fitness_import=np.genfromtxt('/rscratch/asl47/Bulk_Run/Modular/{}_Fitness.txt'.format(subfile_name),dtype=np.float64)
-        plt.plot(xrange(1,fitness_import.shape[0]+1),fitness_import[:,0],ls='--',label=r,c=c[r-4*x],alpha=0.6)
-        plt.plot(xrange(1,fitness_import.shape[0]+1),fitness_import[:,1],ls='',marker='o',alpha=0.6,c=c[r-4*x])
+        plt.plot(range(1,fitness_import.shape[0]+1),fitness_import[:,0],ls='--',label=r,c=c[r-4*x],alpha=0.6)
+        plt.plot(range(1,fitness_import.shape[0]+1),fitness_import[:,1],ls='',marker='o',alpha=0.6,c=c[r-4*x])
 
 
         haystack=search_sequence_numpy(fitness_import[:,1],needle)
         if haystack:
-            print "found on {} at {}".format(r,haystack)
+            print("found on {} at {}".format(r,haystack))
             counts+=1
         else:
-            print "not found on {}".format(r)
+            print("not found on {}".format(r))
 
     plt.legend()
     plt.xlabel('generation')
@@ -560,7 +560,7 @@ def PlotModularityGrid(A,mu,O):
     plt.show(block=False)
 
 def adjust_spines(ax, spines):
-    for loc, spine in ax.spines.items():
+    for loc, spine in list(ax.spines.items()):
         if loc in spines:
             spine.set_position(('outward', 10))  # outward by 10 points
             spine.set_smart_bounds(True)
@@ -587,12 +587,12 @@ def adjust_spines(ax, spines):
 
 def roulette_selection(weights,N):
     sorted_indexed_weights = sorted(enumerate(weights), key=operator.itemgetter(1))
-    indices, sorted_weights = zip(*sorted_indexed_weights)
+    indices, sorted_weights = list(zip(*sorted_indexed_weights))
     tot_sum=sum(sorted_weights)
     prob = [x*1./tot_sum for x in sorted_weights]
     cum_prob=np.cumsum(prob)
    
-    for i in xrange(N):
+    for i in range(N):
         random_num=random()
         for index_value, cum_prob_value in zip(indices,cum_prob):
             if random_num < cum_prob_value:
@@ -639,34 +639,34 @@ def Iterateit(N,X):
     fracs=np.empty((2*steps,3))
 
     
-    for i in xrange(0,2*steps,2):
+    for i in range(0,2*steps,2):
         
-        for j in xrange(3):
+        for j in range(3):
             fracs[i][2-j]=next_pop.count(j)
  
         next_pop=mut(next_pop)
-        for j in xrange(3):
+        for j in range(3):
             fracs[i+1][2-j]=next_pop.count(j)
         next_pop=getr(next_pop,N)
         
 
         #next_pop=next_pop3
     #plt.figure()
-    plt.plot(range(steps*2),fracs[:,0],'r',label='Max')
-    plt.plot(range(steps*2),fracs[:,1],'b',label='Med')
+    plt.plot(list(range(steps*2)),fracs[:,0],'r',label='Max')
+    plt.plot(list(range(steps*2)),fracs[:,1],'b',label='Med')
     
-    plt.plot(range(0,steps*2,2),fracs[::2,0],marker='o',c='r',ls='')
-    plt.plot(range(1,steps*2,2),fracs[1::2,0],marker='d',c='r',ls='')
-    plt.plot(range(0,steps*2,2),fracs[::2,1],marker='o',c='b',ls='')
-    plt.plot(range(1,steps*2,2),fracs[1::2,1],marker='d',c='b',ls='')
+    plt.plot(list(range(0,steps*2,2)),fracs[::2,0],marker='o',c='r',ls='')
+    plt.plot(list(range(1,steps*2,2)),fracs[1::2,0],marker='d',c='r',ls='')
+    plt.plot(list(range(0,steps*2,2)),fracs[::2,1],marker='o',c='b',ls='')
+    plt.plot(list(range(1,steps*2,2)),fracs[1::2,1],marker='d',c='b',ls='')
     
-    plt.plot(range(steps*2),fracs[:,2],'k')
+    plt.plot(list(range(steps*2)),fracs[:,2],'k')
 
-    plt.plot(range(steps),[N*g(i,X) for i in xrange(steps)],'g:')
+    plt.plot(list(range(steps)),[N*g(i,X) for i in range(steps)],'g:')
     pp=[(1-X)]
-    for i in xrange(steps-1):
+    for i in range(steps-1):
         pp.append(pprime(pp[-1]))
-    plt.plot(range(steps),[N*p for p in pp],'c:')
+    plt.plot(list(range(steps)),[N*p for p in pp],'c:')
     plt.legend()
     plt.show(block=False)
         
@@ -689,14 +689,14 @@ def quavo(n):
     Q=np.matrix(((0.7,0,0),(0.2,0.9,0),(0.1,0.1,1)))
     f=np.array([3,1,0])
     #print Q
-    for j in xrange(3):
-        n_prime[j]=sum([n[i]*Q[j,i] for i in xrange(3)])
+    for j in range(3):
+        n_prime[j]=sum([n[i]*Q[j,i] for i in range(3)])
 
     #print n_prime
 
-    for j in xrange(3):
+    for j in range(3):
         #print n_prime[j],f[j], sum([f[i]*n_prime[i] for i in xrange(3)])
-        n_pp[j]=n_prime[j]*f[j]/(1.*sum([f[i]*n_prime[i] for i in xrange(3)]))
+        n_pp[j]=n_prime[j]*f[j]/(1.*sum([f[i]*n_prime[i] for i in range(3)]))
     
 
     return n_pp
@@ -713,7 +713,7 @@ from random import choice
 def T():
     l=['A']*70+['B']*10
 
-    n=[choice(l) for _ in xrange(100)]
+    n=[choice(l) for _ in range(100)]
     return n.count('A')-l.count('A')*(10./8)
     
 

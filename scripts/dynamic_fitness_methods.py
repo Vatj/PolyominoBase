@@ -24,11 +24,11 @@ def LoadExistingData2(needle,mu):
 def LoadPartials(N=100,mu=16):
     d={}
     for A,O in [(3,50000),(2,5),(2,25),(2,75),(1,5),(1,15),(1,25)]:
-        print 'loading for A,O'
+        print('loading for A,O')
         d['A{}O{}'.format(A,O)]=SolutionCDF_Partials(500,A,mu,O,N)
     return d
 def SavePartial(d,mu):
-        np.savez('/rscratch/asl47/Processed/Dynamic/fitness_increments_Mu{}_K5000'.format(mu),d.values(),args=d.keys(),allow_pickle=True)
+        np.savez('/rscratch/asl47/Processed/Dynamic/fitness_increments_Mu{}_K5000'.format(mu),list(d.values()),args=list(d.keys()),allow_pickle=True)
 def ReadPartial(mu):
     loaded= np.load('/rscratch/asl47/Processed/Dynamic/fitness_increments_Mu{}_K5000.npz'.format(mu),allow_pickle=True)
     data={}
@@ -47,7 +47,7 @@ def SolutionCDF(needle_length=30,A=2,mu=4,O=3,runs=1):
     
     needle=np.ones(needle_length,dtype=np.float64)
     
-    for r in xrange(runs):
+    for r in range(runs):
         subfile_name='A{}_T20_C200_N500_Mu{}_O{}_K25000_I0_Run{}'.format(A,Mu_Sets[mu],O,r)
         fitness_import=np.loadtxt('/scratch/asl47/Data_Runs/Dynamic_3/A{}Mu{}O{}/{}_Fitness.txt'.format(A,mu,O,subfile_name))
         #/A{}Mu{}O{}/
@@ -59,7 +59,7 @@ def SolutionCDF(needle_length=30,A=2,mu=4,O=3,runs=1):
                 occ+=1
                 firsts.append(haystack)
 
-    print "seen {} times for a fraction of {}".format(occ,occ*1./runs)
+    print("seen {} times for a fraction of {}".format(occ,occ*1./runs))
     return firsts
 x=[]
 def SolutionCDF_Partials(pop_amount=500,A=2,mu=4,O=3,p=0,runs=1):
@@ -67,7 +67,7 @@ def SolutionCDF_Partials(pop_amount=500,A=2,mu=4,O=3,p=0,runs=1):
     Mu_Sets={32:'0.001563',16:'0.003125',8:'0.006250',4:'0.012500',1:'0.050000'}
      
     
-    for r in xrange(runs):
+    for r in range(runs):
 
         subfile_name='A{}_T20_C200_N1000_Mu{}_O{}_K20000_P{}_Run{}'.format(A,Mu_Sets[mu],O,p,r)
         #fitness_import=np.loadtxt('/scratch/asl47/Data_Runs/Dynamic_T2/Mu{}/{}_Fitness.txt'.format(mu,subfile_name))
@@ -102,7 +102,7 @@ def SolutionCDF_Partials(pop_amount=500,A=2,mu=4,O=3,p=0,runs=1):
         
             
         except Exception as e:
-            print r,"excepted",fitness_import.shape
+            print(r,"excepted",fitness_import.shape)
         
 
 

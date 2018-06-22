@@ -8,11 +8,12 @@ import matplotlib.pyplot as plt
 from math import factorial
 from operator import mul
 from itertools import combinations_with_replacement
+from functools import reduce
 
 def choose(n, k):
     ntok = 1
     ktok = 1
-    for t in xrange(1, min(k, n - k) + 1):
+    for t in range(1, min(k, n - k) + 1):
         ntok *= n
         ktok *= t
         n -= 1
@@ -20,14 +21,14 @@ def choose(n, k):
 
 
 def product_of(list_iterable):
-    return reduce(mul, list_iterable, 1L)
+    return reduce(mul, list_iterable, 1)
 
 def Find_Neutral_Degeneracy(F,N,P):
-    print [[choose(F,U)*N**(F-U)]+[[product_of([P-2*Upp for Upp in xrange(0,Up-1+1)])]+[sum(product_of(factors) for factors in combinations_with_replacement(xrange(1,Up+1),U-Up))] for Up in xrange(0,U+1)] for U in xrange(0,F+1)]
-    return sum([choose(F,U)*N**(F-U)*sum([product_of([P-2*Upp for Upp in xrange(0,Up-1+1)])*sum(product_of(factors) for factors in combinations_with_replacement(xrange(1,Up+1),U-Up)) for Up in xrange(0,U+1)]) for U in xrange(0,F+1)])
+    print([[choose(F,U)*N**(F-U)]+[[product_of([P-2*Upp for Upp in range(0,Up-1+1)])]+[sum(product_of(factors) for factors in combinations_with_replacement(range(1,Up+1),U-Up))] for Up in range(0,U+1)] for U in range(0,F+1)])
+    return sum([choose(F,U)*N**(F-U)*sum([product_of([P-2*Upp for Upp in range(0,Up-1+1)])*sum(product_of(factors) for factors in combinations_with_replacement(range(1,Up+1),U-Up)) for Up in range(0,U+1)]) for U in range(0,F+1)])
    
 def Find_Interacting_Degeneracy(N_Interacting_Colours,N_Interacting_Tuples):
-    return product_of([N_Interacting_Colours-2*x for x in xrange(0,N_Interacting_Tuples)])
+    return product_of([N_Interacting_Colours-2*x for x in range(0,N_Interacting_Tuples)])
 
 def Find_Tile_Set_Interchange_Degeneracy(Tiles):
     return float(factorial(len(Tiles)))/product_of([factorial(Tiles.count(list(unique_tile))) for unique_tile in set(tuple(tile) for tile in Tiles)])
@@ -70,12 +71,12 @@ def Find_Overall_Degeneracy(Tile_Set,N_Colours,verbose=False):
     if Tile_SetF.count(0)>=1:
         Combined_Degeneracy*=Find_Neutral_Degeneracy(Tile_SetF.count(0),2,N_Colours-max(Tile_SetF)-2)
         if verbose:
-            print "Neutral: ",Find_Neutral_Degeneracy(Tile_SetF.count(0),2,N_Colours-max(Tile_SetF)-2)
+            print("Neutral: ",Find_Neutral_Degeneracy(Tile_SetF.count(0),2,N_Colours-max(Tile_SetF)-2))
         
     #Tile Interchange
     Combined_Degeneracy*=Find_Tile_Set_Interchange_Degeneracy(Tile_Set)
     if verbose:
-        print "interchange: ",Find_Tile_Set_Interchange_Degeneracy(Tile_Set)
+        print("interchange: ",Find_Tile_Set_Interchange_Degeneracy(Tile_Set))
     #Individual Tile Symmetry
 
     #for i,Tile in enumerate(list(set([tuple(tt) for tt in Tile_Set]))):
@@ -83,15 +84,15 @@ def Find_Overall_Degeneracy(Tile_Set,N_Colours,verbose=False):
     for i,Tile in enumerate(Tile_Set):
         Combined_Degeneracy*=Find_Tile_Rotational_Degeneracy(Tile)
         if verbose:
-            print "Tile: ",Find_Tile_Rotational_Degeneracy(Tile)
+            print("Tile: ",Find_Tile_Rotational_Degeneracy(Tile))
     #Interacting Pair Degeneracy
     Combined_Degeneracy*=Find_Interacting_Degeneracy(N_Colours-2,max(Tile_SetF)/2)
     if verbose:
-        print "Interacting: ",Find_Interacting_Degeneracy(N_Colours-2,max(Tile_SetF)/2)
+        print("Interacting: ",Find_Interacting_Degeneracy(N_Colours-2,max(Tile_SetF)/2))
 
     #Combined_Degeneracy/=Find_Relabelling_Collisions(Tile_Set)
     if verbose:
-        print "Relabels: ",Find_Relabelling_Collisions(Tile_Set)
+        print("Relabels: ",Find_Relabelling_Collisions(Tile_Set))
     return int(Combined_Degeneracy)
 
 
@@ -99,7 +100,7 @@ def Find_Relabelling_Collisions(Tile_Set):
     duplicate_Factor=1
     flat_Tiles=[item for sublist in Tile_Set for item in sublist]
     
-    for i in xrange(1,max(flat_Tiles)+2,2):
+    for i in range(1,max(flat_Tiles)+2,2):
         if i in flat_Tiles:
             if flat_Tiles.count(i)==flat_Tiles.count(i+1):
                 duplicate_Factor*=2
@@ -122,13 +123,13 @@ def Test_Degen():
         if Find_Overall_Degeneracy([line[:4],line[4:]],10)!=Counts[i]:
             misM+=1
             if Find_Overall_Degeneracy([line[:4],line[4:]],10)<Counts[i]:
-                print "Not ideal"
+                print("Not ideal")
             else:
-                print line,"N:",i,"  off by factor ",Find_Overall_Degeneracy([line[:4],line[4:]],10)*1./Counts[i]
+                print(line,"N:",i,"  off by factor ",Find_Overall_Degeneracy([line[:4],line[4:]],10)*1./Counts[i])
             #print "fixed attempt is ", Find_Overall_Degeneracy([line[:4],line[4:]],10)*1./Find_Relabelling_Collisions([line[:4],line[4:]])/Counts[i]
             
-    print "Mismatch total was ",misM
-    print "total recovery was ",misS
+    print("Mismatch total was ",misM)
+    print("total recovery was ",misS)
 
 
 
@@ -137,12 +138,12 @@ def Compare_Methods():
     F_Max=16
     C_Max=50
     
-    z=[[0 for x in xrange(1,F_Max+1)] for y in xrange(0,C_Max+1,2)]
-    print z[0]
-    for F in xrange(1,F_Max+1):
-        print "on F ",F
-        for C in xrange(0,C_Max+1,2):
-            print "on C ",C
+    z=[[0 for x in range(1,F_Max+1)] for y in range(0,C_Max+1,2)]
+    print(z[0])
+    for F in range(1,F_Max+1):
+        print("on F ",F)
+        for C in range(0,C_Max+1,2):
+            print("on C ",C)
             #rint "on ",F," and ",C
             #print "filling indexes ",C/2," ",F-1
             z[C/2][F-1]=Find_Neutral_Degeneracy(F,C,0,[],0)-Find_Neutral_Degeneracy_Experimental_2(F,2,C)
@@ -158,11 +159,11 @@ def Plot_Degens():
     from matplotlib.colors import LogNorm
     F_Max=12
     C_Max=40
-    z=[[0 for x in xrange(1,F_Max+1)] for y in xrange(0,C_Max+1,2)]
+    z=[[0 for x in range(1,F_Max+1)] for y in range(0,C_Max+1,2)]
     #print z[0]
-    for F in xrange(1,F_Max+1):
+    for F in range(1,F_Max+1):
         #print "on F ",F
-        for C in xrange(0,C_Max+1,2):
+        for C in range(0,C_Max+1,2):
             #print "on C ",C
             #rint "on ",F," and ",C
             #print "filling indexes ",C/2," ",F-1
@@ -202,9 +203,9 @@ def Topology_Generator(Input_Stubs):
         return Overall_Topology
     else:
         #Start the recursion
-        for launch in xrange(Overall_Topology.count('*')):
+        for launch in range(Overall_Topology.count('*')):
             replaceIndex=Overall_Topology.index('*')
-            for iterate in xrange(launch):
+            for iterate in range(launch):
                 replaceIndex+=Overall_Topology[replaceIndex+1:].index('*')+1
                 
             New_Topology=Overall_Topology[:]
@@ -215,7 +216,7 @@ def Topology_Generator(Input_Stubs):
 
 def Recursive_Topology_Step(Recursive_Topology,Conjugate_Locations):
     if '*' not in Recursive_Topology:
-        for sliceRange in xrange(0,len(Recursive_Topology)-4,4):
+        for sliceRange in range(0,len(Recursive_Topology)-4,4):
             if Check_Smaller_Tile(Recursive_Topology[sliceRange:sliceRange+4],Recursive_Topology[sliceRange+4:sliceRange+8]):
                 #print "REJECTED: ",Recursive_Topology
                 break
@@ -224,7 +225,7 @@ def Recursive_Topology_Step(Recursive_Topology,Conjugate_Locations):
                 break
         else:
             if Recursive_Topology[:4]==[0,1,1,2]:
-                print Recursive_Topology
+                print(Recursive_Topology)
     else:
         nextIndex=Recursive_Topology.index('*')
 
@@ -253,7 +254,7 @@ def Check_Smaller_Tile(First_Tile,Second_Tile):
     Return:
     True if second is larger
     """
-    for face in xrange(4):
+    for face in range(4):
         if First_Tile[face]<Second_Tile[face]:
             return False
         elif First_Tile[face]==Second_Tile[face]:

@@ -1,8 +1,5 @@
 #include "core_genotype.hpp"
 
-
-
-
 ////////////
 //Edge Set//
 ////////////

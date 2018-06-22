@@ -30,10 +30,10 @@ def plotFitnessFunc():
      plt.xlabel('Fitness')
      plt.ylabel('PDF')
      plt.show(block=False)
-     
+
 
 def plotRandomTheory(I_size,g_len):
-     
+
      b_asym=binom(I_size,.5)
      b_sym=binom(I_size/2,.5)
 
@@ -46,10 +46,10 @@ def plotRandomTheory(I_size,g_len):
      plt.text(.5,2/float(g_len+1)*b_sym.pmf(I_size/4.)*.9,'sym',ha='center',va='top')
 
      plt.text(.5,float(g_len-1)/(g_len+1)*b_asym.pmf(I_size/2.)*.9,'asym',ha='center',va='bottom')
-     
+
      plt.yscale('log')
      plt.show(block=False)
-     
+
 
 def plotInterfaceProbability(l_I,l_g,Nsamps=False):
 
@@ -70,15 +70,15 @@ def plotInterfaceProbability(l_I,l_g,Nsamps=False):
      ax1.plot(s_hats[::2],np.log10(sym_factor(l_g)*SF_sym(s_hats[::2])),ls='',marker='^',c='royalblue')
      ax1.plot(s_hats,np.log10(asym_factor(l_g)*SF_asym(s_hats)),ls='',marker='o',c='firebrick')
 
-    
+
      ax2 = ax1.twinx()
-     
+
      ratios=np.log10((sym_factor(l_g)*SF_sym(s_hats))/(asym_factor(l_g)*SF_asym(s_hats)))
      ax2.plot(s_hats,ratios,c='darkseagreen')
      crossover=np.where(ratios>0)[0][0]
      ax2.axvline(s_hats[crossover],color='k',ls='--')
      ax2.axhline(color='k',ls='-',lw=0.2)
-     
+
      Is={8:np.uint8,16:np.uint16,32:np.uint32,64:np.uint64}
      if Nsamps:
           set_length(l_I)
@@ -88,7 +88,7 @@ def plotInterfaceProbability(l_I,l_g,Nsamps=False):
                indices=choice(list(cwr(range(l_g),2)))
                if indices[0]!=indices[1]:
                     bases=np.random.randint(0,np.iinfo(Is[l_I]).max,dtype=Is[l_I],size=2)
-                    
+
                     a_m[np.where(BindingStrength(*bases)>=s_hats)]+=1
                else:
                     base=np.random.randint(0,np.iinfo(Is[l_I]).max,dtype=Is[l_I])
@@ -97,14 +97,14 @@ def plotInterfaceProbability(l_I,l_g,Nsamps=False):
           a_m2=np.ma.log10(a_m/Nsamps)
           ax1.plot(s_hats[::2],s_m2[::2],ls='--',c='royalblue')
           ax1.plot(s_hats,a_m2,ls='--',c='firebrick')
-     
+
 
      crossover_height=np.log10(asym_factor(l_g)*SF_asym(1))/2.
      ax1.text(crossover/float(l_I),crossover_height,'crossover',ha='right',va='center',rotation=90)
      scale_factor=np.log10(asym_factor(l_g)*SF_asym(s_hats))[0]-np.log10(asym_factor(l_g)*SF_asym(s_hats))[-1]
      ax1.text(.2,np.log10(sym_factor(l_g)*SF_sym(.2))-scale_factor*0.05,'sym',va='top')
      ax1.text(.2,np.log10(asym_factor(l_g)*SF_asym(.2)+scale_factor*0.05),'asym',va='bottom')
-     
+
      ax2.text(.1,(ratios[-1]-ratios[0])*.015+ratios[0],'ratio',ha='center',va='bottom')
 
      ax1.set_ylabel(r'$  \log \left( Pr_{\mathrm{interface}} \right) $')
@@ -113,11 +113,11 @@ def plotInterfaceProbability(l_I,l_g,Nsamps=False):
 
      ax1.spines['top'].set_visible(False)
      ax2.spines['top'].set_visible(False)
-     
-     plt.show(block=False)     
-     
 
-     
+     plt.show(block=False)
+
+
+
 
 def plotInterfaceActivation(I_size,L_size):
      b_asym=binom(I_size,.5)
@@ -138,37 +138,37 @@ def plotInterfaceActivation(I_size,L_size):
      plt.text(.6,sym(0.6)/N_interactions*0.9,'sym',ha='right',va='top')
      plt.text(.6,asym(0.6)/N_interactions*.9,'asym',ha='right',va='top')
      plt.text(.6,sym(0.6)/asym(0.6)/.8,'ratio',ha='right',va='bottom')
-     
+
 
      plt.xlabel(r'$\hat{S}$')
      plt.ylabel('Frac pairwise')
      plt.title(r'$I_{size}=$ %i' % I_size)
      plt.yscale('log')
      plt.tight_layout()
-     plt.show(block=False)   
-          
+     plt.show(block=False)
+
 
 """PHYLOGENCY SECTION """
 def plotBulkPhylogeny(data_struct,use_offset=False):
      plt.figure()
      for data in data_struct:
-          plotPhylogeny(*data.values(),called=True,use_offset=use_offset)
+          plotPhylogeny(*list(data.values()),called=True,use_offset=use_offset)
      plt.ylabel(r'$\hat{S}$')
      plt.xlabel('generations')
      plt.show(block=False)
 
 def plotPhylogeny(mae,mai,ms,called=False,use_offset=False):
      if not called:
-          plt.figure()     
+          plt.figure()
      for interface_type,cr in zip([mae,mai,ms],[(.25,.38),(0.58,0.75),(0.91,.08)]):
           for data in interface_type:
-               slope, intercept, r_value, p_value, std_err = linregress(xrange(len(data)-1),data[1:])
+               slope, intercept, r_value, p_value, std_err = linregress(range(len(data)-1),data[1:])
                h= uniform(*cr) if cr[1]>cr[0] else choice([uniform(cr[0],1),uniform(0,cr[1])])
                s = uniform(0.2, 1)
-               v = uniform(0.5, 1)       
+               v = uniform(0.5, 1)
                r, g, b = hsv_to_rgb(h, s, v)
                g_offset=data[0] if use_offset else 0
-               plt.plot(xrange(g_offset,g_offset+len(data)-1),data[1:],c=(r,g,b),alpha=0.2,zorder=1)
+               plt.plot(range(g_offset,g_offset+len(data)-1),data[1:],c=(r,g,b),alpha=0.2,zorder=1)
      patches = [plt.plot([],[],c=color,ls='--')[0] for color in [(.21,.8,.16),(0.16,.22,.8),(.8,.16,.16)]]
      plt.legend(patches,['AE','AI','S'], frameon=False)
      if not called:
@@ -192,18 +192,18 @@ def bootstrap(data, n_boot=10000, ci=68):
      s1 = np.apply_along_axis(scoreatpercentile, 0, b, 50.-ci/2.)
      s2 = np.apply_along_axis(scoreatpercentile, 0, b, 50.+ci/2.)
      return (s1,s2)
-    
+
 def tsplotboot(ax,data,title='',**kw):
     x = np.arange(data.shape[1])
     est = np.nanmean(data, axis=0)
     cis = bootstrap(data,100)
     ax.fill_between(x,cis[0],cis[1],alpha=0.3,color='dimgray', **kw)
-    
+
     ax.plot(x,est,c='dimgray',lw=2)
     for i in data:
          ax.plot(x,i,alpha=0.05,rasterized=1)
     ax.margins(x=0)
-    
+
     ax.set_ylabel(r'$\langle \hat{S} \rangle$')
     if title!='':
          ax.set_title(title)
@@ -219,8 +219,8 @@ def plotData(cc,I_size,t_star,mu=1,g_size=12):
               # v=v[v[:,0]==t_star]
                #v=v[np.count_nonzero(np.isnan(v),axis=1)<1000]
                #tsplotboot(ax,v,k+' {}'.format(len(v)))
-               
-               
+
+
                gen_length=2000#v[0].shape[0]
                co_factor=2 if 'S' in k else 1
                step_length=int(g_size/(2.*mu/co_factor))
@@ -234,9 +234,7 @@ def plotData(cc,I_size,t_star,mu=1,g_size=12):
                pgs=RandomWalk(I_size/co_factor,N_steps,float(co_factor)/6,t_star,1,1)
                ax.plot(range(0,(N_steps+1)*step_length,step_length),pgs[:-1],'b--')
                ax.plot([0,gen_length],[pgs[-1]]*2,'k--',alpha=0.5)
-        
-                    
-                    
+
      plt.xlabel('elapsed generations')
      plt.tight_layout(pad=0)
      fig.suptitle(r'$l_I = %i , S^* = %.2f$' % (I_size,t_star))
@@ -291,12 +289,12 @@ def PhenotypicTransitions(phen_trans,N=40,crit_factor=0.5):
 
 
 def plotTransitions(phen_trans,cdict=None):
-     
+
      fig =plt.figure()
      ncols=int(ceil(np.sqrt(len(phen_trans))))
      nrows=int(ceil(len(phen_trans)/float(ncols)))
      cdict={None:(0,0,0)} if cdict is None else cdict
-     
+
      for i,(key,trans) in enumerate(phen_trans.iteritems(),1):
           if len(trans)==0:
                continue
@@ -305,7 +303,7 @@ def plotTransitions(phen_trans,cdict=None):
           for phen in trans.keys():
                if phen not in cdict:
                     cdict[phen]=icy.generate_new_color(cdict.values(),0.5)
-                    
+
           cols=[cdict[p] if p!=key else 'k' for p in sorted(trans.keys())]
           wedges,_ = ax.pie([trans[k] for k in sorted(trans.keys())],labels=sorted(trans.keys()),colors=cols,startangle=90,counterclock=False)
 
@@ -316,7 +314,7 @@ def plotTransitions(phen_trans,cdict=None):
           fig = plt.gcf()
           fig.gca().add_artist(centre_circle)
      plt.show(block=False)
-     
+
      return cdict
 
 
@@ -340,7 +338,7 @@ def plotTransitionsDetailed(pt):
      size_counts={i:len(scaled_count[v]) for i,v in enumerate(sorted(scaled_count.keys()))}
      #return scaled_count,size_counts
 
-     
+
      fig,ax = plt.subplots(1)
      connection_dict={}
      phen_dict={}
@@ -352,7 +350,7 @@ def plotTransitionsDetailed(pt):
                     continue
                total_weight=sum(scaled_count[c][phen].values())
                for connector,weight in scaled_count[c][phen].iteritems():
-                    
+
                     con_x=np.count_nonzero(connector[2:])-1
                     offset2=0 if len(scaled_count[con_x+1])%2==1 else .5
                     con_y=len(scaled_count[con_x+1])/2-sorted(scaled_count[con_x+1]).index(connector)-offset2
@@ -375,11 +373,11 @@ def plotTransitionsDetailed(pt):
                          dx+=1
                          dy=dy-(np.sign(dy_f)) if abs(dy)>=1 else 0
                     connection_dict[(phen,connector)]=AddConnectionPatch(ax,spline_points,float(weight)/total_weight)
-                    
 
-                         
- 
-               
+
+
+
+
      ax.set_aspect(1)
      ax.relim()
      ax.autoscale_view()
@@ -394,7 +392,7 @@ def plotTransitionsDetailed(pt):
           patch_coord=[int(np.round(mean_click[0])),np.round(mean_click[1]*2)/2.]
           if abs(patch_coord[1])<.25:
                patch_coord[1]=0
-               
+
           phen_slices=scaled_count[sorted(scaled_count.keys())[patch_coord[0]]]
           j=int(len(phen_slices)/2-(0 if len(phen_slices)%2==1 else .5)-patch_coord[1])
 
@@ -416,9 +414,9 @@ def plotTransitionsDetailed(pt):
                for artist in phen_dict[phen]:
                     artist.set_alpha(1)
 
-                    
 
-                    
+
+
           fig.canvas.draw()
           return True
 
@@ -428,7 +426,7 @@ def plotTransitionsDetailed(pt):
 
 
 
-  
+
 def AddPhenotypePatch(ax,shape,xy):
      ar_offsets={0:(0,-.25,0,.25),1:(-.25,0,.25,0),2:(0,.25,0,-.25),3:(.25,0,-.25,0)}
      cols=['darkgreen','royalblue','firebrick','goldenrod','mediumorchid']
@@ -446,20 +444,19 @@ def AddPhenotypePatch(ax,shape,xy):
                artists.append(ax.arrow(new_x+(.5+ar_offsets[theta][0])*scale,new_y+(.5+ar_offsets[theta][1])*scale, ar_offsets[theta][2]*scale, ar_offsets[theta][3]*scale, head_width=0.075*scale, head_length=0.15*scale, fc='k', ec='k',alpha=0.1))
      return artists
 
-     
+
 from scipy.interpolate import splprep, splev
 
 def AddConnectionPatch(ax,pts,weight):
 
-     tck, u = splprep(pts.T, u=None, s=0.0,k=3, per=False) 
+     tck, u = splprep(pts.T, u=None, s=0.0,k=3, per=False)
      u_new = np.linspace(u.min(), u.max(), 50)
      x_new, y_new = splev(u_new, tck, der=0)
-     
+
      ar=ax.arrow(x_new[x_new.shape[0]/2],y_new[y_new.shape[0]/2],x_new[x_new.shape[0]/2+1]-x_new[x_new.shape[0]/2],y_new[y_new.shape[0]/2+1]-y_new[y_new.shape[0]/2], shape='full', lw=0, length_includes_head=True, head_width=.05,alpha=0.1)
      ln=ax.plot(x_new, y_new, 'b--',lw=weight*2,alpha=0.1)[0]
      return (ln,ar)
 
-     
+
 def getD():
      return {(4, 1, 1, 5, 7, 3): {(1, 1, 1): 93, (2, 1, 1, 3): 123, (2, 1, 1, 5): 96}, (3, 3, 1, 5, 2, 8, 0, 6, 4, 7, 3): {(2, 1, 1, 5): 94}, (4, 3, 0, 0, 1, 0, 5, 9, 11, 7, 0, 3, 0, 0): {(4, 1, 1, 5, 7, 3): 68}, (4, 4, 0, 0, 1, 0, 4, 5, 6, 0, 0, 8, 7, 2, 0, 3, 0, 0): {(1, 1, 1): 63, (2, 1, 1, 5): 85}, (2, 2, 1, 5, 7, 3): {(2, 1, 1, 5): 91}, (3, 2, 0, 1, 5, 7, 3, 0): {(2, 1, 1, 5): 98, (1, 1, 1): 96, (2, 1, 1, 3): 151}, (2, 1, 1, 5): {(1, 1, 1): 206, (2, 1, 1, 3): 130}, (6, 1, 1, 5, 9, 11, 7, 3): {(4, 1, 1, 5, 7, 3): 61}, (2, 2, 0, 1, 4, 5): {(2, 1, 1, 5): 106}, (5, 4, 0, 0, 1, 5, 2, 1, 5, 8, 0, 6, 8, 0, 6, 7, 3, 4, 7, 3, 0, 0): {(4, 1, 1, 5, 7, 3): 62}, (4, 3, 0, 0, 1, 5, 0, 1, 3, 0, 7, 3, 0, 0): {(3, 2, 0, 1, 5, 7, 3, 0): 60}, (3, 2, 0, 1, 5, 9, 3, 0): {(3, 2, 0, 1, 5, 7, 3, 0): 62}, (2, 1, 1, 3): {(1, 1, 1): 382}, (3, 1, 1, 5, 9): {(1, 1, 1): 71, (2, 1, 1, 5): 98}, (4, 1, 1, 5, 7, 9): {(4, 1, 1, 5, 7, 3): 68}, (3, 2, 1, 1, 2, 4, 3, 3): {(2, 1, 1, 3): 132}, (3, 1, 1, 5, 3): {(2, 1, 1, 5): 98}, (4, 3, 0, 0, 0, 1, 5, 9, 11, 7, 3, 0, 0, 0): {(4, 1, 1, 5, 7, 3): 69}, (2, 2, 0, 1, 5, 9): {(1, 1, 1): 88, (2, 1, 1, 5): 106}, (2, 2, 1, 2, 4, 3): {(2, 1, 1, 3): 80, (1, 1, 1): 147}, (2, 2, 1, 2, 4, 5): {(1, 1, 1): 70, (2, 1, 1, 5): 96}, (3, 2, 1, 5, 9, 11, 7, 3): {(3, 2, 0, 1, 5, 7, 3, 0): 62}}
-

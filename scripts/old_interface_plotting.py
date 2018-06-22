@@ -32,23 +32,23 @@ def VisualisePhenotypes(r_type,temperature,mu,gamma,run):
           line_count+=1
           line_count%=page_max
      else:
-          for l in xrange(line_count,page_max):
+          for l in range(line_count,page_max):
                axarr.reshape(-1)[l].set_axis_off()
      
      plt.show(block=False)
 
 def Test():
      un=set()
-     for r in xrange(20):
+     for r in range(20):
           for v in VisualisePhenotypes('S',0.000001,.5,1,r):
                un.add(tuple(v[2:]))
-          print len(un)
+          print(len(un))
      return sorted(list(un),key = lambda z : sum([1 for i in z[2:] if i!=0]))
              
 def LoadSizes(r_type,temperature,mu,gamma,runs=0):
      sizes=defaultdict(int)
      phen_count=[]
-     for r in xrange(runs):
+     for r in range(runs):
           phens=0
           for line in open(BASE_FILE_PATH.format('Sizes',r_type,temperature,mu,gamma,r)):
                (size,count)=[int(i) for i in line.rstrip().split()]
@@ -64,25 +64,25 @@ def LoadSizes(r_type,temperature,mu,gamma,runs=0):
 def LoadPairSizes(temperature,mu,gamma,runs=0):
      if runs==0:
           runs=min(GetMaxRun('S',temperature,mu,gamma),GetMaxRun('R',temperature,mu,0))
-          print "Runs evaluated at ",runs
+          print("Runs evaluated at ",runs)
      return (LoadSizes('S',temperature,mu,gamma,runs),'Selection',runs),(LoadSizes('S',temperature,mu,gamma,runs),'Random',runs)
 
 def LoadData(d_type,r_type,temperature,mu,gamma,runs=1):
      data=[]
-     for r in xrange(runs):
+     for r in range(runs):
           data.append(np.loadtxt(BASE_FILE_PATH.format(d_type,r_type,temperature,mu,gamma,r)))
      return np.stack(data,axis=2)
 
 def LoadPairFitness(temperature,mu,gamma,runs=0):
      if runs==0:
           runs=min(GetMaxRun('S',temperature,mu,gamma),GetMaxRun('R',temperature,mu,0))
-          print "Runs evaluated at ",runs
+          print("Runs evaluated at ",runs)
      return LoadData('Fitness','S',temperature,mu,gamma,runs),LoadData('Fitness','S',temperature,mu,gamma,runs)
 
 def LoadPairStrengths(temperature,mu,gamma,runs=0):
      if runs==0:
           runs=min(GetMaxRun('S',temperature,mu,gamma),GetMaxRun('R',temperature,mu,0))
-          print "Runs evaluated at ",runs
+          print("Runs evaluated at ",runs)
      return LoadData('Strengths','S',temperature,mu,gamma,runs),LoadData('Strengths','S',temperature,mu,gamma,runs)
 
 def PlotStrengthRatios(data_frame,N_tiles,title_string='',temperature=-1):
@@ -136,10 +136,10 @@ def PlotStrengthRatios(data_frame,N_tiles,title_string='',temperature=-1):
           self_err_lower=np.log10(self_ratio-self_err)
    
           pairwise_G_stat=2* np.nansum(means[:interface_size+1]*np.log(pairwise_ratio))
-          print "G: {}, p-value: {}".format(pairwise_G_stat,chi2.sf(pairwise_G_stat,interface_size))
+          print("G: {}, p-value: {}".format(pairwise_G_stat,chi2.sf(pairwise_G_stat,interface_size)))
 
           self_G_stat=2* np.nansum(means[interface_size+1:]*np.log(self_ratio))
-          print "G: {}, p-value: {}".format(self_G_stat,chi2.sf(self_G_stat,interface_size/2))
+          print("G: {}, p-value: {}".format(self_G_stat,chi2.sf(self_G_stat,interface_size/2)))
 
  
           
@@ -197,7 +197,7 @@ def PlotPhenotypeSizes(ss,title_string=''):
      max_v=-1
      
      for s in ss:
-          plt.plot(s[0].keys(),[s[0][k]/float(s[2]) for k in s[0].keys()],label=s[1],**plot_params[s[1]])
+          plt.plot(list(s[0].keys()),[s[0][k]/float(s[2]) for k in list(s[0].keys())],label=s[1],**plot_params[s[1]])
           if min_v<0:
                min_v=min(s[0].values())/float(s[2])
                max_v=max(s[0].values())/float(s[2])
@@ -206,7 +206,7 @@ def PlotPhenotypeSizes(ss,title_string=''):
                max_v = max(s[0].values())/float(s[2]) if max(s[0].values())/float(s[2])>max_v else max_v
           
                
-     plt.plot(range(1,len(poly_sizes)+1),poly_sizes,marker='x',c='k',markeredgewidth=1.25,ls='',label='One-sided Polyominoes')
+     plt.plot(list(range(1,len(poly_sizes)+1)),poly_sizes,marker='x',c='k',markeredgewidth=1.25,ls='',label='One-sided Polyominoes')
 
 
      plt.ylim((min_v*0.8,max_v*1.5))
@@ -263,7 +263,7 @@ def PlotInterfaceStrengths(data_frame,N_tiles,title_string=''):
      slices=np.zeros((1),dtype=np.int32)
      slices=np.concatenate([slices,np.array([generations-1])])#np.logspace(0,np.log10(generations-1),20,dtype=np.int32)])
      population_size=78000. #float(data_frame[0][0,0,0])#/(L*(L+1)/2)
-     print population_size
+     print(population_size)
      
      for data,ax in zip(data_frame,axarr.reshape(-1)):
      #np.append(data,means[:,-1].reshape(T+1,1))
@@ -278,7 +278,7 @@ def PlotInterfaceStrengths(data_frame,N_tiles,title_string=''):
           #ax.plot(np.linspace(0,1,interface_size+1),[(N_tiles-1.)/(N_tiles+1)*binom_pair.pmf(i)+2./(N_tiles+1)*binom_self.pmf(i/2)*(1-i%2) for i in xrange(interface_size+1)],'kx',markeredgewidth=1)
 
           #ax.plot(np.linspace(0,1,interface_size+1),[(N_tiles-1.)/(N_tiles+1)*binom_pair.pmf(i) for i in xrange(interface_size+1)],'kx',markeredgewidth=1)
-          ax.plot(np.linspace(0,1,interface_size/2+1),[2./(N_tiles+1)*binom_self.pmf(i) for i in xrange(interface_size/2+1)],'k+',markeredgewidth=1)
+          ax.plot(np.linspace(0,1,interface_size/2+1),[2./(N_tiles+1)*binom_self.pmf(i) for i in range(interface_size/2+1)],'k+',markeredgewidth=1)
           
      
      axarr[0].set_ylim([10**-5,1.5])
@@ -331,7 +331,7 @@ def PlotBindingStrengths(Ts,I_size):
      binom_self=binom(I_size/2.,0.5)
 
      comb=np.zeros((I_size+1))
-     for i in xrange(I_size+1):
+     for i in range(I_size+1):
           comb[i]+=binom_pair.pmf(i)
           if i%2==0:
                comb[i]+=binom_self.pmf(i/2)
@@ -360,8 +360,8 @@ def PlotPhenotypeSizesOld(ss):
           else:
                min_v = np.min(hist[hist>0])*1./s[2] if np.min(hist[hist>0])*1./s[2]<min_v else min_v
                max_v = np.max(hist[hist>0])*1./s[2] if np.max(hist[hist>0])*1./s[2]>max_v else max_v
-               print min_v,max_v    
-     plt.plot(range(1,len(poly_sizes)+1),poly_sizes,marker='x',c='k',markeredgewidth=1.25,ls='',label='One-sided Polyominoes')
+               print(min_v,max_v)    
+     plt.plot(list(range(1,len(poly_sizes)+1)),poly_sizes,marker='x',c='k',markeredgewidth=1.25,ls='',label='One-sided Polyominoes')
      plt.ylim((min_v*0.8,max_v*1.5))
      plt.yscale('log',nonposy='mask')
      plt.ylabel(r'$\langle f \rangle$')
@@ -372,7 +372,7 @@ def PlotPhenotypeSizesOld(ss):
 
 def LoadSizesOld(r_type,temperature,mu,runs=1):
      sizes=[]
-     for r in xrange(runs):
+     for r in range(runs):
           sizes.extend([sum([int(s) for s in line.rstrip().split()][2:])  for line in open("/scratch/asl47/Data_Runs/Interface/T{1:.6f}/Sizes_{0}_T{1:.6f}_Mu{2:.6f}_Run{3}.txt".format(r_type,temperature,mu,r))])
      return sizes
 
@@ -381,12 +381,12 @@ def LoadPairSizesOld(temperature,mu,runs=1):
 
 def LoadStrengthsOld(r_type,temperature,mu,gamma,runs=1,interface_size=16):
      total_ret=[]
-     for r in xrange(runs):
+     for r in range(runs):
           per_runs=[]
           bulk_data=[{k:v for (k,v) in zip([float(d) for d in line.rstrip().split()[::2]],[int(d) for d in line.rstrip().split()[1::2]])} for line in open(BASE_FILE_PATH.format('Strengths',r_type,temperature,mu,gamma,r))]
           for data in bulk_data:
                temp=np.zeros((interface_size+1))
-               for k,v in data.iteritems():
+               for k,v in data.items():
                     temp[int(k*interface_size)]=v
                per_runs.append(temp)
           total_ret.append(np.stack(per_runs,axis=1))
@@ -437,7 +437,7 @@ def HistoryLoad(temperature=0.000001,mu=1,gamma=1,run=0):
           converted=[int(i) for i in line.split()]
           if phen_line:
                phens=[]
-               for i in xrange(0,len(converted),2):
+               for i in range(0,len(converted),2):
                     phens.append((converted[i],converted[i+1]))
                phenotype_IDs.append(phens)
                phen_line=False
@@ -461,7 +461,7 @@ def HistoryDiagram(IDs,selections,low=-1,high=-1):
      
      for phen in unique_phens:
           if sum(phen):
-               phen_col[phen]=icy.generate_new_color(phen_col.values(),0)
+               phen_col[phen]=icy.generate_new_color(list(phen_col.values()),0)
           
      for g,(ID,sel) in enumerate(zip(IDs[low:high],selections[low:high])):
           
@@ -477,7 +477,7 @@ def HistoryDiagram(IDs,selections,low=-1,high=-1):
                     #print i,s
                plt.plot([s,i],[g,g+1],'k--',lw=0.5,zorder=10)
 
-     for idpx,c in phen_col.iteritems():
+     for idpx,c in phen_col.items():
           plt.scatter(-10,0,c=c,label=idpx)
      
 
@@ -488,7 +488,7 @@ def HistoryDiagram(IDs,selections,low=-1,high=-1):
           fixation=0#rev_sel[0].index(max(set(rev_sel[0]), key=rev_sel[0].count))
           
           printed_paths=set()
-          for init in xrange(len(rev_sel[0])):
+          for init in range(len(rev_sel[0])):
                fixation=init
                tm=len(selections)-1
                for nex in rev_sel[1:]:
@@ -513,13 +513,13 @@ def PlotAnalysis(gz,N_samps=50,normed=False):
      
      #return sampled_history_strengths
      #plt.figure()
-     for i in xrange(N_samps):
+     for i in range(N_samps):
           sampled_history_strengths=RandomHistorySampling(*gz,goback=1999)
-          for key,interface_pairing in sampled_history_strengths.iteritems():
+          for key,interface_pairing in sampled_history_strengths.items():
                for sequence in interface_pairing:
                     norm_factor=sequence[0] if normed else 1
                     if sequence:
-                         plt.plot(range(len(sequence)),np.array(sequence)/norm_factor-1,alpha=0.4)
+                         plt.plot(list(range(len(sequence))),np.array(sequence)/norm_factor-1,alpha=0.4)
                          return
                          uniq=[L[0] for L in groupby(sequence)]
                          ups=0
@@ -543,7 +543,7 @@ def FF(xs,t):
      t=.05
      mi=stats.norm.cdf(xs[0],q,t)
      ma=stats.norm.cdf(xs[-1],q,t)
-     print ma,mi
+     print(ma,mi)
      scal=1./(ma-mi)
      #print scal,mi
      return stats.norm.cdf((xs-q)/t)#-mi)*scal#*xs**2

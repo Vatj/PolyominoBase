@@ -25,11 +25,20 @@ namespace simulation_params
 
 namespace model_params
 {
-  
+
   constexpr uint8_t interface_size=CHAR_BIT*sizeof(interface_type);
-  
+
   extern double temperature,binding_threshold,fitness_factor,interface_threshold,mu_prob;
   extern bool fixed_seed;
+  extern std::binomial_distribution<uint8_t> b_dist;
+  extern std::uniform_real_distribution<double> real_dist;
+  extern std::array<double,model_params::interface_size+1> binding_probabilities;
+}
+
+std::array<double,model_params::interface_size+1> GenBindingProbsLUP();
+
+/* SPATIAL */
+Phenotype SpatialGrid(std::vector<int8_t>& placed_tiles);
   extern std::binomial_distribution<uint8_t> b_dist;
   extern std::uniform_real_distribution<double> real_dist;
   extern std::array<double,model_params::interface_size+1> binding_probabilities;
@@ -49,10 +58,9 @@ void InterfaceStrengths(BGenotype& interfaces, std::vector<uint32_t>& strengths)
 
 
 namespace interface_model
-{  
+{
   struct InterfacePhenotypeTable;
 
-  
   interface_type reverse_bits(interface_type v);
   uint8_t ArbitraryPopcount(interface_type face1);
   uint8_t SammingDistance(interface_type face1,interface_type face2);
@@ -65,21 +73,18 @@ namespace interface_model
 
   std::vector<int8_t> AssembleProteinNew(const BGenotype& binary_genome,std::set<interaction_pair>& interacting_indices);
   void ExtendPerimeter(const BGenotype& binary_genome,uint8_t tile_detail, int8_t x,int8_t y, std::vector<int8_t>& placed_tiles,std::vector<int8_t>& potential_sites,std::vector<double>& binding_strengths,std::vector<interaction_pair>& interaction_pairs);
-  
 
-
-  
 
   struct InterfacePhenotypeTable : PhenotypeTable {
     std::unordered_map<uint8_t,std::vector<double> > phenotype_fitnesses{{0,{0}}};
-         
+
     /* Replace previously undiscovered phenotype IDs with new phenotype ID */
-    void RelabelPhenotypes(std::vector<Phenotype_ID >& pids,std::map<Phenotype_ID, std::map<interaction_pair, uint8_t> >& p_ints) { 
-      for(std::unordered_map<uint8_t,std::vector<uint16_t> >::iterator x_iter=new_phenotype_xfer.begin();x_iter!=new_phenotype_xfer.end();++x_iter) 
+    void RelabelPhenotypes(std::vector<Phenotype_ID >& pids,std::map<Phenotype_ID, std::map<interaction_pair, uint8_t> >& p_ints) {
+      for(std::unordered_map<uint8_t,std::vector<uint16_t> >::iterator x_iter=new_phenotype_xfer.begin();x_iter!=new_phenotype_xfer.end();++x_iter)
         for(std::vector<uint16_t>::iterator r_iter=x_iter->second.begin();r_iter!=x_iter->second.end();r_iter+=2)
 	  for(auto& imap :p_ints[std::make_pair(x_iter->first,*(r_iter))])
 	    p_ints[std::make_pair(x_iter->first,*(r_iter+1))][imap.first]+=imap.second;
-	
+
       PhenotypeTable::RelabelPhenotypes(pids);
     }
 
@@ -91,8 +96,8 @@ namespace interface_model
     }
     return ID_counter;
   }
-    
-    
+
+
 
     void AssignInitialFitnesses() {
       for(const auto& kv : known_phenotypes) {
@@ -101,13 +106,13 @@ namespace interface_model
 	}
       }
     }
-    
+
     /* Add fitness contribution from each phenotype */
     double GenotypeFitness(std::map<Phenotype_ID,uint8_t> ID_counter) {
-      double fitness=0; 
+      double fitness=0;
       for(std::map<Phenotype_ID,uint8_t >::const_iterator p_it =ID_counter.begin();p_it!=ID_counter.end();++p_it)
         if(p_it->second >= ceil(model_params::UND_threshold*simulation_params::phenotype_builds))
-	    fitness+=phenotype_fitnesses[p_it->first.first][p_it->first.second] * std::pow(static_cast<double>(p_it->second)/simulation_params::phenotype_builds,model_params::fitness_factor);     
+	    fitness+=phenotype_fitnesses[p_it->first.first][p_it->first.second] * std::pow(static_cast<double>(p_it->second)/simulation_params::phenotype_builds,model_params::fitness_factor);
       return fitness;
     }
 
@@ -123,8 +128,3 @@ namespace interface_model
 
   };
 }
-
-
-
-
-
