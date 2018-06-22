@@ -18,6 +18,7 @@ namespace model_params
   std::array<double,model_params::interface_size+1> binding_probabilities;
 }
 
+std::vector<int8_t> (*assembly_model[2]) (const BGenotype&, std::set<interaction_pair>&) {interface_model::AssembleProteinNew,interface_model::AssembleProtein};
 
 namespace interface_model
 {
@@ -58,7 +59,7 @@ namespace interface_model
     std::set<interaction_pair > interacting_indices;
     std::map<Phenotype_ID, std::map<interaction_pair, uint8_t> > phenotype_interactions;
     for(uint8_t nth=0;nth<simulation_params::phenotype_builds;++nth) {
-      assembly_information=AssembleProteinNew(binary_genome,interacting_indices);
+      assembly_information=(*assembly_model[0])(binary_genome,interacting_indices);
 
       if(assembly_information.size()>0) {
         for(auto interacting_pair : interacting_indices)
@@ -100,7 +101,7 @@ namespace interface_model
       for(uint8_t base : genome_bases) {
         if(model_params::real_dist(model_params::RNG_Engine)<model_params::binding_probabilities[SammingDistance(binary_genome[tile*4+orientation],binary_genome[base])]) {
 	  interacting_indices.insert(std::minmax(static_cast<uint8_t>(tile*4+orientation),base));
-          placed_tiles.insert(placed_tiles.end(),{x,y,static_cast<int8_t>(base%4+((GAUGE==4)*(-2*(base%4)+(direction-base%4+4)%4+1)))});
+          placed_tiles.insert(placed_tiles.end(),{x,y,static_cast<int8_t>((direction-base%4+4)%4+1)});
 	  PerimeterGrowth(x,y,(4+direction-(base%4))%4,direction,base/4,growing_perimeter,placed_tiles);
 	  break;
 	}
@@ -229,25 +230,21 @@ Phenotype SpatialGrid(std::vector<int8_t>& placed_tiles) {
   std::tie(y_bottom,y_top)=std::minmax_element(y_locs.begin(),y_locs.end());
   uint8_t dx=*x_right-*x_left+1,dy=*y_top-*y_bottom+1;
   std::vector<uint8_t> spatial_grid(dx*dy);
-  for(uint16_t tileIndex=0;tileIndex<x_locs.size();++tileIndex)
-    spatial_grid[(*y_top-y_locs[tileIndex])*dx + (x_locs[tileIndex]-*x_left)]=tile_vals[tileIndex];
-
-  Phenotype phen{dx,dy,spatial_grid};
-  if(dy>dx) {
-    ClockwiseRotation(phen);
-  }
-  MinimizePhenRep(phen.tiling);
-  return phen;
-}
-
-
-void PrintShape(Phenotype phen) {
-  for(uint8_t y=0;y<phen.dy;++y) {
-    for(uint8_t x=0;x<phen.dx;++x)
-      std::cout<<+phen.tiling[y*phen.dx+x]<<" ";
-    std::cout<<std::endl;
-  }
-  std::cout<<std::endl;
+  for(uint16_t tileIndex=0;tileIndex<x_locs.size();++tileIndex) {
+    uint8_t tile_detail=0;
+    switch(DETERMINISM_LEVEL) {
+    case 1:
+      tile_detail=tile_vals[tileIndex] > 0 ? 1 : 0;
+      break;
+    case 2:
+      tile_detail=tile_vals[tileIndex] > 0 ? (tile_vals[tileIndex]-1)/4+1 : 0;
+      break;
+    case 3:
+      tile_detail=tile_vals[tileIndex];
+    }
+    spatial_grid[(*y_top-y_locs[tileIndex])*dx + (x_locs[tileIndex]-*x_left)]=tile_detail;
+   }
+  return Phenotype{dx,dy,spatial_grid};
 }
 
 uint8_t PhenotypeSymmetryFactor(std::vector<uint8_t>& original_shape, uint8_t dx, uint8_t dy) {

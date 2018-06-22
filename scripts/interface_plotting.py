@@ -16,6 +16,11 @@ from math import ceil
 from copy import deepcopy
 from collections import defaultdict
 
+def plotFF(g,s):
+    xs=np.linspace(0,1,101)
+    plt.figure()
+    plt.plot(xs,(xs>s)*((xs-s)**g/(1-s)**g))
+    plt.show(block=False)
 
 """RANDOM THEORY SECTION """
 def plotFitnessFunc():
