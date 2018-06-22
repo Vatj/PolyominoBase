@@ -9,7 +9,7 @@
 
 std::vector<Phenotype_ID> GetSetPIDs(Genotype genotype, PhenotypeTable* pt_it)
 {
-  Clean_Genome(genotype, 0, false);
+  Clean_Genome(genotype, false);
   std::vector<Phenotype_ID> pIDs = Stochastic::AssemblePlasticGenotype(genotype, pt_it);
   std::sort(pIDs.begin(), pIDs.end());
   return pIDs;

@@ -30,20 +30,20 @@ void GP_MapSampler(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_geno
     if(((iter->first).front() == rare_pID) || ((iter->first).back() == loop_pID))
       continue;
 
-    Set_Metrics set_metrics(model_params::n_genes, model_params::metric_colours);
+    Set_Metrics set_metrics(simulation_params::n_genes, simulation_params::metric_colours);
     set_metrics.ref_pIDs = iter->first;
 
     for(auto genotype: iter->second)
     {
-      neutral_weight = ((double) NeutralSize(genotype, 1, model_params::metric_colours - 1)) / simulation_params::n_jiggle; // This weight will be counted n_jiggle time when added to form the total neutral weight
+      neutral_weight = ((double) NeutralSize(genotype, 1, simulation_params::metric_colours - 1)) / simulation_params::n_jiggle; // This weight will be counted n_jiggle time when added to form the total neutral weight
 
       #pragma omp parallel for schedule(dynamic) firstprivate(genotype, neutral_weight)
       for(uint32_t nth_jiggle=0; nth_jiggle<simulation_params::n_jiggle; ++nth_jiggle)
       {
-        Clean_Genome(genotype, 0, false);
+        Clean_Genome(genotype, false);
         JiggleGenotype(genotype);
 
-        Genotype_Metrics genome_metric(model_params::n_genes, model_params::metric_colours);
+        Genotype_Metrics genome_metric(simulation_params::n_genes, simulation_params::metric_colours);
         genome_metric.set_reference(genotype, iter->first, neutral_weight);
 
         for(Genotype neighbour : genotype_neighbourhood(genotype))
@@ -80,14 +80,14 @@ void GP_MapSimple(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_genom
     number_of_genomes -= (iter->second).size();
     std::cout << "}. Only " <<+ number_of_genomes << " left! \n";
 
-    Set_Metrics set_metrics(model_params::n_genes, model_params::metric_colours);
+    Set_Metrics set_metrics(simulation_params::n_genes, simulation_params::metric_colours);
     set_metrics.ref_pIDs = iter->first;
 
     for(auto genotype: iter->second)
     {
-      neutral_weight = ((double) NeutralSize(genotype, 1, model_params::metric_colours - 1));
+      neutral_weight = ((double) NeutralSize(genotype, 1, simulation_params::metric_colours - 1));
 
-      Genotype_Metrics genome_metric(model_params::n_genes, model_params::metric_colours);
+      Genotype_Metrics genome_metric(simulation_params::n_genes, simulation_params::metric_colours);
       genome_metric.set_reference(genotype, iter->first, neutral_weight);
 
       for(Genotype neighbour : genotype_neighbourhood(genotype))
@@ -111,7 +111,7 @@ void GP_MapSimple(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_genom
 
 void JiggleGenotype(Genotype& genotype)
 {
-  uint8_t max_colour = model_params::metric_colours;
+  uint8_t max_colour = simulation_params::metric_colours;
   uint8_t min_colour =* std::max_element(genotype.begin(), genotype.end());
 
   if(min_colour + 1 == max_colour)
@@ -132,15 +132,15 @@ std::vector<Genotype> genotype_neighbourhood(const Genotype& genome)
   std::vector<Genotype> neighbours;
   Genotype neighbour;
 
-  std::vector<uint8_t> mutants(model_params::metric_colours);
+  std::vector<uint8_t> mutants(simulation_params::metric_colours);
   std::iota(mutants.begin(), mutants.end(), 0);
 
-  for(uint8_t index=0; index<model_params::n_genes*4; ++index)
+  for(uint8_t index=0; index<simulation_params::n_genes*4; ++index)
   {
     std::swap(*std::find(mutants.begin(), mutants.end(),genome[index]), mutants.back());
 
     neighbour = genome;
-    for(int j=0; j<model_params::metric_colours-1; ++j)
+    for(int j=0; j<simulation_params::metric_colours-1; ++j)
     {
       neighbour[index] = mutants[j];
       neighbours.emplace_back(neighbour);
@@ -195,7 +195,7 @@ uint64_t combination_with_repetiton(uint8_t space_size , uint8_t sample_size)
 uint64_t NeutralSize(Genotype genotype, uint32_t N_neutral_colours, uint32_t N_possible_interacting_colours)
 {
   uint8_t neutral_faces = std::count(genotype.begin(),genotype.end(),0);
-  Clean_Genome(genotype, 0, false);
+  Clean_Genome(genotype, false);
   std::set<uint8_t> unique_cols(genotype.begin(),genotype.end());
 
   uint32_t N_interacting_colours= N_possible_interacting_colours, N_interacting_pairs = (unique_cols.size() - 1) / 2;

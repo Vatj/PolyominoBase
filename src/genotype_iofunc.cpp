@@ -1,16 +1,30 @@
 #include "genotype_iofunc.hpp"
+#include <python2.7/Python.h>
 #include <sstream>
 #include <iterator>
 #include <string>
 #include <utility>
 
+// void IsoCall(std::string file_name)
+// {
+//   Py_Initialize();
+//   PyObject* graph_string = PyString_FromString((char *) "./scripts/graph_methods.py");
+//   PyObject* graph_script = PyImport_Import(graph_string);
+//
+//   PyObject* trim_topo = PyObject_GetAttrString(graph_script, (char*) "Trim_Topologies");
+//   PyObject* args = PyString_FromString(file_name.c_str());
+//
+//   PyObject_CallObject(trim_topo, args);
+//   Py_Finalize();
+// }
+
 void PrintConfigFile(std::string config_file)
 {
   std::ofstream fout(config_file);
 
-  fout << "n_genes : " <<+ model_params::n_genes << "\n";
-  fout << "colours : " <<+ model_params::colours << "\n";
-  fout << "metric_colours : " <<+ model_params::metric_colours << "\n";
+  fout << "n_genes : " <<+ simulation_params::n_genes << "\n";
+  fout << "colours : " <<+ simulation_params::colours << "\n";
+  fout << "metric_colours : " <<+ simulation_params::metric_colours << "\n";
   fout << "n_samples : " <<+ simulation_params::n_samples << "\n";
   fout << "Threshold : " <<+ simulation_params::UND_threshold << "\n";
   fout << "Phenotype builds : " <<+ simulation_params::phenotype_builds << "\n";

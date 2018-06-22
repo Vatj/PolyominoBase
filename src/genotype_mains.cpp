@@ -1,12 +1,8 @@
 #include "genotype_mains.hpp"
 
-namespace model_params
-{
-  uint8_t n_genes=4, colours=7, metric_colours=9;
-}
-
 namespace simulation_params
 {
+  uint8_t n_genes=3, colours=7, metric_colours=9;
   uint8_t phenotype_builds= 10;
   uint32_t n_samples = 10, n_jiggle = 3;
   std::mt19937 RNG_Engine(std::random_device{}());
@@ -16,12 +12,12 @@ namespace simulation_params
 
 namespace io_params
 {
-  std::string file_path = "/rscratch/vatj2/public_html/Polyominoes/data/gpmap/V5/meeting/";
+  std::string file_path = "/rscratch/vatj2/public_html/Polyominoes/data/gpmap/V5/experiment/";
   // std::string file_path = "/rscratch/vatj2/public_html/Polyominoes/data/gpmap/V4/reproducibility/threshold95p/";
-  std::string threshold = "_T" + std::to_string(int (100 * simulation_params::UND_threshold));
+  std::string threshold = "_T" + std::to_string((int) ceil(100 * simulation_params::UND_threshold));
   std::string builds = "_B" + std::to_string(simulation_params::phenotype_builds);
-  std::string file_details = "_N" + std::to_string(model_params::n_genes - 1) + "_C" + std::to_string(model_params::colours) + threshold + builds;
-  std::string extra="_Cx" + std::to_string(model_params::metric_colours) + "_J" + std::to_string(simulation_params::n_jiggle);
+  std::string file_details = "_N" + std::to_string(simulation_params::n_genes - 1) + "_C" + std::to_string(simulation_params::colours) + threshold + builds;
+  std::string extra="_Cx" + std::to_string(simulation_params::metric_colours) + "_J" + std::to_string(simulation_params::n_jiggle);
   std::string ending=".txt", iso_ending="_Iso.txt";
   std::string config_file = file_path + "Config" + file_details + extra + ending;
   std::string file_path3 = "/rscratch/vatj2/public_html/Polyominoes/data/gpmap/V5/reproducibility/";
@@ -34,7 +30,7 @@ namespace io_params
   std::string genome_metric_file = file_path + "GenomeMetrics2" + file_details + extra + iso_ending;
 
   std::string file_path2 = "/rscratch/vatj2/public_html/Polyominoes/data/gpmap/V5/duplication/";
-  std::string file_details2 = "_N" + std::to_string(model_params::n_genes) + "_C" + std::to_string(model_params::colours) + threshold + builds;
+  std::string file_details2 = "_N" + std::to_string(simulation_params::n_genes) + "_C" + std::to_string(simulation_params::colours) + threshold + builds;
   // std::string duplicate_file = file_path2 + "DuplicateGenotypes" + file_details2 + iso_ending;
   std::string duplicate_file = file_path + "JiggleDuplicateGenotypes" + file_details2 + extra + ending;
   std::string dup_set_metric_file = file_path + "JiggleDuplicateSetMetrics" + file_details2 + extra + ending;
@@ -55,7 +51,7 @@ int main()
   // QuickRandom();
   // Duplicate();
   // DuplicateJiggle();
-  AnalysisJiggleFromFile();
+  // AnalysisJiggleFromFile();
 
   std::cout << "Back to sleep!" << std::endl;
 

@@ -45,7 +45,7 @@ struct PhenotypeTable {
     uint8_t new_phenotype_index=0;
     for(Phenotype phen_p : undiscovered_phenotypes[phenotype_size]) {
       if(ComparePolyominoes(phen,phen_p)) {
-	if(++undiscovered_phenotype_counts[new_phenotype_index]>=ceil(model_params::UND_threshold*simulation_params::phenotype_builds)) {
+	if(++undiscovered_phenotype_counts[new_phenotype_index]>=ceil(simulation_params::UND_threshold*simulation_params::phenotype_builds)) {
 	  new_phenotype_xfer[phenotype_size].emplace_back(known_phenotypes[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
 	  known_phenotypes[phenotype_size].emplace_back(phen);
 	  new_phenotype_xfer[phenotype_size].emplace_back(known_phenotypes[phenotype_size].size()-1);

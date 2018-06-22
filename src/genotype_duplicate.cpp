@@ -24,7 +24,7 @@ void GenomesJiggleDuplication(std::vector<Genotype>& genomes, std::vector<Genoty
   {
     for(uint32_t nth_jiggle=0; nth_jiggle<simulation_params::n_jiggle; ++nth_jiggle)
     {
-      Clean_Genome(genome, 0, false);
+      // Clean_Genome(genome, false);
       JiggleGenotype(genome);
       jiggle_genomes.emplace_back(genome);
 
@@ -39,9 +39,9 @@ std::vector<Genotype> GeneDuplication(Genotype& genotype)
 {
   std::vector <Genotype> duplicates;
 
-  for(uint8_t index=0; index < model_params::n_genes; ++index)
+  for(uint8_t index=0; index < simulation_params::n_genes; ++index)
   {
-    Genotype duplicate(4 * model_params::n_genes);
+    Genotype duplicate(4 * simulation_params::n_genes);
     std::copy(std::begin(genotype), std::end(genotype), std::begin(duplicate));
 
     for(uint8_t tail=0; tail < 4; tail++)

@@ -1,12 +1,19 @@
 #include <graph_analysis.hpp>
 #include <core_metrics.hpp>
 
+namespace simulation_params
+{
+  extern std::mt19937 RNG_Engine;
+  extern uint8_t phenotype_builds;
+  extern double UND_threshold;
+}
+
 namespace Stochastic
 {
   extern bool STERIC_FORBIDDEN;
 
   std::vector<Phenotype_ID> AssemblePlasticGenotype(Genotype genotype, PhenotypeTable* pt);
-  
+
   Phenotype Generate_Spatial_Occupancy(std::vector<int8_t>& Placed_Tiles_Check, uint8_t generate_mode);
   Phenotype_ID Analyse_Genotype_Outcome(Genotype genome, uint8_t N_Repeated_Checks, PhenotypeTable* pt,uint8_t seed);
   std::vector<int8_t> Stochastic_Polyomino_Builder(const Genotype& genome, uint8_t THRESHOLD_SIZE, uint8_t initial_Tile);

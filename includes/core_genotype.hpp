@@ -10,7 +10,7 @@
 typedef std::vector<uint8_t> Genotype;
 
 uint8_t Interaction_Matrix(uint8_t input_face);
-void Clean_Genome(Genotype& genome,int secondNonInteracting,bool Remove_Duplicates);
+void Clean_Genome(Genotype& genome, bool Remove_Duplicates);
 void Minimize_Tile_Set(Genotype& genome);
 std::map<uint8_t,uint8_t> DuplicateGenes(Genotype& genome);
 bool Disjointed_Check(Genotype& genome);

@@ -5,24 +5,21 @@ uint8_t Interaction_Matrix(uint8_t input_face) {
 }
 
 /*! strips genotype of unused interacting faces and replaces with 0*/
-void Clean_Genome(Genotype& genome,int secondNonInteracting=0,bool Remove_Duplicates=true) {
-  if(secondNonInteracting!=0)
-    std::replace(genome.begin(),genome.end(),secondNonInteracting,0);
-
+void Clean_Genome(Genotype& genome,bool Remove_Duplicates=true) {
   for(uint32_t t=1;t<=*std::max_element(genome.begin(),genome.end());t+=2) {
     if(std::count(genome.begin(),genome.end(),t)==0) //genotype doens't contain this face
-        std::replace(genome.begin(),genome.end(),t+1,0);
+      std::replace(genome.begin(),genome.end(),t+1,uint32_t(0));
     else //genotype does contain this face
       if(std::find(genome.begin(),genome.end(),t+1)==genome.end()) //genotype doesn't contain conjugate
-        std::replace(genome.begin(),genome.end(),t,0);
+        std::replace(genome.begin(),genome.end(),t,uint32_t(0));
   }
 
   if(Remove_Duplicates) {
     Minimize_Tile_Set(genome);
     DuplicateGenes(genome);
-    
   }
 }
+
 
 void Minimize_Tile_Set(Genotype& genome) {
   Genotype Minimal_Genome;

@@ -1,13 +1,9 @@
 #include "genotype_generate.hpp"
 #include <iostream>
 
-namespace model_params
-{
-  extern uint8_t n_genes, colours, metric_colours;
-}
-
 namespace simulation_params
 {
+  extern uint8_t n_genes, colours, metric_colours;
   extern uint32_t n_jiggle;
   extern std::mt19937 RNG_Engine;
 }

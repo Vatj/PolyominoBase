@@ -14,7 +14,7 @@ std::vector<Genotype> SampleMinimalGenotypes(PhenotypeTable* pt)
 
   std::cout << "Generating " <<+ simulation_params::n_samples << " samples \n";
 
-  GenotypeGenerator ggenerator = GenotypeGenerator(model_params::n_genes, model_params::colours);
+  GenotypeGenerator ggenerator = GenotypeGenerator(simulation_params::n_genes, simulation_params::colours);
   ggenerator.init();
 
   std::cout << "Threshold is : " << (ceil(simulation_params::phenotype_builds * simulation_params::UND_threshold));
@@ -39,13 +39,13 @@ std::vector<Genotype> SampleMinimalGenotypes(PhenotypeTable* pt)
   ++generated_genotypes;
 
     uint32_t lbound_neck=0;
-    for(uint8_t neck_ind=0; neck_ind < model_params::n_genes; ++neck_ind)
+    for(uint8_t neck_ind=0; neck_ind < simulation_params::n_genes; ++neck_ind)
     {
       lbound_neck = std::uniform_int_distribution<uint32_t>{lbound_neck, ggenerator.n_necklaces-1}(simulation_params::RNG_Engine);
       states.emplace_back(lbound_neck);
       if(!simulation_params::allow_duplicates)
       {
-        if((lbound_neck + model_params::n_genes - neck_ind) > ggenerator.n_necklaces)
+        if((lbound_neck + simulation_params::n_genes - neck_ind) > ggenerator.n_necklaces)
           continue;
         ++lbound_neck;
       }
@@ -90,7 +90,7 @@ std::vector<Genotype> ExhaustiveMinimalGenotypesIL(PhenotypeTable* pt)
 
   std::cout << "Generating all minimal samples \n";
 
-  GenotypeGenerator ggenerator = GenotypeGenerator(model_params::n_genes, model_params::colours);
+  GenotypeGenerator ggenerator = GenotypeGenerator(simulation_params::n_genes, simulation_params::colours);
   ggenerator.init();
   Genotype genotype, nullg;
   Phenotype_ID loop_pID = {255, 0};
@@ -127,7 +127,7 @@ std::vector<Genotype> ExhaustiveMinimalGenotypesFiltered(PhenotypeTable* pt)
 
   std::cout << "Generating all minimal samples\n";
 
-  GenotypeGenerator ggenerator = GenotypeGenerator(model_params::n_genes, model_params::colours);
+  GenotypeGenerator ggenerator = GenotypeGenerator(simulation_params::n_genes, simulation_params::colours);
   ggenerator.init();
   Genotype genotype, nullg;
   Phenotype_ID rare_pID = {0, 0}, loop_pID = {255, 0};

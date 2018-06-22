@@ -106,7 +106,7 @@ namespace Stochastic
 
         uint8_t conjugate_count=std::count(genome.begin(),genome.end(),next_binds[Noptions*4+2]);
         std::uniform_int_distribution<uint8_t> Random_Count(0,conjugate_count-1);
-        int nth_conjugate=Random_Count(model_params::RNG_Engine);
+        int nth_conjugate=Random_Count(simulation_params::RNG_Engine);
         auto current_conjugate=std::find(genome.begin(),genome.end(),next_binds[Noptions*4+2]);
         for(uint8_t conj_cnt=1;conj_cnt<=nth_conjugate;++conj_cnt)
           current_conjugate=std::find(current_conjugate+1,genome.end(),next_binds[Noptions*4+2]);
@@ -145,7 +145,7 @@ namespace Stochastic
       break;
     }
     uint8_t conjugate_Face=Interaction_Matrix(interacting_Face);
-    next_binds.insert(next_binds.begin()+std::uniform_int_distribution<size_t>{0,next_binds.size()/4}(model_params::RNG_Engine)*4,{static_cast<int8_t>(X+X_OFFSET),static_cast<int8_t>(Y+Y_OFFSET),static_cast<int8_t>(conjugate_Face),static_cast<int8_t>((face_index+2)%4)});
+    next_binds.insert(next_binds.begin()+std::uniform_int_distribution<size_t>{0,next_binds.size()/4}(simulation_params::RNG_Engine)*4,{static_cast<int8_t>(X+X_OFFSET),static_cast<int8_t>(Y+Y_OFFSET),static_cast<int8_t>(conjugate_Face),static_cast<int8_t>((face_index+2)%4)});
   }
 
 

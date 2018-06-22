@@ -1,14 +1,9 @@
-// #include "stochastic_model.hpp"
 #include "genotype_phenotype.hpp"
 #include <iostream>
 
-namespace model_params
-{
-  extern uint8_t n_genes, colours;
-}
-
 namespace simulation_params
 {
+  extern uint8_t n_genes, colours;
   extern std::mt19937 RNG_Engine;
   extern uint8_t phenotype_builds;
   extern uint32_t n_samples;

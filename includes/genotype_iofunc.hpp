@@ -1,19 +1,16 @@
 #include "genotype_duplicate.hpp"
 #include <iostream>
 
-namespace model_params
-{
-  extern uint8_t n_genes, colours, metric_colours;
-}
-
 namespace simulation_params
 {
+  extern uint8_t n_genes, colours, metric_colours;
   extern uint8_t phenotype_builds;
   extern uint32_t n_samples, n_jiggle;
   extern double UND_threshold;
   extern bool allow_duplicates;
 }
 
+// void IsoCall(std::string file_name);
 
 void PrintConfigFile(std::string config_file);
 void PrintGenomeFile(std::string genome_file, std::vector<Genotype>& genomes);
