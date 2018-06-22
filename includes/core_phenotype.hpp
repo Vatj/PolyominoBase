@@ -1,27 +1,41 @@
 #include "core_genotype.hpp"
-
 #include <iostream>
 #include <fstream>
 #include <unordered_map>
 
-constexpr uint8_t FREE_POLYOMINO = true ? 2 : 1, GAUGE = true ? 4 : 1;
+/*! free vs one-sided polyominoes and tile vs orientation determinism */
+constexpr uint8_t FREE_POLYOMINO = true ? 2 : 1, DETERMINISM_LEVEL=1;
+/*!
+  (true) free polyominoes are not chirally distinct
+  (false) one-sided polyominoes are
 
+determinism levels as follows:
+    shape       : 1
+    tile        : 2
+    orientation : 3
+*/
+
+/*! phenotype definitions */
 struct Phenotype {
   uint8_t dx=1;
   uint8_t dy=1;
   std::vector<uint8_t> tiling{1};
 };
+typedef std::pair<uint8_t,uint16_t> Phenotype_ID;
+typedef std::map<std::vector<Phenotype_ID>, std::vector<Genotype>> Set_to_Genome;
 
+/*! print phenotype to stdout */
+void PrintShape(Phenotype& phen);
+
+/*! phenotype rotations */
 void ClockwiseRotation(Phenotype& phen);
 void ClockwisePiRotation(Phenotype& phen);
 void ChiralFlip(Phenotype& phen);
 
+/*! phenotype comparisons*/
 bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2);
 void MinimizePhenRep(std::vector<uint8_t>& tiling);
 void GetMinPhenRepresentation(Phenotype& phen);
-
-typedef std::pair<uint8_t,uint16_t> Phenotype_ID;
-typedef std::map<std::vector<Phenotype_ID>, std::vector<Genotype>> Set_to_Genome;
 
 namespace simulation_params
 {
@@ -58,6 +72,12 @@ struct PhenotypeTable {
       ++new_phenotype_index;
     }
     GetMinPhenRepresentation(phen);
+
+    if(static_cast<uint8_t>(ceil(simulation_params::UND_threshold*simulation_params::phenotype_builds))<=1) {
+      known_phenotypes[phenotype_size].emplace_back(phen);
+      return std::make_pair(phenotype_size,known_phenotypes[phenotype_size].size()-1);
+    }
+
     undiscovered_phenotypes[phenotype_size].emplace_back(phen);
     undiscovered_phenotype_counts.emplace_back(1);
     return std::make_pair(phenotype_size,known_phenotypes[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);

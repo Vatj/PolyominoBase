@@ -164,7 +164,7 @@ int main(int argc, char* argv[]) {
   BGenotype bg{0,0,0,0};//{15540537610786488263,3375271998381208445,0,2018349694661896724, 0,0,3375271998381208445,4697909892076606603};
   std::set<interaction_pair > aa;
   std::vector<int8_t> a;
-  Phenotype phen,phen1{4,4,{0,1,0,0, 0,5,6,2, 4,8,7,0, 0,0,3,0}},phen2{4,4,{0,0,1,0, 4,5,6,0, 0,8,7,2, 0,3,0,0}};
+  Phenotype phen,phen1{4,4,{0,1,0,0, 0,1,1,1, 1,1,1,0, 0,0,1,0}},phen2{4,4,{0,0,1,0, 1,1,1,0, 0,1,1,1, 0,1,0,0}};
   Phenotype phen3{3,2,{0,0,1, 2,5,9}},phen4{3,2,{1,0,0,5,9,4}};
   std::ofstream apple("distrs.txt", std::ios_base::out);
   switch(run_option) {
@@ -172,18 +172,18 @@ int main(int argc, char* argv[]) {
     EvolutionRunner();
     break;
   case 'T':
-    for(auto x:phen3.tiling)
+    for(auto x:phen1.tiling)
       std::cout<<+x<<" ";
     std::cout<<std::endl;
-    GetMinPhenRepresentation(phen3);
-    for(auto x:phen3.tiling)
+    GetMinPhenRepresentation(phen1);
+    for(auto x:phen1.tiling)
       std::cout<<+x<<" ";
     std::cout<<std::endl;
-    for(auto x:phen4.tiling)
+    for(auto x:phen2.tiling)
       std::cout<<+x<<" ";
     std::cout<<std::endl;
-    GetMinPhenRepresentation(phen4);
-    for(auto x:phen4.tiling)
+    GetMinPhenRepresentation(phen2);
+    for(auto x:phen2.tiling)
       std::cout<<+x<<" ";
     std::cout<<std::endl;
 
