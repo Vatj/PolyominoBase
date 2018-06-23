@@ -64,12 +64,23 @@ void Genotype_Metrics::save_to_file(std::ofstream& fout)
   fout <<+ diversity.size() << " ";
   fout <<+ neutral_weight << " ";
 
-  fout << "{";
-  for (auto pID: ref_pIDs)
-    fout <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
+  fout << "(";
+  for(auto paired: pID_counter)
+    fout <<+ paired.second << ",";
+  fout.seekp((long) fout.tellp() - 1);
+  fout << ") ";
 
+  fout << "{";
+  for (auto paired: pID_counter)
+    fout <<+ "(" <<+ paired.first.first << "," <<+ paired.first.second << "),";
   fout.seekp((long) fout.tellp() - 1);
   fout << "}\n";
+
+  // fout << "{";
+  // for (auto pID: ref_pIDs)
+  //   fout <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
+  // fout.seekp((long) fout.tellp() - 1);
+  // fout << "}\n";
 }
 
 void Genotype_Metrics::clear()

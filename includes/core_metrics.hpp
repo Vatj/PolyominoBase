@@ -17,9 +17,9 @@ struct Genotype_Metrics
 {
   uint8_t n_genes, colours;
 
-
   Genotype ref_genotype;
   std::vector <Phenotype_ID> ref_pIDs;
+  std::map <Phenotype_ID, uint16_t> pID_counter;
 
   Phenotype_ID rare_pID = {0, 0}, loop_pID = {255, 0};
 
