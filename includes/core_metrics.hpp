@@ -45,7 +45,8 @@ typedef struct Genotype_Metrics Genotype_Metrics;
 
 struct Set_Metrics
 {
-  uint8_t n_genes, colours, analysed;
+  uint8_t n_genes, colours;
+  uint32_t analysed;
 
   std::vector <Phenotype_ID> ref_pIDs;
 
@@ -53,7 +54,7 @@ struct Set_Metrics
   std::vector <double> intersection_robustnesses, rares, loops;
   std::vector <double> neutral_weightings;
   std::vector <Genotype_Metrics> genome_metrics;
-  std::vector <uint16_t> diversity_tracker;
+  std::vector <uint32_t> diversity_tracker;
 
   std::set <Phenotype_ID> diversity;
 
