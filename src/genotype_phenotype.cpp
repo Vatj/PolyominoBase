@@ -15,6 +15,15 @@ std::vector<Phenotype_ID> GetSetPIDs(Genotype genotype, PhenotypeTable* pt_it)
   return pIDs;
 }
 
+std::map<Phenotype_ID, uint8_t> GetPIDCounter(Genotype genotype, PhenotypeTable* pt_it)
+{
+  Clean_Genome(genotype, false);
+  std::map<Phenotype_ID, uint8_t> ID_counter = Stochastic::AssemblePlasticGenotypeFrequency(genotype, pt_it);
+  std::sort(pIDs.begin(), pIDs.end());
+  return pIDs;
+}
+
+
 void PreProcessSampled(std::vector<Genotype> genomes, Set_to_Genome& set_to_genome, PhenotypeTable* pt)
 {
   Genotype genotype;
