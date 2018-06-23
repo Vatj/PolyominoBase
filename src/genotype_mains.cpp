@@ -2,9 +2,9 @@
 
 namespace simulation_params
 {
-  uint8_t n_genes=3, colours=7, metric_colours=9;
+  uint8_t n_genes=4, colours=7, metric_colours=9;
   uint8_t phenotype_builds=40;
-  uint32_t n_samples = 10, n_jiggle = 3;
+  uint32_t n_samples = 10, n_jiggle = 30;
   std::mt19937 RNG_Engine(std::random_device{}());
   double UND_threshold=0.25;
   bool allow_duplicates = true, STERIC_FORBIDDEN = false;
@@ -21,7 +21,7 @@ namespace io_params
   // std::string file_path3 = "/rscratch/vatj2/public_html/Polyominoes/data/gpmap/V6/reproducibility/";
 
   std::string genome_file = file_path + "SampledGenotypes" + file_details + ending;
-  std::string phenotype_file = file_path + "PhenotypeTable" + file_details + ending;
+  std::string phenotype_file = file_path + "PhenotypeTable" + ending;
   std::string set_file = file_path + "SetTable" + file_details + ending;
   std::string preprocess_file = file_path + "PreProcessGenotypes" + file_details + ending;
   std::string set_metric_file = file_path + "SetMetrics" + file_details + extra + ending;
@@ -74,10 +74,8 @@ void JustExhaustive()
   pt.PrintTable(io_params::phenotype_file);
 
   uint64_t nphen = 0;
-
   for(auto iter = std::begin(pt.known_phenotypes); iter != std::end(pt.known_phenotypes); iter++)
     nphen += (iter->second).size();
-
   std::cout << "The phenotype table has " <<+ nphen << " entries \n";
 }
 
@@ -126,10 +124,21 @@ void QuickFromFile()
   std::vector<Set_Metrics> metrics;
 
   LoadPhenotypeTable(io_params::phenotype_file, &pt);
+
+  uint64_t nphen = 0;
+  for(auto iter = std::begin(pt.known_phenotypes); iter != std::end(pt.known_phenotypes); iter++)
+    nphen += (iter->second).size();
+  std::cout << "The phenotype table has " <<+ nphen << " entries \n";
+
   LoadGenomeFile(io_params::genome_file, genomes);
   PreProcessSampled(genomes, set_to_genome, &pt);
   GP_MapSampler(metrics, set_to_genome, &pt);
   PrintMetrics(io_params::set_metric_file, io_params::genome_metric_file, metrics);
+
+  nphen = 0;
+  for(auto iter = std::begin(pt.known_phenotypes); iter != std::end(pt.known_phenotypes); iter++)
+    nphen += (iter->second).size();
+  std::cout << "The phenotype table has " <<+ nphen << " entries \n";
 }
 
 void Duplicate()
