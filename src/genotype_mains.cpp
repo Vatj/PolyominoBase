@@ -3,7 +3,7 @@
 namespace simulation_params
 {
   uint8_t n_genes=3, colours=7, metric_colours=9;
-  uint8_t phenotype_builds=10;
+  uint8_t phenotype_builds=40;
   uint32_t n_samples = 10, n_jiggle = 3;
   std::mt19937 RNG_Engine(std::random_device{}());
   double UND_threshold=0.25;
@@ -15,7 +15,7 @@ namespace io_params
   std::string file_path = "/rscratch/vatj2/public_html/Polyominoes/data/gpmap/V6/experiment/";
   std::string threshold = "_T" + std::to_string((int) ceil(100 * simulation_params::UND_threshold));
   std::string builds = "_B" + std::to_string(simulation_params::phenotype_builds);
-  std::string file_details = "_N" + std::to_string(simulation_params::n_genes - 1) + "_C" + std::to_string(simulation_params::colours) + threshold + builds;
+  std::string file_details = "_N" + std::to_string(simulation_params::n_genes) + "_C" + std::to_string(simulation_params::colours) + threshold + builds;
   std::string extra="_Cx" + std::to_string(simulation_params::metric_colours) + "_J" + std::to_string(simulation_params::n_jiggle);
   std::string ending=".txt", iso_ending="_Iso.txt";
   // std::string file_path3 = "/rscratch/vatj2/public_html/Polyominoes/data/gpmap/V6/reproducibility/";
@@ -46,9 +46,9 @@ int main()
   std::cout << " colours : " <<+ simulation_params::colours;
   std::cout << " metric_colours : " <<+ simulation_params::metric_colours << "\n";
 
-  JustExhaustive();
+  // JustExhaustive();
   // ExhaustiveMetricsPrintAll();
-  // QuickFromFile();
+  QuickFromFile();
   // QuickRandom();
   // Duplicate();
   // DuplicateJiggle();

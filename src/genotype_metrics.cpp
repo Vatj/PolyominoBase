@@ -46,7 +46,9 @@ void GP_MapSampler(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_geno
         Genotype_Metrics genome_metric(simulation_params::n_genes, simulation_params::metric_colours);
         genome_metric.set_reference(genotype, iter->first, neutral_weight);
 
-        genome_metric.pID_counter = GetPIDCounter(genotype, pt); 
+        std::map<Phenotype_ID, uint8_t> pID_counter = GetPIDCounter(genotype, pt);
+
+        genome_metric.pID_counter.insert(std::begin(pID_counter), std::end(pID_counter));
 
         for(Genotype neighbour : genotype_neighbourhood(genotype))
         {
