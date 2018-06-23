@@ -18,9 +18,8 @@ std::vector<Phenotype_ID> GetSetPIDs(Genotype genotype, PhenotypeTable* pt_it)
 std::map<Phenotype_ID, uint8_t> GetPIDCounter(Genotype genotype, PhenotypeTable* pt_it)
 {
   Clean_Genome(genotype, false);
-  std::map<Phenotype_ID, uint8_t> ID_counter = Stochastic::AssemblePlasticGenotypeFrequency(genotype, pt_it);
-  std::sort(pIDs.begin(), pIDs.end());
-  return pIDs;
+  std::map<Phenotype_ID, uint8_t> pID_counter = Stochastic::AssemblePlasticGenotypeFrequency(genotype, pt_it);
+  return pID_counter;
 }
 
 
