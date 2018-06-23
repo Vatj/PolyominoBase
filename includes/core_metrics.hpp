@@ -53,6 +53,7 @@ struct Set_Metrics
   std::vector <double> intersection_robustnesses, rares, loops;
   std::vector <double> neutral_weightings;
   std::vector <Genotype_Metrics> genome_metrics;
+  std::vector <uint16_t> diversity_tracker;
 
   std::set <Phenotype_ID> diversity;
 

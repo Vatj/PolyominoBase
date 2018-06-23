@@ -96,7 +96,9 @@ void Shape_Metrics::robust_pID(std::vector <Phenotype_ID> pIDs)
 // Constructor of the Set_Metrics structure
 Set_Metrics::Set_Metrics(uint8_t n_genes, uint8_t colours):
 n_genes(n_genes), colours(colours), analysed(0)
-{}
+{
+  diversity_tracker.emplace_back(0);
+}
 
 // Member functions of the Set_Metrics structure
 
@@ -116,6 +118,7 @@ void Set_Metrics::add_genotype_metrics(Genotype_Metrics& genome_metric)
 
   for (auto pID: genome_metric.diversity)
     diversity.insert(pID);
+  diversity_tracker.emplace_back(diversity.size());
 
   genome_metrics.emplace_back(genome_metric);
 }
@@ -137,6 +140,12 @@ void Set_Metrics::save_to_file(std::ofstream& set_out, std::ofstream& genome_out
   set_out <<+ average_union_evolvability << " " <<+ average_rare << " ";
   set_out <<+ average_loop << " " <<+ analysed << " ";
   set_out <<+ total_neutral_size << " " << diversity.size() << " ";
+
+  set_out << "(";
+  for(auto value: diversity_tracker)
+    set_out <<+ value << ",";
+  set_out.seekp((long) set_out.tellp() - 1);
+  set_out << ") ";
 
   set_out << "{";
   for (auto pID: ref_pIDs)
