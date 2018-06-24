@@ -17,7 +17,7 @@ struct Genotype_Metrics
 {
   uint8_t n_genes, colours;
 
-  Genotype ref_genotype;
+  Genotype ref_genotype, original;
   std::vector <Phenotype_ID> ref_pIDs;
   std::map <Phenotype_ID, uint8_t> pID_counter;
 
@@ -49,6 +49,7 @@ struct Set_Metrics
   uint32_t analysed;
 
   std::vector <Phenotype_ID> ref_pIDs;
+  std::vector <Genotype> originals;
 
   std::vector <double> strict_robustnesses, union_evolvabilities;
   std::vector <double> intersection_robustnesses, rares, loops;
