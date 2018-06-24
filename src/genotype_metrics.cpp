@@ -16,7 +16,6 @@ void GP_MapSampler(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_geno
   uint32_t number_of_genomes = 0;
   for(Set_to_Genome::iterator iter = std::begin(set_to_genome); iter != std::end(set_to_genome); iter++)
     number_of_genomes += (iter->second).size();
-
   std::cout << "There are " <<+ number_of_genomes << " genomes to jiggle! \n";
 
   for(Set_to_Genome::iterator iter = std::begin(set_to_genome); iter != std::end(set_to_genome); iter++)
@@ -67,39 +66,58 @@ void GP_MapSampler(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_geno
 
 void GP_MapSimple(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_genome, PhenotypeTable* pt)
 {
-  // Phenotype_ID loop_pID = {255, 0}, rare_pID = {0, 0};
+  Phenotype_ID loop_pID = {255, 0}, rare_pID = {0, 0};
   double neutral_weight = 0;
+  Genotype genotype;
 
+  // Logging message count number of genomes in the preprocess set
   uint32_t number_of_genomes = 0;
   for(Set_to_Genome::iterator iter = std::begin(set_to_genome); iter != std::end(set_to_genome); iter++)
     number_of_genomes += (iter->second).size();
-
   std::cout << "There are " <<+ number_of_genomes << " genomes to analyse! \n";
 
+  // Loop over the map between unique pID sets and their genome representants
   for(Set_to_Genome::iterator iter = std::begin(set_to_genome); iter != std::end(set_to_genome); iter++)
   {
+    // Logging message keep track of the current pID set
     std::cout << "Currently processing " <<+ (iter->second).size() << " genomes for {";
     for(auto pID: iter->first)
       std::cout << "(" <<+ pID.first << ", " <<+ pID.second << "), ";
     number_of_genomes -= (iter->second).size();
     std::cout << "}. Only " <<+ number_of_genomes << " left! \n";
 
+    // Don't compute the metrics for pID set containing either rare or unbound phenotypes
+    if(((iter->first).front() == rare_pID) || ((iter->first).back() == loop_pID))
+      continue;
+
+    // Each set is associated to a set_metric instance which will
+    // store all the genome_metrics and extract statistical informations
     Set_Metrics set_metrics(simulation_params::n_genes, simulation_params::metric_colours);
     set_metrics.ref_pIDs = iter->first;
 
-    for(auto genotype: iter->second)
+    // Loop over each genome representants of the pID set
+    // for(auto genotype: iter->second)
+    #pragma omp parallel for schedule(dynamic) firstprivate(genotype, neutral_weight)
+    for(uint32_t index = 0; index < (iter->second).size(); index++)
     {
+      genotype = (iter->second)[index];
       neutral_weight = ((double) NeutralSize(genotype, 1, simulation_params::metric_colours - 1));
 
+      // GenomeMetrics instance will save informations on each neighbour
+      // Each instance will be stored in the current SetMetric instance
       Genotype_Metrics genome_metric(simulation_params::n_genes, simulation_params::metric_colours);
       genome_metric.set_reference(genotype, iter->first, neutral_weight);
 
+      // Expansive operations calculating the pID set for all the neighbours
       for(Genotype neighbour : genotype_neighbourhood(genotype))
       {
          std::vector<Phenotype_ID> neighbour_pIDs = GetSetPIDs(neighbour, pt);
          genome_metric.analyse_pIDs(neighbour_pIDs);
       }
-      set_metrics.add_genotype_metrics(genome_metric);
+      #pragma omp critical
+      {
+        set_metrics.add_genotype_metrics(genome_metric);
+      }
     }
     metrics.emplace_back(set_metrics);
   }
