@@ -50,22 +50,23 @@ void PrintPreProcessFile(std::string preprocess_file, Set_to_Genome& set_to_geno
 
   for(Set_to_Genome::iterator iter = std::begin(set_to_genome); iter != std::end(set_to_genome); iter++)
   {
-    // fout << "{";
-    // for (auto pID: iter->first)
-    //   fout <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
-    // fout.seekp((long) fout.tellp() - 1);
-    // fout << "}" << "\n";
-    fout << "x ";
-    for (auto pID: iter->first)
-      fout <<+ pID.first << " " <<+ pID.second << " ";
-    fout << "\n";
+    fout << "{";
+    for (auto pID: ref_pIDs)
+      fout <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
+    fout.seekp((long) set_out.tellp() - 1);
+    fout << "} ";
 
-    for(auto genome: iter->second)
+    fout << "[";
+    for (auto original: originals)
     {
-      for(auto index: genome)
-        fout <<+ index << " ";
-      fout << "\n";
+      set_out << "(";
+      for (auto face: original)
+        set_out <<+ face << ",";
+      set_out.seekp((long) set_out.tellp() - 1);
+      set_out << "),";
     }
+    set_out.seekp((long) set_out.tellp() - 1);
+    set_out << "]\n";
   }
 }
 
@@ -86,10 +87,22 @@ void PrintSetTable(std::string set_file, Set_to_Genome& set_to_genome)
 
 void PrintMetrics(std::string set_metric_file, std::string genome_metric_file, std::vector<Set_Metrics> metrics)
 {
+  // Create new files and open them for writing (erase previous data)
   std::ofstream set_metric_out(set_metric_file);
   std::ofstream genome_metric_out(genome_metric_file);
 
-  std::cout << "Print metrics to files : \n" << set_metric_file << "\n" << genome_metric_file << "\n";
+  // Logging
+  std::cout << "Print metrics to files : \n";
+  std::cout << set_metric_file << "\n" << genome_metric_file << "\n";
+
+  // Header for the metric files
+  set_metric_out << "srobustness irobustness meta_evolvability evolvability";
+  set_metric_out << " rare unbound analysed misclassified neutral_size";
+  set_metric_out << " diversity diversity_tracker originals pIDs\n";
+
+  genome_metric_out << "genome original srobustness irobustness";
+  genome_metric_out << " meta_evolvability evolvability rare unbound diversity";
+  genome_metric_out << " neutral_weight frequencies pIDs\n";
 
   for (auto metric: metrics)
     metric.save_to_file(set_metric_out, genome_metric_out);
@@ -115,6 +128,7 @@ void LoadGenomeFile(std::string genome_file, std::vector<Genotype>& genomes)
 
 void LoadPreProcessFile(std::string preprocess_file, Set_to_Genome& set_to_genome)
 {
+  "Defunct Code for now."
   std::string str;
   Genotype genotype;
   std::vector<int> pre_pIDs;
