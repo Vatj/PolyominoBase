@@ -9,7 +9,7 @@ std::vector<Genotype> SampleMinimalGenotypes(PhenotypeTable* pt)
 {
   uint64_t good_genotypes=0, generated_genotypes=0;
   std::vector<Genotype> genomes(simulation_params::n_samples + 4);
-  Phenotype_ID rare_pID = {0, 0}, loop_pID = {255, 0};
+  Phenotype_ID rare_pID = {0, 0}, unbound_pID = {255, 0};
   std::vector<Phenotype_ID> pIDs;
 
   std::cout << "Generating " <<+ simulation_params::n_samples << " samples \n";
@@ -58,7 +58,7 @@ std::vector<Genotype> SampleMinimalGenotypes(PhenotypeTable* pt)
       continue;
 
     pIDs = GetSetPIDs(genotype, pt);
-    if(pIDs.front() == rare_pID || pIDs.back() == loop_pID)
+    if(pIDs.front() == rare_pID || pIDs.back() == unbound_pID)
       continue;
 
       #pragma omp critical
@@ -93,7 +93,7 @@ std::vector<Genotype> ExhaustiveMinimalGenotypesIL(PhenotypeTable* pt)
   GenotypeGenerator ggenerator = GenotypeGenerator(simulation_params::n_genes, simulation_params::colours);
   ggenerator.init();
   Genotype genotype, nullg;
-  Phenotype_ID loop_pID = {255, 0};
+  Phenotype_ID unbound_pID = {255, 0};
   std::vector<Phenotype_ID> pIDs;
   uint64_t good_genotypes = 0, generated_genotypes = 0;
 
@@ -107,7 +107,7 @@ std::vector<Genotype> ExhaustiveMinimalGenotypesIL(PhenotypeTable* pt)
       continue;
 
     pIDs = GetSetPIDs(genotype, pt);
-    if(pIDs.back() == loop_pID)
+    if(pIDs.back() == unbound_pID)
       continue;
 
     good_genotypes++;
@@ -130,7 +130,7 @@ std::vector<Genotype> ExhaustiveMinimalGenotypesFiltered(PhenotypeTable* pt)
   GenotypeGenerator ggenerator = GenotypeGenerator(simulation_params::n_genes, simulation_params::colours);
   ggenerator.init();
   Genotype genotype, nullg;
-  Phenotype_ID rare_pID = {0, 0}, loop_pID = {255, 0};
+  Phenotype_ID rare_pID = {0, 0}, unbound_pID = {255, 0};
   std::vector<Phenotype_ID> pIDs;
   uint64_t good_genotypes = 0, generated_genotypes = 0;
 
@@ -144,7 +144,7 @@ std::vector<Genotype> ExhaustiveMinimalGenotypesFiltered(PhenotypeTable* pt)
       continue;
 
     pIDs = GetSetPIDs(genotype, pt);
-    if(pIDs.front() == rare_pID || pIDs.back() == loop_pID)
+    if(pIDs.front() == rare_pID || pIDs.back() == unbound_pID)
       continue;
 
     good_genotypes++;
@@ -166,7 +166,7 @@ std::vector<Genotype> ExhaustiveMinimalGenotypesFiltered(PhenotypeTable* pt)
 //   // // GenotypeGenerator ggenerator = GenotypeGenerator(n_genes, colours);
 //   // // ggenerator.init();
 //   // // Genotype genotype(2 * 4);
-//   // Phenotype_ID rare_pID = {0, 0}, loop_pID = {255, 0};
+//   // Phenotype_ID rare_pID = {0, 0}, unbound_pID = {255, 0};
 //   // std::vector<Phenotype_ID> pIDs;
 //   // uint64_t good_genotypes = 0, generated_genotypes = 0;
 //
@@ -185,7 +185,7 @@ std::vector<Genotype> ExhaustiveMinimalGenotypesFiltered(PhenotypeTable* pt)
 //   //
 //   //                 pIDs = GetSetPIDs(genotype, pt);
 //   //
-//   //                 if (pIDs.front() != rare_pID && pIDs.back() != loop_pID)
+//   //                 if (pIDs.front() != rare_pID && pIDs.back() != unbound_pID)
 //   //                 {
 //   //                   good_genotypes++;
 //   //                   genomes.emplace_back(copy);

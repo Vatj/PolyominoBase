@@ -48,7 +48,6 @@ int main()
   // QuickFromFile();
   // QuickRandom();
   DuplicateJiggle();
-  // AnalysisJiggleFromFile();
 
   std::cout << "Back to sleep!" << std::endl;
 
