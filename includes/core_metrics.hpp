@@ -21,11 +21,11 @@ struct Genotype_Metrics
   std::vector <Phenotype_ID> ref_pIDs;
   std::map <Phenotype_ID, uint8_t> pID_counter;
 
-  Phenotype_ID rare_pID = {0, 0}, loop_pID = {255, 0};
+  Phenotype_ID rare_pID = {0, 0}, unbound_pID = {255, 0};
 
   double number_of_neighbours;
   double strict_robustness = 0, intersection_robustness = 0, union_evolvability = 0;
-  double rare = 0, loop = 0, neutral_weight=0;
+  double rare = 0, unbound = 0, neutral_weight=0;
 
   std::vector <Shape_Metrics> shapes;
   std::set <Phenotype_ID> diversity;
@@ -53,7 +53,7 @@ struct Set_Metrics
   std::map <Genotype, std::vector<Phenotype_ID>> misclassified;
 
   std::vector <double> strict_robustnesses, union_evolvabilities;
-  std::vector <double> intersection_robustnesses, rares, loops;
+  std::vector <double> intersection_robustnesses, rares, unbounds;
   std::vector <double> neutral_weightings;
   std::vector <Genotype_Metrics> genome_metrics;
   std::vector <uint32_t> diversity_tracker;
