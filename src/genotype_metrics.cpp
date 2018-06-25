@@ -49,6 +49,13 @@ void GP_MapSampler(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_geno
         std::map<Phenotype_ID, uint8_t> pID_counter = GetPIDCounter(genotype, pt);
         genome_metric.pID_counter.insert(std::begin(pID_counter), std::end(pID_counter));
 
+        std::vector<Phenotype_ID> pIDs;
+        for(auto pID: pID_counter)
+          pIDs.emplace_back(pID.first);
+
+        if(pIDs != iter->first)
+          set_metrics.misclassified[genotype] = pIDs;
+
         for(Genotype neighbour : genotype_neighbourhood(genotype))
         {
            std::vector<Phenotype_ID> neighbour_pIDs = GetSetPIDs(neighbour, pt);
@@ -68,7 +75,8 @@ void GP_MapSimple(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_genom
 {
   Phenotype_ID unbound_pID = {255, 0}, rare_pID = {0, 0};
   double neutral_weight = 0;
-  Genotype genotype;
+  Genotype genotype, original;
+  std::set <Genotype> originals;
 
   // Logging message count number of genomes in the preprocess set
   uint32_t number_of_genomes = 0;
@@ -97,10 +105,12 @@ void GP_MapSimple(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_genom
 
     // Loop over each genome representants of the pID set
     // for(auto genotype: iter->second)
-    #pragma omp parallel for schedule(dynamic) firstprivate(genotype, neutral_weight)
+    #pragma omp parallel for schedule(dynamic) firstprivate(genotype, original, neutral_weight)
     for(uint32_t index = 0; index < (iter->second).size(); index++)
     {
       genotype = (iter->second)[index];
+      original = genotype;
+      Clean_Genome(original, false);
       neutral_weight = ((double) NeutralSize(genotype, 1, simulation_params::metric_colours - 1));
 
       // GenomeMetrics instance will save informations on each neighbour
@@ -111,6 +121,13 @@ void GP_MapSimple(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_genom
       std::map<Phenotype_ID, uint8_t> pID_counter = GetPIDCounter(genotype, pt);
       genome_metric.pID_counter.insert(std::begin(pID_counter), std::end(pID_counter));
 
+      std::vector<Phenotype_ID> pIDs;
+      for(auto pID: pID_counter)
+        pIDs.emplace_back(pID.first);
+
+      if(pIDs != iter->first)
+        set_metrics.misclassified[genotype] = pIDs;
+
       // Expansive operations calculating the pID set for all the neighbours
       for(Genotype neighbour : genotype_neighbourhood(genotype))
       {
@@ -120,8 +137,11 @@ void GP_MapSimple(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_genom
       #pragma omp critical
       {
         set_metrics.add_genotype_metrics(genome_metric);
+        originals.insert(original);
       }
     }
+    for(auto genome: originals)
+      set_metrics.originals.emplace_back(genome);
     metrics.emplace_back(set_metrics);
   }
 }

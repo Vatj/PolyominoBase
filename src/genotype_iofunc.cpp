@@ -74,20 +74,20 @@ void PrintSetTable(std::string set_file, Set_to_Genome& set_to_genome)
     fout << "{";
     for (auto pID: iter->first)
       fout <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
-    fout.seekp((long) set_out.tellp() - 1);
+    fout.seekp((long) fout.tellp() - 1);
     fout << "} ";
 
     fout << "[";
     for (auto original: iter->second)
     {
-      set_out << "(";
+      fout << "(";
       for (auto face: original)
-        set_out <<+ face << ",";
-      set_out.seekp((long) set_out.tellp() - 1);
-      set_out << "),";
+        fout <<+ face << ",";
+      fout.seekp((long) fout.tellp() - 1);
+      fout << "),";
     }
-    set_out.seekp((long) set_out.tellp() - 1);
-    set_out << "]\n";
+    fout.seekp((long) fout.tellp() - 1);
+    fout << "]\n";
   }
 }
 
@@ -104,7 +104,7 @@ void PrintMetrics(std::string set_metric_file, std::string genome_metric_file, s
   // Header for the metric files
   set_metric_out << "srobustness irobustness meta_evolvability evolvability";
   set_metric_out << " rare unbound analysed misclassified neutral_size";
-  set_metric_out << " diversity diversity_tracker originals pIDs\n";
+  set_metric_out << " diversity diversity_tracker originals misclassified_details pIDs\n";
 
   genome_metric_out << "genome original srobustness irobustness";
   genome_metric_out << " meta_evolvability evolvability rare unbound diversity";

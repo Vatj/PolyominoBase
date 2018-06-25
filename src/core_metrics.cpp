@@ -182,20 +182,24 @@ void Set_Metrics::save_to_file(std::ofstream& set_out, std::ofstream& genome_out
   set_out << "} ";
 
   set_out << "[";
-  for (auto mishap: misclassified)
-  {
-    set_out << "(";
-    for (auto face: mishap.first)
-      set_out <<+ face << ",";
+  if(misclassified.size()) {
+    for (auto mishap: misclassified)
+    {
+      set_out << "(";
+      for (auto face: mishap.first)
+        set_out <<+ face << ",";
+      set_out.seekp((long) set_out.tellp() - 1);
+      set_out << "),{";
+      for (auto pID: mishap.second)
+        set_out <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
+      set_out.seekp((long) set_out.tellp() - 1);
+      set_out << "},";
+    }
     set_out.seekp((long) set_out.tellp() - 1);
-    set_out << "),{";
-    for (auto pID: mishap.second)
-      set_out <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
-    set_out.seekp((long) set_out.tellp() - 1);
-    set_out << "}";
+    set_out << "] ";
+  } else {
+    set_out << "] ";
   }
-  set_out.seekp((long) set_out.tellp() - 1);
-  set_out << "] ";
 
   set_out << "{";
   for (auto pID: ref_pIDs)
