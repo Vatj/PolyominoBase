@@ -50,6 +50,7 @@ struct Set_Metrics
 
   std::vector <Phenotype_ID> ref_pIDs;
   std::vector <Genotype> originals;
+  std::map <Genotype, std::vector<Phenotype_ID>> misclassified;
 
   std::vector <double> strict_robustnesses, union_evolvabilities;
   std::vector <double> intersection_robustnesses, rares, loops;

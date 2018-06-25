@@ -11,6 +11,8 @@ void Genotype_Metrics::set_reference(Genotype& genotype, std::vector<Phenotype_I
 {
   ref_genotype = genotype;
   ref_pIDs = pIDs;
+  original = genotype;
+  Clean_Genome(original, false);
 
   neutral_weight = neutral;
 
@@ -65,6 +67,7 @@ void Genotype_Metrics::save_to_file(std::ofstream& fout)
   fout <<+ strict_robustness / number_of_neighbours << " ";
   fout <<+ intersection_robustness / number_of_neighbours << " ";
   fout <<+ union_evolvability / number_of_neighbours << " ";
+  fout <<+ (union_evolvability - rare - loop) / number_of_neighbours << " ";
   fout <<+ rare / number_of_neighbours << " ";
   fout <<+ loop / number_of_neighbours << " ";
   fout <<+ diversity.size() << " ";
@@ -156,7 +159,8 @@ void Set_Metrics::save_to_file(std::ofstream& set_out, std::ofstream& genome_out
   set_out <<+ average_strict_robustness << " " <<+ average_intersection_robustness << " ";
   set_out <<+ average_union_evolvability << " ";
   set_out <<+ average_union_evolvability - average_loop - average_rare << " ";
-  set_out <<+ average_rare << " " <<+ average_loop << " " <<+ analysed << " ";
+  set_out <<+ average_rare << " " <<+ average_loop << " ";
+  set_out <<+ analysed << " " <<+ misclassified.size() << " ";
   set_out <<+ total_neutral_size << " " << diversity.size() << " ";
 
   set_out << "(";
@@ -168,14 +172,30 @@ void Set_Metrics::save_to_file(std::ofstream& set_out, std::ofstream& genome_out
   set_out << "{";
   for (auto original: originals)
   {
-    fout << "(";
+    set_out << "(";
     for (auto face: original)
-      fout <<+ face << ",";
-    fout.seekp((long) fout.tellp() - 1);
-    fout << "),";
+      set_out <<+ face << ",";
+    set_out.seekp((long) set_out.tellp() - 1);
+    set_out << "),";
   }
   set_out.seekp((long) set_out.tellp() - 1);
-  set_out << "}" << std::endl;
+  set_out << "} ";
+
+  set_out << "[";
+  for (auto mishap: misclassified)
+  {
+    set_out << "(";
+    for (auto face: mishap.first)
+      set_out <<+ face << ",";
+    set_out.seekp((long) set_out.tellp() - 1);
+    set_out << "),{";
+    for (auto pID: mishap.second)
+      set_out <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
+    set_out.seekp((long) set_out.tellp() - 1);
+    set_out << "}" << std::endl;
+  }
+  set_out.seekp((long) set_out.tellp() - 1);
+  set_out << "] ";
 
   set_out << "{";
   for (auto pID: ref_pIDs)
