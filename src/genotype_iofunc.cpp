@@ -50,23 +50,17 @@ void PrintPreProcessFile(std::string preprocess_file, Set_to_Genome& set_to_geno
 
   for(Set_to_Genome::iterator iter = std::begin(set_to_genome); iter != std::end(set_to_genome); iter++)
   {
-    fout << "{";
-    for (auto pID: ref_pIDs)
-      fout <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
-    fout.seekp((long) set_out.tellp() - 1);
-    fout << "} ";
+    fout << "x ";
+    for (auto pID: iter->first)
+      fout <<+ pID.first << " " <<+ pID.second << " ";
+    fout << "\n";
 
-    fout << "[";
-    for (auto original: originals)
+    for(auto genome: iter->second)
     {
-      set_out << "(";
-      for (auto face: original)
-        set_out <<+ face << ",";
-      set_out.seekp((long) set_out.tellp() - 1);
-      set_out << "),";
+      for(auto index: genome)
+        fout <<+ index << " ";
+      fout << "\n";
     }
-    set_out.seekp((long) set_out.tellp() - 1);
-    set_out << "]\n";
   }
 }
 
@@ -80,8 +74,20 @@ void PrintSetTable(std::string set_file, Set_to_Genome& set_to_genome)
     fout << "{";
     for (auto pID: iter->first)
       fout <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
-    fout.seekp((long) fout.tellp() - 1);
-    fout << "} "<<+ (iter->second).size() << std::endl;
+    fout.seekp((long) set_out.tellp() - 1);
+    fout << "} ";
+
+    fout << "[";
+    for (auto original: iter->second)
+    {
+      set_out << "(";
+      for (auto face: original)
+        set_out <<+ face << ",";
+      set_out.seekp((long) set_out.tellp() - 1);
+      set_out << "),";
+    }
+    set_out.seekp((long) set_out.tellp() - 1);
+    set_out << "]\n";
   }
 }
 
@@ -128,7 +134,6 @@ void LoadGenomeFile(std::string genome_file, std::vector<Genotype>& genomes)
 
 void LoadPreProcessFile(std::string preprocess_file, Set_to_Genome& set_to_genome)
 {
-  "Defunct Code for now."
   std::string str;
   Genotype genotype;
   std::vector<int> pre_pIDs;
