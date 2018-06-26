@@ -2,9 +2,9 @@
 
 namespace simulation_params
 {
-  uint8_t n_genes=4, colours=7, metric_colours=9;
+  uint8_t n_genes=3, colours=7, metric_colours=9;
   uint8_t phenotype_builds=40;
-  uint32_t n_samples = 10, n_jiggle = 30;
+  uint32_t n_samples = 10, n_jiggle = 201;
   std::mt19937 RNG_Engine(std::random_device{}());
   double UND_threshold=0.25;
   bool allow_duplicates = true, STERIC_FORBIDDEN = false;
@@ -45,9 +45,9 @@ int main()
 
   // JustExhaustive();
   // ExhaustiveMetricsPrintAll();
-  QuickFromFile();
+  // QuickFromFile();
   // QuickRandom();
-  // DuplicateJiggle();
+  DuplicateJiggle();
 
   std::cout << "Back to sleep!" << std::endl;
 
