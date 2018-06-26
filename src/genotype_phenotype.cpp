@@ -15,6 +15,14 @@ std::vector<Phenotype_ID> GetSetPIDs(Genotype genotype, PhenotypeTable* pt_it)
   return pIDs;
 }
 
+std::map<Phenotype_ID, uint8_t> GetPIDCounter(Genotype genotype, PhenotypeTable* pt_it)
+{
+  Clean_Genome(genotype, false);
+  std::map<Phenotype_ID, uint8_t> pID_counter = Stochastic::AssemblePlasticGenotypeFrequency(genotype, pt_it);
+  return pID_counter;
+}
+
+
 void PreProcessSampled(std::vector<Genotype> genomes, Set_to_Genome& set_to_genome, PhenotypeTable* pt)
 {
   Genotype genotype;
@@ -41,7 +49,7 @@ void FilterExhaustive(std::vector<Genotype> genomes, PhenotypeTable* pt)
   Genotype genotype;
   std::vector<Genotype> new_genomes;
   std::vector<Phenotype_ID> pIDs;
-  Phenotype_ID rare_pID = {0, 0}, loop_pID = {255, 0};
+  Phenotype_ID rare_pID = {0, 0}, unbound_pID = {255, 0};
 
   std::cout << "Threshold is : " << (ceil(simulation_params::phenotype_builds * simulation_params::UND_threshold));
   std::cout << " out of " <<+ simulation_params::phenotype_builds << " builds \n";
@@ -51,7 +59,7 @@ void FilterExhaustive(std::vector<Genotype> genomes, PhenotypeTable* pt)
   {
     genotype = genomes[index];
     pIDs = GetSetPIDs(genotype, pt);
-    if(pIDs.front() == rare_pID || pIDs.back() == loop_pID)
+    if(pIDs.front() == rare_pID || pIDs.back() == unbound_pID)
       continue;
     else
       new_genomes.emplace_back(genotype);
