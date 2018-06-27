@@ -1,34 +1,108 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch,Rectangle
+from scipy.interpolate import splprep, splev
 from collections import defaultdict, deque, Counter
 import itertools
 import seaborn as sns
+
 import numpy as np
 
 def Transform_Graph_From_List(tile_kit):
     graph_kit=nx.MultiDiGraph()
     graph_kit.add_nodes_from(xrange(len(tile_kit)))
 
-    ## Add edges for internal structure in clockwise orientation
-    for internal_edge in xrange(len(tile_kit)/4):
-        graph_kit.add_edge(internal_edge*4+0,internal_edge*4+1)#,color='k')
-        graph_kit.add_edge(internal_edge*4+1,internal_edge*4+2)#,color='k')
-        graph_kit.add_edge(internal_edge*4+2,internal_edge*4+3)#,color='k')
-        graph_kit.add_edge(internal_edge*4+3,internal_edge*4+0)#,color='k')
+    ## Add edges for internal structure in clockwise orientation 
+    for i_edge in xrange(len(tile_kit)/4):
+        slices=deque([0,1,2,3])
+        for _ in xrange(4):
+            graph_kit.add_edge(i_edge*4+slices[0],i_edge*4+slices[1])
+            slices.rotate(-1)
 
     ## Add edges for graph connections
     for index,face in enumerate(tile_kit):
-        search_offset=0
-        if face==0:
-            continue
-        else:
-            while(Interaction_Matrix(face) in tile_kit[index+search_offset:]):
-                search_offset+=tile_kit[index+search_offset:].index(Interaction_Matrix(face))
-                graph_kit.add_edge(index,index+search_offset)#,color='r')
-                graph_kit.add_edge(index+search_offset,index)#,color='r')
-                search_offset+=1
-
+        i=0
+        if face:
+            while(Interaction_Matrix(face) in tile_kit[index+i:]):
+                i+=tile_kit[index+i:].index(Interaction_Matrix(face))
+                graph_kit.add_edge(index,index+i)#,color='r')
+                graph_kit.add_edge(index+i,index)#,color='r')
+                i+=1
+                
     return graph_kit
+
+def PartitionPhenotype(genotypes):
+    """
+    genotypes: list of genotypes that all have the same phenotype
+    returns a list of lists, where the sublists contain isomorphic genotypes
+    """
+    graph_clusters=[[genotypes[0]]]
+    network_graphs=[Transform_Graph_From_List(genotypes[0])]
+
+    for genotype in genotypes[1:]:
+        ref_graph=Transform_Graph_From_List(genotype)
+        for i,comp_graph in enumerate(network_graphs):
+            if nx.is_isomorphic(ref_graph,comp_graph):
+                graph_clusters[i].append(genotype)
+                break
+        else:
+            graph_clusters.append([genotype])
+            network_graphs.append(ref_graph)
+
+    return graph_clusters
+                
+            
+def DrawNiceGraph(genotype):
+    """NOT COMPLETE"""
+    scale=0.5
+    dx=[0,.2,0,-.2]
+    dy=[.2,0,-.2,0]
+    fig,ax = plt.subplots(1)
+    
+    for x in xrange(len(genotype)/4):
+        ax.add_patch(Rectangle((x,0), scale, scale,edgecolor='maroon',fill=False,lw=2.5,alpha=1))
+        for j,g in enumerate(genotype[x*4:x*4+4]):
+            ax.annotate(g, xy=(x+.25+dx[j%4], .25+dy[j%4]), xytext=(x+.25+dx[j%4],.25+dy[j]),ha='center',va='center')
+            if g:
+                base_points=np.array([[x+.25+dx[j%4]*5./4]*2,[.25+dy[j%4]*5./4]*2]).T
+                print j,"base",base_points
+                if j==0:
+                    base_points[1][1]+=.05
+                elif j==1:
+                    base_points[1][0]+=.05
+                elif j==2:
+                    base_points[1][1]-=.05
+                elif j==3:
+                    base_points[1][0]-=.05
+
+                print "base",base_points
+                conj_pair=Interaction_Matrix(g)
+                indices = [i for i, x in enumerate(genotype) if (x == conj_pair and i>j)]
+                for index in indices:
+                    new_points=np.array([[(index/4)+.25+dx[index%4]]*2,[.25+dy[index%4]]*2]).T
+                    if index==0:
+                        new_points[0][1]+=.05
+                    elif index==1:
+                        new_points[0][0]+=.05
+                    elif index==2:
+                        new_points[0][1]-=.05
+                    else:
+                        new_points[0][0]-=.05
+                    print "new",new_points
+                    concd=np.concatenate((base_points,new_points))
+                    print "conc",concd
+                    draw_edge(ax,concd)
+                    
+            
+
+    ax.set_aspect(1)
+    ax.relim()
+    ax.autoscale_view()
+    
+    ax.grid(False)
+    plt.axis('off')
+    plt.show(block=False)
+    return
 
 def Interaction_Matrix(colour):
     return colour if colour <=0 else  (1-colour%2)*(colour-1)+(colour%2)*(colour+1)
