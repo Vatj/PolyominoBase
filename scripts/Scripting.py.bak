@@ -27,9 +27,9 @@ def pointless():
     from math import factorial
     upperL=31
     tiles=8
-    plt.plot(list(range(1,upperL)),[factorial(n+tiles-1)/(factorial(n-1)*factorial(tiles)*1.) for N in range(1,upperL)])
-    plt.plot(list(range(1,upperL)),[n**tiles for n in range(1,upperL)])
-    plt.plot(list(range(1,upperL)),[(n**tiles)/(factorial(n+tiles-1)/(factorial(n-1)*factorial(tiles)*1.)) for n in range(1,upperL)])
+    plt.plot(range(1,upperL),[factorial(n+tiles-1)/(factorial(n-1)*factorial(tiles)*1.) for N in range(1,upperL)])
+    plt.plot(range(1,upperL),[n**tiles for n in range(1,upperL)])
+    plt.plot(range(1,upperL),[(n**tiles)/(factorial(n+tiles-1)/(factorial(n-1)*factorial(tiles)*1.)) for n in range(1,upperL)])
     plt.yscale('log')
     plt.show()
 
@@ -68,7 +68,7 @@ def z():
                                         #print i,j,k,l
                                     N+=1
     print(N)
-    print((len(x)))
+    print(len(x))
     return x
 
 from collections import deque
@@ -124,7 +124,7 @@ def x():
             for k in range(krange,j-1,-1):
                 lrange=(1-k%2)*(k+1) + (k%2)*(k+2)
                 for l in range(lrange,k-1,-1):
-                    print((i,j,k,l))
+                    print(i,j,k,l)
                     N+=1
 
                     
@@ -164,7 +164,7 @@ def mmm():
 
     #plt.contour(xrange(20),xrange(50),np.array([xxx(0,[],1,0,i,j,0) for i in xrange(40) for j in xrange(50)]).reshape(40,-1),20)
     for i in range(4,20,4):
-        plt.plot(list(range(i*3)),[xxx(0,[],1,0,i,j,0) for j in range(i*3)],label=i)
+        plt.plot(range(i*3),[xxx(0,[],1,0,i,j,0) for j in range(i*3)],label=i)
     plt.legend()
     plt.yscale('log')
     plt.show()
@@ -195,7 +195,7 @@ def ppp():
 def fukm():
     lineF=[line.rstrip('\n') for line in open("RunConfigs/TileTest_2_16.txt")]
     lineI=[[int(i) for i in line.split(" ")] for line in lineF]
-    print(("Starting off with ",len(lineI)," possibilities"))
+    print("Starting off with ",len(lineI)," possibilities")
     lineT=[[line[:4],line[4:]] for line in lineI]
     #return lineT[:10]
     uniques=[]
@@ -203,22 +203,22 @@ def fukm():
     for i,line in enumerate(lineT):
         #print "HERE",line
         if(i%1000==0):
-            print(("On ",i))
+            print("On ",i)
             #print uniques
             
         for uniq in uniques:
             tuple1=line[0]
             tuple2=line[1]
             if tuple1 in uniq and tuple2 in uniq and tuple1!=tuple2:
-                print((tuple1,"and",tuple2," are in ",line))
+                print(tuple1,"and",tuple2," are in ",line)
                 #print line
                 dups+=1
                 break
         else:
             uniques.append([line[0],line[1]])
     #print x
-    print(("Reduced to ",len(uniques)," possibilities"))
-    print(("Dups found is ",dups))
+    print("Reduced to ",len(uniques)," possibilities")
+    print("Dups found is ",dups)
     uniqs=[y[0]+y[1] for y in uniques]
     return uniqs
     with open("Output/Unique_2_8_Space.txt", "w") as text_file:
@@ -230,8 +230,8 @@ def fukm():
 def tm(x):
     for ln in x:
         print(ln)
-        print((ln[:4]))
-        print((ln[4:]))
+        print(ln[:4])
+        print(ln[4:])
         if [0,0,0,1] in ln and [0,0,0,0] in ln:
             print("hi")
 
@@ -296,7 +296,7 @@ def N_Effective_Numbering(colours,tiles):
 import matplotlib.pyplot as plt
 def plot_Search_Spaces():
     f, (ax1,ax2) = plt.subplots(1, 2)
-    Tile_Space=list(range(1,6))
+    Tile_Space=range(1,6)
 
     N_1_8=57
     N_1_16=57
@@ -336,7 +336,7 @@ def plot_Search_Spaces():
     plt.show()
 import seaborn as sns
 def plot_Search_Spaces2():
-    Tile_Space=list(range(1,6))
+    Tile_Space=range(1,6)
     sns.set_context("paper",font_scale=2.2)
     sns.set_style("white",rc={"xtick.major.size": 8, "ytick.major.size": 8,"xtick.minor.size":5, "ytick.minor.size": 5,"axes.linewidth": 2,"axes.edgecolor":"darkgray","font.size":8,"axes.titlesize":8,"axes.labelsize":5})
     plt.rc('text', usetex=True)
@@ -505,7 +505,7 @@ def Make_Primary_Necklaces(N,K):
     #f=open("/scratch/asl47/Search_Spaces/{}.txt".format(fname),'w')
     squeezeFile=open("/scratch/asl47/Search_Spaces/SearchSpace_1_{}.txt".format(K),'wb')
     FKM_CAT(N,K,2,1,1,[0,0,0,0,0],True,0,-1,squeezeFile)
-    print(("did this many ", Numm))
+    print("did this many ", Numm)
     #f.close()
     squeezeFile.close()
     
@@ -878,13 +878,13 @@ def B0():
 def Tempester():
     lineRaw=[line.rstrip('\n') for line in open('/rscratch/asl47/SearchSpace_3_8.txt')]
     lineF=[[int(i) for i in line if i!=" "] for line in lineRaw]
-    print((lineF[0]))
+    print(lineF[0])
     Ls=[]
     for line in lineF:
         if line[0]==line[1] and line[4]==line[0] and line[5]==line[0] and line[8]==line[0] and line[9]==line[0] and line[0]==0 and line.count(0)==6:
             
             Ls.append(line)
-    print((len(Ls)))
+    print(len(Ls))
     return Ls
 
 def write_list(lis):
@@ -990,7 +990,7 @@ def equaldistr(N,m):
     TOTAL=np.zeros(N)
     for _ in range(m):
         TOTAL+=np.array([int(i) for i in list(bin(randint(0,2**N-1))[2:].zfill(N))])
-        print((TOTAL/float(m)))
+        print(TOTAL/float(m))
 
 
 

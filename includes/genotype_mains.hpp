@@ -7,3 +7,4 @@ void QuickRandom();
 void QuickFromFile();
 void ExhaustiveMetricsPrintAll();
 void DuplicateJiggle();
+void DuplicateExhaustive();

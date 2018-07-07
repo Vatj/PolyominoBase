@@ -15,6 +15,11 @@ std::vector<Genotype> ExhaustiveMinimalGenotypesFiltered(PhenotypeTable* pt);
 std::vector<Genotype> SampleMinimalGenotypes(PhenotypeTable* pt);
 std::vector<Genotype> ExhaustiveFullGenotypes2(uint8_t colours, PhenotypeTable* pt);
 
+// Temporary Fix
+std::vector<Genotype> GeneDuplication2(Genotype& genotype);
+std::vector<Genotype> ExhaustiveMinimalGenotypesFilteredDuplicate(std::vector<Genotype>& genomes, PhenotypeTable* pt);
+
+
 /*Minimal genotype methods*/
 struct NecklaceFactory
 {

@@ -24,8 +24,8 @@ def product_of(list_iterable):
     return reduce(mul, list_iterable, 1)
 
 def Find_Neutral_Degeneracy(F,N,P):
-    print([[choose(F,U)*N**(F-U)]+[[product_of([P-2*Upp for Upp in range(0,Up-1+1)])]+[sum(product_of(factors) for factors in combinations_with_replacement(list(range(1,Up+1)),U-Up))] for Up in range(0,U+1)] for U in range(0,F+1)])
-    return sum([choose(F,U)*N**(F-U)*sum([product_of([P-2*Upp for Upp in range(0,Up-1+1)])*sum(product_of(factors) for factors in combinations_with_replacement(list(range(1,Up+1)),U-Up)) for Up in range(0,U+1)]) for U in range(0,F+1)])
+    print([[choose(F,U)*N**(F-U)]+[[product_of([P-2*Upp for Upp in range(0,Up-1+1)])]+[sum(product_of(factors) for factors in combinations_with_replacement(range(1,Up+1),U-Up))] for Up in range(0,U+1)] for U in range(0,F+1)])
+    return sum([choose(F,U)*N**(F-U)*sum([product_of([P-2*Upp for Upp in range(0,Up-1+1)])*sum(product_of(factors) for factors in combinations_with_replacement(range(1,Up+1),U-Up)) for Up in range(0,U+1)]) for U in range(0,F+1)])
    
 def Find_Interacting_Degeneracy(N_Interacting_Colours,N_Interacting_Tuples):
     return product_of([N_Interacting_Colours-2*x for x in range(0,N_Interacting_Tuples)])
@@ -71,12 +71,12 @@ def Find_Overall_Degeneracy(Tile_Set,N_Colours,verbose=False):
     if Tile_SetF.count(0)>=1:
         Combined_Degeneracy*=Find_Neutral_Degeneracy(Tile_SetF.count(0),2,N_Colours-max(Tile_SetF)-2)
         if verbose:
-            print(("Neutral: ",Find_Neutral_Degeneracy(Tile_SetF.count(0),2,N_Colours-max(Tile_SetF)-2)))
+            print("Neutral: ",Find_Neutral_Degeneracy(Tile_SetF.count(0),2,N_Colours-max(Tile_SetF)-2))
         
     #Tile Interchange
     Combined_Degeneracy*=Find_Tile_Set_Interchange_Degeneracy(Tile_Set)
     if verbose:
-        print(("interchange: ",Find_Tile_Set_Interchange_Degeneracy(Tile_Set)))
+        print("interchange: ",Find_Tile_Set_Interchange_Degeneracy(Tile_Set))
     #Individual Tile Symmetry
 
     #for i,Tile in enumerate(list(set([tuple(tt) for tt in Tile_Set]))):
@@ -84,15 +84,15 @@ def Find_Overall_Degeneracy(Tile_Set,N_Colours,verbose=False):
     for i,Tile in enumerate(Tile_Set):
         Combined_Degeneracy*=Find_Tile_Rotational_Degeneracy(Tile)
         if verbose:
-            print(("Tile: ",Find_Tile_Rotational_Degeneracy(Tile)))
+            print("Tile: ",Find_Tile_Rotational_Degeneracy(Tile))
     #Interacting Pair Degeneracy
     Combined_Degeneracy*=Find_Interacting_Degeneracy(N_Colours-2,max(Tile_SetF)/2)
     if verbose:
-        print(("Interacting: ",Find_Interacting_Degeneracy(N_Colours-2,max(Tile_SetF)/2)))
+        print("Interacting: ",Find_Interacting_Degeneracy(N_Colours-2,max(Tile_SetF)/2))
 
     #Combined_Degeneracy/=Find_Relabelling_Collisions(Tile_Set)
     if verbose:
-        print(("Relabels: ",Find_Relabelling_Collisions(Tile_Set)))
+        print("Relabels: ",Find_Relabelling_Collisions(Tile_Set))
     return int(Combined_Degeneracy)
 
 
@@ -125,11 +125,11 @@ def Test_Degen():
             if Find_Overall_Degeneracy([line[:4],line[4:]],10)<Counts[i]:
                 print("Not ideal")
             else:
-                print((line,"N:",i,"  off by factor ",Find_Overall_Degeneracy([line[:4],line[4:]],10)*1./Counts[i]))
+                print(line,"N:",i,"  off by factor ",Find_Overall_Degeneracy([line[:4],line[4:]],10)*1./Counts[i])
             #print "fixed attempt is ", Find_Overall_Degeneracy([line[:4],line[4:]],10)*1./Find_Relabelling_Collisions([line[:4],line[4:]])/Counts[i]
             
-    print(("Mismatch total was ",misM))
-    print(("total recovery was ",misS))
+    print("Mismatch total was ",misM)
+    print("total recovery was ",misS)
 
 
 
@@ -139,11 +139,11 @@ def Compare_Methods():
     C_Max=50
     
     z=[[0 for x in range(1,F_Max+1)] for y in range(0,C_Max+1,2)]
-    print((z[0]))
+    print(z[0])
     for F in range(1,F_Max+1):
-        print(("on F ",F))
+        print("on F ",F)
         for C in range(0,C_Max+1,2):
-            print(("on C ",C))
+            print("on C ",C)
             #rint "on ",F," and ",C
             #print "filling indexes ",C/2," ",F-1
             z[C/2][F-1]=Find_Neutral_Degeneracy(F,C,0,[],0)-Find_Neutral_Degeneracy_Experimental_2(F,2,C)

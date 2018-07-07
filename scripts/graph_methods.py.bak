@@ -10,12 +10,12 @@ import numpy as np
 
 def Transform_Graph_From_List(tile_kit):
     graph_kit=nx.MultiDiGraph()
-    graph_kit.add_nodes_from(range(len(tile_kit)))
+    graph_kit.add_nodes_from(xrange(len(tile_kit)))
 
-    ## Add edges for internal structure in clockwise orientation
-    for i_edge in range(int(len(tile_kit)/4)):
+    ## Add edges for internal structure in clockwise orientation 
+    for i_edge in xrange(len(tile_kit)/4):
         slices=deque([0,1,2,3])
-        for _ in range(4):
+        for _ in xrange(4):
             graph_kit.add_edge(i_edge*4+slices[0],i_edge*4+slices[1])
             slices.rotate(-1)
 
@@ -28,7 +28,7 @@ def Transform_Graph_From_List(tile_kit):
                 graph_kit.add_edge(index,index+i)#,color='r')
                 graph_kit.add_edge(index+i,index)#,color='r')
                 i+=1
-
+                
     return graph_kit
 
 def PartitionPhenotype(genotypes):
@@ -36,8 +36,8 @@ def PartitionPhenotype(genotypes):
     genotypes: list of genotypes that all have the same phenotype
     returns a list of lists, where the sublists contain isomorphic genotypes
     """
-    graph_clusters = [[genotypes[0]]]
-    network_graphs = [Transform_Graph_From_List(genotypes[0])]
+    graph_clusters=[[genotypes[0]]]
+    network_graphs=[Transform_Graph_From_List(genotypes[0])]
 
     for genotype in genotypes[1:]:
         ref_graph=Transform_Graph_From_List(genotype)
@@ -50,22 +50,22 @@ def PartitionPhenotype(genotypes):
             network_graphs.append(ref_graph)
 
     return graph_clusters
-
-
+                
+            
 def DrawNiceGraph(genotype):
     """NOT COMPLETE"""
     scale=0.5
     dx=[0,.2,0,-.2]
     dy=[.2,0,-.2,0]
     fig,ax = plt.subplots(1)
-
-    for x in range(len(genotype)/4):
+    
+    for x in xrange(len(genotype)/4):
         ax.add_patch(Rectangle((x,0), scale, scale,edgecolor='maroon',fill=False,lw=2.5,alpha=1))
         for j,g in enumerate(genotype[x*4:x*4+4]):
             ax.annotate(g, xy=(x+.25+dx[j%4], .25+dy[j%4]), xytext=(x+.25+dx[j%4],.25+dy[j]),ha='center',va='center')
             if g:
                 base_points=np.array([[x+.25+dx[j%4]*5./4]*2,[.25+dy[j%4]*5./4]*2]).T
-                print(j,"base",base_points)
+                print j,"base",base_points
                 if j==0:
                     base_points[1][1]+=.05
                 elif j==1:
@@ -75,7 +75,7 @@ def DrawNiceGraph(genotype):
                 elif j==3:
                     base_points[1][0]-=.05
 
-                print("base",base_points)
+                print "base",base_points
                 conj_pair=Interaction_Matrix(g)
                 indices = [i for i, x in enumerate(genotype) if (x == conj_pair and i>j)]
                 for index in indices:
@@ -88,17 +88,17 @@ def DrawNiceGraph(genotype):
                         new_points[0][1]-=.05
                     else:
                         new_points[0][0]-=.05
-                    print("new",new_points)
+                    print "new",new_points
                     concd=np.concatenate((base_points,new_points))
-                    print("conc",concd)
+                    print "conc",concd
                     draw_edge(ax,concd)
-
-
+                    
+            
 
     ax.set_aspect(1)
     ax.relim()
     ax.autoscale_view()
-
+    
     ax.grid(False)
     plt.axis('off')
     plt.show(block=False)
@@ -158,7 +158,7 @@ def Trim_Topologies(fin):
     unique_C=0
     for key in reversed(sorted(TD.keys())):
         del_count=0
-        print("on ",key, len(TD[key]))
+        print "on ",key, len(TD[key])
         for i,comp1 in enumerate(TD[key]):
             G1=Transform_Graph_From_List(comp1)
             del_count=0
@@ -169,9 +169,9 @@ def Trim_Topologies(fin):
                     del TD[key][i+1+j-del_count]
                     del_count+=1
             unique_C+=1
-    print(unique_C)
-    with open(fin.decode('utf-8').rstrip('.txt')+'_Iso.txt', 'w') as outfile:
-        for zero_set in list(TD.values()):
+    print unique_C
+    with open(fin.rstrip('.txt')+'_Iso.txt', 'w') as outfile:
+        for zero_set in TD.values():
             for genotype in zero_set:
                 genotype_str= ' '.join(map(str,genotype))+'\n'
                 outfile.write(genotype_str)
@@ -181,7 +181,7 @@ def Trim_Topologies(fin):
 
 def Order_By_Zeroes(tile_kit):
     z_Map=defaultdict(int)
-    for i in range(int(len(tile_kit)/4)):
+    for i in xrange(len(tile_kit)/4):
         tile=tile_kit[i*4:i*4+4]
         if 0 in tile:
             z_Map[tile.count(0)]+=1
@@ -202,8 +202,8 @@ def Enumerate_Topology(tile_kit):
     queue_kit=[deque(tile) for tile in tile_kit]
 
 
-    for tile_rot in range(4**len(tile_kit)):
-        for tile_index in range(len(tile_kit)-1,-1,-1):
+    for tile_rot in xrange(4**len(tile_kit)):
+        for tile_index in xrange(len(tile_kit)-1,-1,-1):
             if tile_rot%(4**tile_index)==0:
                 queue_kit[tile_index].rotate(-1)
                 yield itertools.permutations(queue_kit)
@@ -211,7 +211,7 @@ def Enumerate_Topology(tile_kit):
 
 
 def cycle_tile(tile):
-    for rotation in range(4):
+    for rotation in xrange(4):
         tile.rotate(-1)
         yield tile
 
@@ -230,14 +230,14 @@ def Hamming_Distance_Of_Topologies(T1,T2):
     return  min([Hamming_Distance(Flat_T1,trial) for trial in Possibles])
 
 def dump(C):
-    for i in range(C):
-        for j in range(C):
-            for k in range(C):
-                for l in range(C):
-                    for m in range(C):
-                        for n in range(C):
-                            for o in range(C):
-                                for p in range(C):
+    for i in xrange(C):
+        for j in xrange(C):
+            for k in xrange(C):
+                for l in xrange(C):
+                    for m in xrange(C):
+                        for n in xrange(C):
+                            for o in xrange(C):
+                                for p in xrange(C):
                                     yield [i,j,k,l,m,n,o,p]
 
 def dump2():
@@ -246,7 +246,7 @@ def dump2():
     with open('/rscratch/asl47/Loop_Genotypes.txt','w') as f:
         for n,T2 in enumerate(dump(8)):
             if n%50000==0:
-                print(n)
+                print n
             G2=Transform_Graph_From_List(T2)
             if nx.is_isomorphic(G1,G2):
                 x=''
@@ -261,27 +261,27 @@ def Phenotype_Hamming_Distances():
     Loop_Genotypes_Input = [line.rstrip('\n') for line in open('/rscratch/asl47/Loop_Genotypes.txt')]
     Loop_Genotypes = [[int(face) for face in line.split()] for line in Loop_Genotypes_Input]
 
-    print("loops",len(Loop_Genotypes))
-    print("BPs",len(BP_Genotypes))
+    print "loops",len(Loop_Genotypes)
+    print "BPs",len(BP_Genotypes)
 
     H_D=[]
     with open('/scratch/asl47/Hamming_Distance.txt','w') as f:
         for n,BP in enumerate(BP_Genotypes):
             if n%100==0:
-                print("Now on {}".format(n))
+                print "Now on {}".format(n)
             for LP in Loop_Genotypes:
-                f.write(str(Hamming_Distance_Of_Topologies([BP[x:x+4] for x in range(0,len(BP),4)],[LP[x:x+4] for x in range(0,len(LP),4)]))+'\n')
-    print("all finished")
+                f.write(str(Hamming_Distance_Of_Topologies([BP[x:x+4] for x in xrange(0,len(BP),4)],[LP[x:x+4] for x in xrange(0,len(LP),4)]))+'\n')
+    print "all finished"
     return True
 
     Counts=Counter(H_D)
     np_H=np.array(H_D)
-    print(Counts)
-    print(min(H_D))
-    print(max(H_D))
-    print(np.percentile(np_H,25))
-    print(np.percentile(np_H,75))
-    print(np.std(np_H))
+    print Counts
+    print min(H_D)
+    print max(H_D)
+    print np.percentile(np_H,25)
+    print np.percentile(np_H,75)
+    print np.std(np_H)
     ax = sns.violinplot(x=H_D)
     plt.show(block=False)
 
@@ -312,12 +312,12 @@ def Plot_Method_Testing(Ts,R):
     #timing_list=[defaultdict(list) for i in xrange(3)]
     #accuracy_list=[defaultdict(list) for i in xrange(3)]
 
-    timing_list=[{K:np.zeros((Ts,R)) for K in [0,5,10,20]} for i in range(3)]
-    accuracy_list=[{K:np.zeros((Ts,R)) for K in [0,5,10,20]} for i in range(3)]
+    timing_list=[{K:np.zeros((Ts,R)) for K in [0,5,10,20]} for i in xrange(3)]
+    accuracy_list=[{K:np.zeros((Ts,R)) for K in [0,5,10,20]} for i in xrange(3)]
 
 
 
-    for T in range(1,Ts+1):
+    for T in xrange(1,Ts+1):
         lines=[]
         lines2=[]
         if T<=10:
@@ -381,14 +381,14 @@ def Plot_Method_Testing(Ts,R):
         else: #Accuracy plots
             results=accuracy_list[n/2]
         for K in Ks:
-            ax.plot([T*4 for T in range(1,Ts+1)],np.mean(results[K],axis=1),markeredgecolor=k_colours[K],ls='',markeredgewidth=1.25,markerfacecolor='none',marker=K_ms[K],markersize=7,zorder=z_orders[K])
+            ax.plot([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),markeredgecolor=k_colours[K],ls='',markeredgewidth=1.25,markerfacecolor='none',marker=K_ms[K],markersize=7,zorder=z_orders[K])
 
-            ax.plot([T*4 for T in range(1,Ts+1)],np.mean(results[K],axis=1),c=k_colours[K],ls='--',lw=0.75,alpha=0.75,zorder=z_orders[K])
-            ax.errorbar([T*4 for T in range(1,Ts+1)],np.mean(results[K],axis=1),yerr=np.std(results[K],axis=1,ddof=1)/np.sqrt(R),c=k_colours[K],ls='--',zorder=z_orders[K],lw=2)
+            ax.plot([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),c=k_colours[K],ls='--',lw=0.75,alpha=0.75,zorder=z_orders[K])
+            ax.errorbar([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),yerr=np.std(results[K],axis=1,ddof=1)/np.sqrt(R),c=k_colours[K],ls='--',zorder=z_orders[K],lw=2)
             if K==20 and n==5:
-                print(results[K][3])
-                print(np.std(results[K],axis=1,ddof=1,dtype=np.float64)/np.sqrt(R))
-                print(np.mean(results[K],axis=1,dtype=np.float64))
+                print results[K][3]
+                print np.std(results[K],axis=1,ddof=1,dtype=np.float64)/np.sqrt(R)
+                print np.mean(results[K],axis=1,dtype=np.float64)
                 ax.plot([16],[0.02666667],markeredgecolor=k_colours[K],ls='',markeredgewidth=1.25,markerfacecolor='none',marker=K_ms[K],markersize=7,zorder=z_orders[K])
             #if n==0 and K==0:
             #    return results[K],np.std(results[K],axis=1,ddof=1)/np.sqrt(R)
@@ -410,7 +410,7 @@ def Plot_Method_Testing(Ts,R):
             #ax.minorticks_on()
             #continue
         if n>=4:
-            ax.xaxis.set(ticks=[T*4 for T in range(1,Ts+1)],ticklabels=[T for T in range(1,Ts+1)])
+            ax.xaxis.set(ticks=[T*4 for T in xrange(1,Ts+1)],ticklabels=[T for T in xrange(1,Ts+1)])
 
     ax0=Ax_Arr_T.reshape(-1)[0]
     ax0.text(30,37.5,'Graph-like',ha='left',va='center',fontsize=15)
@@ -425,20 +425,20 @@ def Plot_Method_Testing(Ts,R):
     fig2, (S_ax,A_ax) = plt.subplots(2,1,sharex=True)
     results=timing_list[2]
     for K in Ks:
-        S_ax.plot([T*4 for T in range(1,Ts+1)],np.mean(results[K],axis=1),markeredgecolor=k_colours[K],ls='',markeredgewidth=1.25,markerfacecolor='none',marker=K_ms[K],markersize=7,zorder=z_orders[K])
+        S_ax.plot([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),markeredgecolor=k_colours[K],ls='',markeredgewidth=1.25,markerfacecolor='none',marker=K_ms[K],markersize=7,zorder=z_orders[K])
 
-        S_ax.plot([T*4 for T in range(1,Ts+1)],np.mean(results[K],axis=1),c=k_colours[K],ls='',lw=0.75,alpha=0.75,zorder=z_orders[K])
-        S_ax.errorbar([T*4 for T in range(1,Ts+1)],np.mean(results[K],axis=1),yerr=np.std(results[K],axis=1,ddof=1)/np.sqrt(R),c=k_colours[K],ls='',zorder=z_orders[K],lw=2)
+        S_ax.plot([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),c=k_colours[K],ls='',lw=0.75,alpha=0.75,zorder=z_orders[K])
+        S_ax.errorbar([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),yerr=np.std(results[K],axis=1,ddof=1)/np.sqrt(R),c=k_colours[K],ls='',zorder=z_orders[K],lw=2)
 
     results=accuracy_list[2]
     for K in Ks:
-        A_ax.plot([T*4 for T in range(1,Ts+1)],np.mean(results[K],axis=1),markeredgecolor=k_colours[K],ls='',markeredgewidth=1.25,markerfacecolor='none',marker=K_ms[K],markersize=7,zorder=z_orders[K])
+        A_ax.plot([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),markeredgecolor=k_colours[K],ls='',markeredgewidth=1.25,markerfacecolor='none',marker=K_ms[K],markersize=7,zorder=z_orders[K])
 
-        A_ax.plot([T*4 for T in range(1,Ts+1)],np.mean(results[K],axis=1),c=k_colours[K],ls='',lw=0.75,alpha=0.75,zorder=z_orders[K])
-        A_ax.errorbar([T*4 for T in range(1,Ts+1)],np.mean(results[K],axis=1),yerr=np.std(results[K],axis=1,ddof=1)/np.sqrt(R),c=k_colours[K],ls='',zorder=z_orders[K],lw=2)
+        A_ax.plot([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),c=k_colours[K],ls='',lw=0.75,alpha=0.75,zorder=z_orders[K])
+        A_ax.errorbar([T*4 for T in xrange(1,Ts+1)],np.mean(results[K],axis=1),yerr=np.std(results[K],axis=1,ddof=1)/np.sqrt(R),c=k_colours[K],ls='',zorder=z_orders[K],lw=2)
 
-    S_ax.xaxis.set(ticks=[T*4 for T in range(1,Ts+1)],ticklabels=[T for T in range(1,Ts+1)])
-    A_ax.xaxis.set(ticks=[T*4 for T in range(1,Ts+1)],ticklabels=[T for T in range(1,Ts+1)])
+    S_ax.xaxis.set(ticks=[T*4 for T in xrange(1,Ts+1)],ticklabels=[T for T in xrange(1,Ts+1)])
+    A_ax.xaxis.set(ticks=[T*4 for T in xrange(1,Ts+1)],ticklabels=[T for T in xrange(1,Ts+1)])
     S_ax.set_yscale('log',nonposy='mask')
     A_ax.set_yscale('log',nonposy='mask')
 
@@ -452,7 +452,7 @@ def Plot_Method_Testing(Ts,R):
     plt.figure()
     results=timing_list[2]
     rats=np.mean(results[10],axis=1)/np.mean(results[0],axis=1)
-    plt.plot(list(range(1,Ts+1)),rats)
+    plt.plot(range(1,Ts+1),rats)
 
     plt.show(block=False)
     #return accuracy_list[2]
@@ -505,7 +505,7 @@ def LoadNewGCs(T):
     else:
         runs=rs[T]
     runs=2
-    for i in range(10,12):
+    for i in xrange(10,12):
         timings=[]
         errors=[]
         for line in open('/rscratch/asl47/binaries/GC_Space_{}_{}.txt'.format(T,i)):
@@ -539,8 +539,8 @@ def PlotNewSimple():
     #plt.plot(range(1,16),ts[:,0],lw=2,ls='--',c='royalblue')
     #plt.plot(range(1,16),ts[:,1],lw=2,ls='-',c='firebrick')
 
-    plt.plot(list(range(1,T_max+1)),40*ts[:,0],marker='o',ls='',c='royalblue')
-    plt.plot(list(range(1,T_max+1)),40*ts[:,1],marker='s',ls='',c='firebrick')
+    plt.plot(range(1,T_max+1),40*ts[:,0],marker='o',ls='',c='royalblue')
+    plt.plot(range(1,T_max+1),40*ts[:,1],marker='s',ls='',c='firebrick')
 
     plt.yscale('log')
     sns.despine(right=1,top=1)

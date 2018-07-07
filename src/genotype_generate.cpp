@@ -158,6 +158,70 @@ std::vector<Genotype> ExhaustiveMinimalGenotypesFiltered(PhenotypeTable* pt)
   return genomes;
 }
 
+// Temporary Fix
+std::vector<Genotype> GeneDuplication2(Genotype& genotype)
+{
+  std::vector <Genotype> duplicates;
+  uint8_t n_genes = simulation_params::n_genes - 1;
+
+  for(uint8_t index=0; index < n_genes; ++index)
+  {
+    Genotype duplicate(4 * n_genes);
+    std::copy(std::begin(genotype), std::end(genotype), std::begin(duplicate));
+
+    for(uint8_t tail=0; tail < 4; tail++)
+      duplicate.emplace_back(genotype[(4 * index) + tail]);
+
+    duplicates.emplace_back(duplicate);
+  }
+
+  return duplicates;
+}
+
+std::vector<Genotype> ExhaustiveMinimalGenotypesFilteredDuplicate(std::vector<Genotype>& genomes, PhenotypeTable* pt)
+{
+  std::vector<Genotype> duplicates, dups;
+
+  std::cout << "Generating all minimal samples\n";
+
+  GenotypeGenerator ggenerator = GenotypeGenerator(simulation_params::n_genes - 1, simulation_params::colours);
+  ggenerator.init();
+  Genotype genotype, nullg;
+  Phenotype_ID rare_pID = {0, 0}, unbound_pID = {255, 0};
+  std::vector<Phenotype_ID> pIDs;
+  uint64_t good_genotypes = 0, generated_genotypes = 0;
+  bool keep_original;
+
+  std::cout << "Threshold is : " << (ceil(simulation_params::phenotype_builds * simulation_params::UND_threshold));
+  std::cout << " out of " <<+ simulation_params::phenotype_builds << " builds \n";
+
+  while((genotype=ggenerator())!=nullg)
+  {
+    generated_genotypes++;
+    if(!ggenerator.valid_genotype(genotype))
+      continue;
+
+    dups = GeneDuplication2(genotype);
+    keep_original = false;
+    for(auto genome: dups)
+    {
+      pIDs = GetSetPIDs(genome, pt);
+      if(pIDs.front() == rare_pID || pIDs.back() == unbound_pID)
+        continue;
+      good_genotypes++;
+      duplicates.emplace_back(genome);
+      keep_original = true;
+      if(good_genotypes % 100 == 0)
+        std::cout << "Found " <<+ good_genotypes << " out of " <<+ generated_genotypes << " generated \n";
+    }
+    if(keep_original)
+      genomes.emplace_back(genotype);
+  }
+
+  std::cout << "Final Values : Found " <<+ genomes.size() << " out of " <<+ generated_genotypes << " generated \n";
+  return duplicates;
+}
+
 
 // std::vector<Genotype> ExhaustiveFullGenotypes2(uint8_t colours, InterfacePhenotypeTable* pt)
 // {

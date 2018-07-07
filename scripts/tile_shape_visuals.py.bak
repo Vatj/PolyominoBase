@@ -42,13 +42,13 @@ def PlotManyLengths(mu):
     t=3
     Os=[5,25,125]
     l1=LoadLengths(t,mu)
-    print(("T3 size: ",l1.shape[0]))
+    print("T3 size: ",l1.shape[0])
     fig=plt.figure(figsize=(10,7))
     plt.title(r'$\langle \mu L \rangle =${}'.format(4./mu))
     PlotCCLengths(l1,r'Static}',**{'c':colour_args[t],'marker':marker_args[0],'ls':ls_args[0],'alpha':1 if l1.shape[0]>10000 else 0.2})
     for (t,o) in product([4,5],Os):
         l1=LoadLengths(t,mu,o)
-        print(("T{}O{} size: ".format(t,o),l1.shape[0]))
+        print("T{}O{} size: ".format(t,o),l1.shape[0])
         PlotCCLengths(l1,r'Dynamic $\Omega^{0}_{{{1}}}$'.format(2 if t==4 else 1,o),**{'c':colour_args[t],'marker':marker_args[o],'ls':ls_args[o],'alpha':1 if l1.shape[0]>10000 else 0.2})
     fig.set_tight_layout(True)
 
@@ -96,7 +96,7 @@ def PlotShapeDistrs(mu):
     sorted_keys[4:]=sorted(sorted_keys[4:],key=lambda x: int(x[x.index('O')+1:]))
 
     for key in sorted_keys:
-        print((key, "len ",len(data_dict[key])))
+        print(key, "len ",len(data_dict[key]))
         #hist_vals,bin_edges=np.histogram(data,
         #plt.hist(data,range=(0,100),bins=100)
         #print key
@@ -141,7 +141,7 @@ def VisualiseSingleShape(shape):
 
     dx=shape[0]
     dy=shape[1]
-    for i,j in product(range(dx),range(dy)):
+    for i,j in product(xrange(dx),xrange(dy)):
         if(shape[2+i+j*dx]):
             ax.add_patch(Rectangle((i-dx/2., dy/2.-j-1), 1, 1, facecolor=cols[(shape[2+i+j*dx]-1)/4],edgecolor='slategrey',fill=True,hatch='////',lw=0))
             ax.add_patch(Rectangle((i-dx/2., dy/2.-j-1), 1, 1,edgecolor='maroon',fill=False,lw=2.5))
@@ -352,14 +352,14 @@ def Merge_Shape_Data_Files(runType,runNum,numParts):
     Shape_Strings_Base=[[int(j) for j in u if j!=' '] for u in [q[0]+q[1] for q in [line.rstrip('\n').split("Deltas ")[-1].split("  Shape: ") for line in open(Shape_Base_Fname)]]]
 
     for i in range(2,numParts+1):
-        print(("Merging on part ",i))
+        print("Merging on part ",i)
         Data_Fname="Output/S_{}_Run_R{}P{}_Data.txt".format(runType,runNum,i)
         Shape_Fname="Output/S_{}_Run_R{}P{}_Shapes.txt".format(runType,runNum,i)
         Shape_Strings=[[int(j) for j in u if j!=' '] for u in [q[0]+q[1] for q in [line.rstrip('\n').split("Deltas ")[-1].split("  Shape: ") for line in open(Shape_Fname)]]]
         Shape_Counts={int(key):int(value) for (key,value) in [line.rstrip('\n').split("Code:")[-1].split(" N:") for line in open(Data_Fname)]}
 
 
-        for key,value in list(Shape_Counts.items()):
+        for key,value in Shape_Counts.items():
             if key>=0:
                 continue
             else:

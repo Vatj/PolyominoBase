@@ -89,8 +89,8 @@ def plotInterfaceProbability(l_I,l_g,Nsamps=False):
           set_length(l_I)
           s_m=np.zeros(l_I+1)
           a_m=np.zeros(l_I+1)
-          for _ in range(Nsamps):
-               indices=choice(list(cwr(list(range(l_g)),2)))
+          for _ in xrange(Nsamps):
+               indices=choice(list(cwr(range(l_g),2)))
                if indices[0]!=indices[1]:
                     bases=np.random.randint(0,np.iinfo(Is[l_I]).max,dtype=Is[l_I],size=2)
 
@@ -167,13 +167,13 @@ def plotPhylogeny(mae,mai,ms,called=False,use_offset=False):
           plt.figure()
      for interface_type,cr in zip([mae,mai,ms],[(.25,.38),(0.58,0.75),(0.91,.08)]):
           for data in interface_type:
-               slope, intercept, r_value, p_value, std_err = linregress(list(range(len(data)-1)),data[1:])
+               slope, intercept, r_value, p_value, std_err = linregress(range(len(data)-1),data[1:])
                h= uniform(*cr) if cr[1]>cr[0] else choice([uniform(cr[0],1),uniform(0,cr[1])])
                s = uniform(0.2, 1)
                v = uniform(0.5, 1)
                r, g, b = hsv_to_rgb(h, s, v)
                g_offset=data[0] if use_offset else 0
-               plt.plot(list(range(g_offset,g_offset+len(data)-1)),data[1:],c=(r,g,b),alpha=0.2,zorder=1)
+               plt.plot(range(g_offset,g_offset+len(data)-1),data[1:],c=(r,g,b),alpha=0.2,zorder=1)
      patches = [plt.plot([],[],c=color,ls='--')[0] for color in [(.21,.8,.16),(0.16,.22,.8),(.8,.16,.16)]]
      plt.legend(patches,['AE','AI','S'], frameon=False)
      if not called:
@@ -183,7 +183,7 @@ def plotPhylogeny(mae,mai,ms,called=False,use_offset=False):
 
 def bootstrap(data, n_boot=10000, ci=68):
      boot_dist = []
-     for i in range(int(n_boot)):
+     for i in xrange(int(n_boot)):
           resampler = np.random.randint(0, data.shape[0], data.shape[0])
           sample = data.take(resampler, axis=0)
           sample=sample.astype(float)
@@ -217,7 +217,7 @@ def tsplotboot(ax,data,title='',**kw):
 
 def plotData(cc,I_size,t_star,mu=1,g_size=12):
      fig,axs = plt.subplots(3)
-     for (k,v),ax in zip(iter(cc.items()),axs):
+     for (k,v),ax in zip(cc.iteritems(),axs):
           #print k,len(v)
           if v:#.size:
                v=np.array(v)
@@ -231,13 +231,13 @@ def plotData(cc,I_size,t_star,mu=1,g_size=12):
                step_length=int(g_size/(2.*mu/co_factor))
                N_steps=int(ceil(gen_length/float(step_length)))
                pgs=RandomWalk(I_size/co_factor,N_steps,.5,t_star,1,1)
-               ax.plot(list(range(0,(N_steps+1)*step_length,step_length)),pgs[:-1],'r--')
+               ax.plot(range(0,(N_steps+1)*step_length,step_length),pgs[:-1],'r--')
                ax.plot([0,gen_length],[pgs[-1]]*2,'k--',alpha=0.5)
 
                step_length=1
                N_steps=int(ceil(gen_length/float(step_length)))
                pgs=RandomWalk(I_size/co_factor,N_steps,float(co_factor)/6,t_star,1,1)
-               ax.plot(list(range(0,(N_steps+1)*step_length,step_length)),pgs[:-1],'b--')
+               ax.plot(range(0,(N_steps+1)*step_length,step_length),pgs[:-1],'b--')
                ax.plot([0,gen_length],[pgs[-1]]*2,'k--',alpha=0.5)
 
      plt.xlabel('elapsed generations')
@@ -247,9 +247,9 @@ def plotData(cc,I_size,t_star,mu=1,g_size=12):
 
 def plotWs(Ws,I_size,t_star):
      plt.figure()
-     for K,W in Ws.items():
+     for K,W in Ws.iteritems():
           lists = sorted(W.items()) # sorted by key, return a list of tuples
-          x, y = list(zip(*lists))
+          x, y = zip(*lists)
           plt.plot(x,[float(i)/sum(y) for i in y],ls='',marker='o',label=K)
      plt.plot(np.linspace(0,1,I_size/2+1),binom(I_size/2,.5).pmf(np.linspace(0,I_size/2,I_size/2+1)),'k--')
      plt.plot(np.linspace(0,1,I_size+1),binom(I_size,.5).pmf(np.linspace(0,I_size,I_size+1)),'k--')
@@ -267,27 +267,27 @@ def plotInterfaceCounts(counts):
      means=[]
      for cnt in counts:
           a=0
-          for i,j in cnt.items():
+          for i,j in cnt.iteritems():
                a+=i*j
-          means.append(a/np.sum(list(cnt.values()),dtype=np.float64))
-     plt.plot(list(range(len(counts))),means)
+          means.append(a/np.sum(cnt.values(),dtype=np.float64))
+     plt.plot(range(len(counts)),means)
      plt.show(block=False)
 
 def plotFatals(counts):
      plt.figure()
-     plt.plot(list(range(counts.shape[1])),np.mean(counts,axis=0))
+     plt.plot(range(counts.shape[1]),np.mean(counts,axis=0))
      plt.show(block=False)
 
 def PhenotypicTransitions(phen_trans,N=40,crit_factor=0.5):
-     print("N set for ",N)
+     print "N set for ",N
      common_transitions=deepcopy(phen_trans)
-     for phen_key,trans in phen_trans.items():
+     for phen_key,trans in phen_trans.iteritems():
           #print "max",phen_key,max(trans.iterkeys(), key=(lambda key: trans[key])),max(trans.values())
-          for tran,count in trans.items():
+          for tran,count in trans.iteritems():
                if count<N*crit_factor:
                     del common_transitions[phen_key][tran]
 
-     for key in list(common_transitions.keys()):
+     for key in common_transitions.keys():
           if not common_transitions[key]:
                del common_transitions[key]
      return common_transitions
@@ -300,14 +300,14 @@ def plotTransitions(phen_trans,cdict=None):
      nrows=int(ceil(len(phen_trans)/float(ncols)))
      cdict={None:(0,0,0)} if cdict is None else cdict
 
-     for i,(key,trans) in enumerate(iter(phen_trans.items()),1):
+     for i,(key,trans) in enumerate(phen_trans.iteritems(),1):
           if len(trans)==0:
                continue
           ax = fig.add_subplot(nrows, ncols, i)
           ax.set_title('T:'+r', '.join(map(str,key)),fontsize=22)
-          for phen in list(trans.keys()):
+          for phen in trans.keys():
                if phen not in cdict:
-                    cdict[phen]=icy.generate_new_color(list(cdict.values()),0.5)
+                    cdict[phen]=icy.generate_new_color(cdict.values(),0.5)
 
           cols=[cdict[p] if p!=key else 'k' for p in sorted(trans.keys())]
           wedges,_ = ax.pie([trans[k] for k in sorted(trans.keys())],labels=sorted(trans.keys()),colors=cols,startangle=90,counterclock=False)
@@ -328,17 +328,17 @@ def plotTransitionsDetailed(pt):
      scaled_count=defaultdict(dict)
      scaled_count[1][(1,1,1)]=None
      connection_subsets=defaultdict(list)
-     for phen in list(pt.keys()):
+     for phen in pt.keys():
           if phen==(1,1,1):
                continue
-          for sub_phen in list(pt[phen].keys()):
+          for sub_phen in pt[phen].keys():
                connection_subsets[phen].append((phen,sub_phen))
 
 
 
 
      #return connection_subsets
-     for k,v in pt.items():
+     for k,v in pt.iteritems():
           scaled_count[np.count_nonzero(k[2:])][k]=v
      size_counts={i:len(scaled_count[v]) for i,v in enumerate(sorted(scaled_count.keys()))}
      #return scaled_count,size_counts
@@ -354,7 +354,7 @@ def plotTransitionsDetailed(pt):
                if i==0:
                     continue
                total_weight=sum(scaled_count[c][phen].values())
-               for connector,weight in scaled_count[c][phen].items():
+               for connector,weight in scaled_count[c][phen].iteritems():
 
                     con_x=np.count_nonzero(connector[2:])-1
                     offset2=0 if len(scaled_count[con_x+1])%2==1 else .5
@@ -405,7 +405,7 @@ def plotTransitionsDetailed(pt):
           #print phen_key
           phen_set=set()
           phen_set.add(phen_key)
-          for phen_pairing, artists in connection_dict.items():
+          for phen_pairing, artists in connection_dict.iteritems():
                if phen_key==phen_pairing[0]:
                     phen_set.add(phen_pairing[1])
                alpha_v=1 if phen_key in phen_pairing else .1
@@ -439,7 +439,7 @@ def AddPhenotypePatch(ax,shape,xy):
      dy=shape[1]
      artists=[]
      scale=.5/max(dx,dy)
-     for i,j in product(range(dx),range(dy)):
+     for i,j in product(xrange(dx),xrange(dy)):
           if(shape[2+i+j*dx]):
                new_x=xy[0]+(i-dx/2.)*scale
                new_y=xy[1]+(dy/2.-j)*scale-(1.*scale)

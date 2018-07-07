@@ -59,7 +59,7 @@ def SolutionCDF(needle_length=30,A=2,mu=4,O=3,runs=1):
                 occ+=1
                 firsts.append(haystack)
 
-    print(("seen {} times for a fraction of {}".format(occ,occ*1./runs)))
+    print("seen {} times for a fraction of {}".format(occ,occ*1./runs))
     return firsts
 x=[]
 def SolutionCDF_Partials(pop_amount=500,A=2,mu=4,O=3,p=0,runs=1):
@@ -102,7 +102,7 @@ def SolutionCDF_Partials(pop_amount=500,A=2,mu=4,O=3,p=0,runs=1):
         
             
         except Exception as e:
-            print((r,"excepted",fitness_import.shape))
+            print(r,"excepted",fitness_import.shape)
         
 
 

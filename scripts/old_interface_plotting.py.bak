@@ -42,7 +42,7 @@ def Test():
      for r in range(20):
           for v in VisualisePhenotypes('S',0.000001,.5,1,r):
                un.add(tuple(v[2:]))
-          print((len(un)))
+          print(len(un))
      return sorted(list(un),key = lambda z : sum([1 for i in z[2:] if i!=0]))
              
 def LoadSizes(r_type,temperature,mu,gamma,runs=0):
@@ -64,7 +64,7 @@ def LoadSizes(r_type,temperature,mu,gamma,runs=0):
 def LoadPairSizes(temperature,mu,gamma,runs=0):
      if runs==0:
           runs=min(GetMaxRun('S',temperature,mu,gamma),GetMaxRun('R',temperature,mu,0))
-          print(("Runs evaluated at ",runs))
+          print("Runs evaluated at ",runs)
      return (LoadSizes('S',temperature,mu,gamma,runs),'Selection',runs),(LoadSizes('S',temperature,mu,gamma,runs),'Random',runs)
 
 def LoadData(d_type,r_type,temperature,mu,gamma,runs=1):
@@ -76,13 +76,13 @@ def LoadData(d_type,r_type,temperature,mu,gamma,runs=1):
 def LoadPairFitness(temperature,mu,gamma,runs=0):
      if runs==0:
           runs=min(GetMaxRun('S',temperature,mu,gamma),GetMaxRun('R',temperature,mu,0))
-          print(("Runs evaluated at ",runs))
+          print("Runs evaluated at ",runs)
      return LoadData('Fitness','S',temperature,mu,gamma,runs),LoadData('Fitness','S',temperature,mu,gamma,runs)
 
 def LoadPairStrengths(temperature,mu,gamma,runs=0):
      if runs==0:
           runs=min(GetMaxRun('S',temperature,mu,gamma),GetMaxRun('R',temperature,mu,0))
-          print(("Runs evaluated at ",runs))
+          print("Runs evaluated at ",runs)
      return LoadData('Strengths','S',temperature,mu,gamma,runs),LoadData('Strengths','S',temperature,mu,gamma,runs)
 
 def PlotStrengthRatios(data_frame,N_tiles,title_string='',temperature=-1):
@@ -136,10 +136,10 @@ def PlotStrengthRatios(data_frame,N_tiles,title_string='',temperature=-1):
           self_err_lower=np.log10(self_ratio-self_err)
    
           pairwise_G_stat=2* np.nansum(means[:interface_size+1]*np.log(pairwise_ratio))
-          print(("G: {}, p-value: {}".format(pairwise_G_stat,chi2.sf(pairwise_G_stat,interface_size))))
+          print("G: {}, p-value: {}".format(pairwise_G_stat,chi2.sf(pairwise_G_stat,interface_size)))
 
           self_G_stat=2* np.nansum(means[interface_size+1:]*np.log(self_ratio))
-          print(("G: {}, p-value: {}".format(self_G_stat,chi2.sf(self_G_stat,interface_size/2))))
+          print("G: {}, p-value: {}".format(self_G_stat,chi2.sf(self_G_stat,interface_size/2)))
 
  
           
@@ -360,7 +360,7 @@ def PlotPhenotypeSizesOld(ss):
           else:
                min_v = np.min(hist[hist>0])*1./s[2] if np.min(hist[hist>0])*1./s[2]<min_v else min_v
                max_v = np.max(hist[hist>0])*1./s[2] if np.max(hist[hist>0])*1./s[2]>max_v else max_v
-               print((min_v,max_v))    
+               print(min_v,max_v)    
      plt.plot(list(range(1,len(poly_sizes)+1)),poly_sizes,marker='x',c='k',markeredgewidth=1.25,ls='',label='One-sided Polyominoes')
      plt.ylim((min_v*0.8,max_v*1.5))
      plt.yscale('log',nonposy='mask')
@@ -386,7 +386,7 @@ def LoadStrengthsOld(r_type,temperature,mu,gamma,runs=1,interface_size=16):
           bulk_data=[{k:v for (k,v) in zip([float(d) for d in line.rstrip().split()[::2]],[int(d) for d in line.rstrip().split()[1::2]])} for line in open(BASE_FILE_PATH.format('Strengths',r_type,temperature,mu,gamma,r))]
           for data in bulk_data:
                temp=np.zeros((interface_size+1))
-               for k,v in list(data.items()):
+               for k,v in data.items():
                     temp[int(k*interface_size)]=v
                per_runs.append(temp)
           total_ret.append(np.stack(per_runs,axis=1))
@@ -477,7 +477,7 @@ def HistoryDiagram(IDs,selections,low=-1,high=-1):
                     #print i,s
                plt.plot([s,i],[g,g+1],'k--',lw=0.5,zorder=10)
 
-     for idpx,c in list(phen_col.items()):
+     for idpx,c in phen_col.items():
           plt.scatter(-10,0,c=c,label=idpx)
      
 
@@ -515,7 +515,7 @@ def PlotAnalysis(gz,N_samps=50,normed=False):
      #plt.figure()
      for i in range(N_samps):
           sampled_history_strengths=RandomHistorySampling(*gz,goback=1999)
-          for key,interface_pairing in list(sampled_history_strengths.items()):
+          for key,interface_pairing in sampled_history_strengths.items():
                for sequence in interface_pairing:
                     norm_factor=sequence[0] if normed else 1
                     if sequence:
@@ -543,7 +543,7 @@ def FF(xs,t):
      t=.05
      mi=stats.norm.cdf(xs[0],q,t)
      ma=stats.norm.cdf(xs[-1],q,t)
-     print((ma,mi))
+     print(ma,mi)
      scal=1./(ma-mi)
      #print scal,mi
      return stats.norm.cdf((xs-q)/t)#-mi)*scal#*xs**2

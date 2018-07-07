@@ -19,8 +19,8 @@ def main():
     if len(sys.argv)<2:
         print("V value required")
         exit()
-    print(("Running executable ",executable))
-    print(("with params ",ex_flags))
+    print("Running executable ",executable)
+    print("with params ",ex_flags)
     for M in logspace(log10(0.25),log10(4),15):
         for T in append(logspace(-2,log10(0.05),8),[0.75,1]):
             command_sequence='./../bin/{0} {1}'.format(executable,ex_flags.format(M,T,Runs,Runs*int(sys.argv[1])))

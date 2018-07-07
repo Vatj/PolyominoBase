@@ -55,7 +55,7 @@ def LoadEvolutionHistory(temperature=0.000001,mu=1,gamma=1,run=0):
      for line in open(BASE_FILE_PATH.format('PhenotypeHistory',interface_length,temperature,mu,gamma,run)):
           converted=[int(i) for i in line.split()]
           if phen_line:
-               phenotype_IDs.append(list(zip(*(iter(converted),) * 2)))
+               phenotype_IDs.append(zip(*(iter(converted),) * 2))
                phen_line=False
           else:
                selections.append(converted)
@@ -66,7 +66,7 @@ def LoadGenotypeHistory(n_tiles,temperature=0.000001,mu=1,gamma=1,run=0):
      genotypes=[]
      for line in open(BASE_FILE_PATH.format('GenotypeHistory',interface_length,temperature,mu,gamma,run)):
           converted=[int(i) for i in line.split()]
-          genotypes.append([[int(i) for i in j] for j in [converted[i:i + 4*n_tiles] for i in range(0, len(converted), 4*n_tiles)]])
+          genotypes.append([[int(i) for i in j] for j in [converted[i:i + 4*n_tiles] for i in xrange(0, len(converted), 4*n_tiles)]])
      return np.array(genotypes,dtype=interface_type)
 
 def LoadStrengthHistory(temperature=0.000001,mu=1,gamma=1,run=0):
@@ -95,18 +95,18 @@ def RandomWalk(I_size=64,n_steps=1000,phi=0.5,T_star=0.6,renorm=False,return_pro
      N=int(I_size*(1-T_star))+1
      analytic_states=getSteadyStates(mmatrix(N,phi,s_hats[-N:]))[1]
      steady_state=np.sum(s_hats[-N:]*analytic_states)
-     print(steady_state)
+     print steady_state
      states=np.zeros(N)
      states[0]=1
 
      progressive_states=[np.sum(s_hats[-N:]*states)]
 
-     for i in range(n_steps):
+     for i in xrange(n_steps):
           states=UpdateStates(states,s_hats[-N:],phi,renorm)
           progressive_states.append(np.sum(s_hats[-N:]*states))
           #print progressive_states
           if progressive_states[-1]>=steady_state*.995:
-               print(i)
+               print i
                return i
 
      if not renorm:
@@ -170,7 +170,7 @@ def writeResults(I,M,t,runs,offset=0):
      interface_type={8:np.uint8,16:np.uint16,32:np.uint32,64:np.uint64}[interface_length]
      setBasePath('scratch')
      pool = Pool()
-     data_struct=pool.map(partial(AnalysePhylogeneticStrengths, mu=M,t=t), list(range(offset,offset+runs)))
+     data_struct=pool.map(partial(AnalysePhylogeneticStrengths, mu=M,t=t), range(offset,offset+runs))
      pool.close()
      with open('I{}Mu{}T{}O{}.pkl'.format(I,M,t,offset), 'wb') as f:
           pickle.dump(data_struct, f)
@@ -198,7 +198,7 @@ def concatenateResults(data_struct,trim_gen=True):
      slice_start=1 if trim_gen else 0
 
      for outer_index,run_data in enumerate(data_struct):
-          for k,v in run_data.items():
+          for k,v in run_data.iteritems():
                if 'Neutral' in k:
                     neutrals[k.split('_')[-1]]+=Counter(v)
                elif 'Stren' in k:
@@ -209,25 +209,25 @@ def concatenateResults(data_struct,trim_gen=True):
                elif k=='Unbounds':
                     fatal_phens[outer_index]=np.array(v)
                elif k=='PhenTrans':
-                    for sub_k,sub_v in v.items():
+                    for sub_k,sub_v in v.iteritems():
                          for phen in sub_v:
                               phen_trans[sub_k][phen]+=1
                elif k=='PhenFirsts':
-                    for sub_k,sub_v in v.items():
+                    for sub_k,sub_v in v.iteritems():
                          first_trans[sub_k][sub_v]+=1
 
 
-     for stren_type,stren_matrix in strengths.items():
-          for k in range(len(stren_matrix)):
+     for stren_type,stren_matrix in strengths.iteritems():
+          for k in xrange(len(stren_matrix)):
                stren_matrix[k]=[trim for trim in stren_matrix[k] if sum(trim.values())>count_thresh]
           if stren_matrix:
                length = len(sorted(stren_matrix,key=len, reverse=True)[0])
                for i,strens in enumerate(stren_matrix):
-                    strengths[stren_type][i]=np.array([np.sum([a*b for a,b in value.items()])/np.sum(list(value.values())) for value in strens]+[np.nan]*(length-len(strens)),dtype=np.double)
+                    strengths[stren_type][i]=np.array([np.sum([a*b for a,b in value.iteritems()])/np.sum(value.values()) for value in strens]+[np.nan]*(length-len(strens)),dtype=np.double)
                smarr=np.array(stren_matrix)
                strengths[stren_type]=smarr[~np.all(np.isnan(smarr),axis=1)]
 
-     return strengths,neutrals,{k:dict(v) for k,v in phen_trans.items()},{k:dict(v) for k,v in first_trans.items()}
+     return strengths,neutrals,{k:dict(v) for k,v in phen_trans.iteritems()},{k:dict(v) for k,v in first_trans.iteritems()}
 #dict(phen_trans),dict(first_trans)#,bindings,fatal_phens
 
 def AnalysePhylogeneticStrengths(r,mu,t):
@@ -254,16 +254,16 @@ def qBFS(genotypes,phenotypes,selections,strengths):
 
      W_a=Counter({K:0 for K in np.linspace(0,1,interface_length+1)})
      W_s=Counter({K:0 for K in np.linspace(0,1,interface_length/2+1)})
-     for generation in range(gen_limit):
+     for generation in xrange(gen_limit):
           temp_count=defaultdict(int)
-          for index in range(pop_size):
+          for index in xrange(pop_size):
                if phenotypes[generation][index][0]!=0:
                     temp_count[len(strengths[generation][index])]+=1
           active_interfaces.append(temp_count)
 
-     for generation in range(gen_limit-1):
+     for generation in xrange(gen_limit-1):
           fatal_phens.append(0)
-          for index in range(pop_size):
+          for index in xrange(pop_size):
                for new_bond in strengths[generation][index]:
                     stren_tree=qDFS(index,new_bond,genotypes[generation:],selections[generation:],strengths[generation:])
                     if stren_tree:
@@ -280,7 +280,7 @@ def qBFS(genotypes,phenotypes,selections,strengths):
                     weak_a,weak_s=qWeak(strengths[generation][index],genotypes[generation][index])
                     W_a+=weak_a
                     W_s+=weak_s
-     return [_f for _f in MSE_ae if _f],[_f for _f in MSE_ai if _f],[_f for _f in MSE_s if _f],dict(W_a),dict(W_s),active_interfaces,fatal_phens
+     return filter(None,MSE_ae),filter(None,MSE_ai),filter(None,MSE_s),dict(W_a),dict(W_s),active_interfaces,fatal_phens
 
 
 def qDFS(index,new_bond,genotypes,selections,strengths):
@@ -323,7 +323,7 @@ def qWeak(strength,genotype):
      weak_sym=Counter({K:0 for K in np.linspace(0,1,interface_length/2+1)})
      g_length=len(genotype)
      used_interfaces=set([item for sublist in strength for item in sublist])
-     non_interactings=set(range(g_length))-used_interfaces
+     non_interactings=set(xrange(g_length))-used_interfaces
      for pair in combinations(non_interactings,2):
           weak_asym[BindingStrength(*genotype[[i for i in pair]])]+=1
      for face in non_interactings:
@@ -336,7 +336,7 @@ def PhenOrderTail(genotypes,phen_table,phenotype_IDs,selections,strengths):
      pop_size=len(genotypes[0])
 
      transition_probabilities=defaultdict(lambda:defaultdict(int))
-     tree_found_states=[(0,p,[(1,0)]) for p in range(pop_size)]
+     tree_found_states=[(0,p,[(1,0)]) for p in xrange(pop_size)]
      first_transitions={(1,1,1):None}
 
      while tree_found_states:
@@ -357,7 +357,7 @@ def PhenOrderTail(genotypes,phen_table,phenotype_IDs,selections,strengths):
 
      transition_probabilities_PHENOTYPES={}
      for key in transition_probabilities:
-          transition_probabilities_PHENOTYPES[phen_table[key]]={phen_table[phen_ID]:count for phen_ID,count in transition_probabilities[key].items()}
+          transition_probabilities_PHENOTYPES[phen_table[key]]={phen_table[phen_ID]:count for phen_ID,count in transition_probabilities[key].iteritems()}
      del first_transitions[(1,1,1)]
      return transition_probabilities_PHENOTYPES,first_transitions
 
@@ -381,15 +381,15 @@ if __name__ == "__main__":
     main(sys.argv)
 
 def PhenotypicTransitions(phen_trans,N=40,crit_factor=0.5):
-     print("N set for ",N)
+     print "N set for ",N
      common_transitions=deepcopy(phen_trans)
-     for phen_key,trans in phen_trans.items():
+     for phen_key,trans in phen_trans.iteritems():
           #print "max",phen_key,max(trans.iterkeys(), key=(lambda key: trans[key])),max(trans.values())
-          for tran,count in trans.items():
+          for tran,count in trans.iteritems():
                if count<N*crit_factor:
                     del common_transitions[phen_key][tran]
 
-     for key in list(common_transitions.keys()):
+     for key in common_transitions.keys():
           if not common_transitions[key]:
                del common_transitions[key]
      return common_transitions

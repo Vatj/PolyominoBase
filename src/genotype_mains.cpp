@@ -2,9 +2,9 @@
 
 namespace simulation_params
 {
-  uint8_t n_genes=3, colours=7, metric_colours=9;
+  uint8_t n_genes=5, colours=11, metric_colours=13;
   uint8_t phenotype_builds=40;
-  uint32_t n_samples = 10, n_jiggle = 201;
+  uint32_t n_samples = 10, n_jiggle = 1000;
   std::mt19937 RNG_Engine(std::random_device{}());
   double UND_threshold=0.25;
   bool allow_duplicates = true, STERIC_FORBIDDEN = false;
@@ -15,22 +15,22 @@ namespace io_params
   std::string file_path = "/rscratch/vatj2/public_html/Polyominoes/data/gpmap/V6/experiment/";
   std::string threshold = "_T" + std::to_string((int) ceil(100 * simulation_params::UND_threshold));
   std::string builds = "_B" + std::to_string(simulation_params::phenotype_builds);
-  std::string file_details = "_N" + std::to_string(simulation_params::n_genes) + "_C" + std::to_string(simulation_params::colours) + threshold + builds;
+  std::string file_details = "_N" + std::to_string(simulation_params::n_genes - 1) + "_C" + std::to_string(simulation_params::colours) + threshold + builds;
   std::string extra="_Cx" + std::to_string(simulation_params::metric_colours) + "_J" + std::to_string(simulation_params::n_jiggle);
   std::string ending=".txt", iso_ending="_Iso.txt";
   // std::string file_path3 = "/rscratch/vatj2/public_html/Polyominoes/data/gpmap/V6/reproducibility/";
 
-  std::string genome_file = file_path + "SampledGenotypes" + file_details + ending;
-  std::string phenotype_file = file_path + "PhenotypeTable" + ending;
+  std::string genome_file = file_path + "SampledGenotypes2" + file_details + ending;
+  std::string phenotype_file = file_path + "PhenotypeTable" + file_details + ending;
   std::string set_file = file_path + "SetTable" + file_details + ending;
   std::string preprocess_file = file_path + "PreProcessGenotypes" + file_details + ending;
   std::string set_metric_file = file_path + "SetMetrics" + file_details + extra + ending;
   std::string genome_metric_file = file_path + "GenomeMetrics" + file_details + extra + ending;
 
   // std::string file_path2 = "/rscratch/vatj2/public_html/Polyominoes/data/gpmap/V6/duplication/";
-  std::string file_details2 = "_N" + std::to_string(simulation_params::n_genes + 1) + "_C" + std::to_string(simulation_params::colours) + threshold + builds;
+  std::string file_details2 = "_N" + std::to_string(simulation_params::n_genes) + "_C" + std::to_string(simulation_params::colours) + threshold + builds;
   // std::string duplicate_file = file_path + "DuplicateGenotypes" + file_details2 + ending;
-  std::string duplicate_file = file_path + "JiggleDuplicateGenotypes" + file_details2 + extra + ending;
+  std::string duplicate_file = file_path + "SampledDuplicateGenotypes" + file_details2 + ending;
   std::string dup_set_metric_file = file_path + "JiggleDuplicateSetMetrics" + file_details2 + extra + ending;
   std::string dup_genome_metric_file = file_path + "JiggleDuplicateGenomeMetrics" + file_details2 + extra + ending;
 
@@ -47,7 +47,8 @@ int main()
   // ExhaustiveMetricsPrintAll();
   // QuickFromFile();
   // QuickRandom();
-  DuplicateJiggle();
+  // DuplicateJiggle();
+  DuplicateExhaustive();
 
   std::cout << "Back to sleep!" << std::endl;
 
@@ -148,4 +149,14 @@ void DuplicateJiggle()
   PreProcessSampled(duplicates, set_to_genome, &pt2);
   GP_MapSimple(metrics, set_to_genome, &pt2);
   PrintMetrics(io_params::dup_set_metric_file, io_params::dup_genome_metric_file, metrics);
+}
+
+void DuplicateExhaustive()
+{
+  PhenotypeTable pt;
+  std::vector<Genotype> genomes, duplicates;
+
+  duplicates = ExhaustiveMinimalGenotypesFilteredDuplicate(genomes, &pt);
+  PrintGenomeFile(io_params::genome_file, genomes);
+  PrintGenomeFile(io_params::duplicate_file, duplicates);
 }

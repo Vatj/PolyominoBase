@@ -77,7 +77,7 @@ def PlotMaximalOccupation():
             continue
             slope, intercept, r_value, p_value, std_err = linregress(list(range(int(O*.2),int(O*.8))),np.log10(np.mean(avg_data_total,axis=0,dtype=np.float64)[O*t+int(O*.2):O*t+int(O*.8)]))
             
-            print((t,slope, intercept, r_value, p_value, std_err))
+            print(t,slope, intercept, r_value, p_value, std_err)
             #for q in xrange(3):
             ax.plot(np.linspace(O*t,O*t+O,O+1),[10**(intercept+slope*i) for i in np.linspace(0,O,O+1)],lw=2.5,c=c)
     
@@ -124,7 +124,7 @@ def PlotMaximalOccupation2(mu):
     plt.plot(list(range(0,fitness_import.shape[0])),[100000*(1-(r1)*(4./mu))*(1-r1*(4./mu))**(i) for i in range(1,fitness_import.shape[0]+1)],lw=2,c='r',ls='',marker='o',alpha=0.4)
     slope, intercept, r_value, p_value, std_err = linregress(list(range(100)),np.log10(np.nanmean(avg_data_total,axis=0,dtype=np.float64)))
             
-    print((slope, intercept, r_value, p_value, std_err))
+    print(slope, intercept, r_value, p_value, std_err)
     plt.plot(list(range(100)),[10**(intercept+slope*i) for i in range(100)],lw=2.5,marker='o',ls='')
                 
     plt.title(r'Static (mu {})'.format(mu))
@@ -206,7 +206,7 @@ def PlotCDF(data_frame,runs=1000):
     plt.figure()
     for data_key,marker in zip(sorted(list(data_frame.keys()),key = lambda x: (x[1], int(x[3:]))),['^','v','>','s','D','o','x']):
         hist,bins=np.histogram(data_frame[data_key][:,3],bins=np.logspace(np.log10(100),np.log10(50000),100))
-        print((min(data_frame[data_key][:,3])))
+        print(min(data_frame[data_key][:,3]))
         center = (bins[:-1] + bins[1:]) / 2
         plt.plot(center,np.cumsum(hist,dtype=np.float64)/runs,marker=marker,label=labs[data_key],mew=2,markersize=7)
         
@@ -479,16 +479,16 @@ def PlotFitnessOverTime(x,needle_length=50):
     for r in range(4*x,4*x+4):
         subfile_name='Modular{}_T20_C200_N1000_Mu0.003125_B5000_Run{}'.format(RUN_TYPE,r)
         fitness_import=np.genfromtxt('/rscratch/asl47/Bulk_Run/Modular/{}_Fitness.txt'.format(subfile_name),dtype=np.float64)
-        plt.plot(list(range(1,fitness_import.shape[0]+1)),fitness_import[:,0],ls='--',label=r,c=c[r-4*x],alpha=0.6)
-        plt.plot(list(range(1,fitness_import.shape[0]+1)),fitness_import[:,1],ls='',marker='o',alpha=0.6,c=c[r-4*x])
+        plt.plot(range(1,fitness_import.shape[0]+1),fitness_import[:,0],ls='--',label=r,c=c[r-4*x],alpha=0.6)
+        plt.plot(range(1,fitness_import.shape[0]+1),fitness_import[:,1],ls='',marker='o',alpha=0.6,c=c[r-4*x])
 
 
         haystack=search_sequence_numpy(fitness_import[:,1],needle)
         if haystack:
-            print(("found on {} at {}".format(r,haystack)))
+            print("found on {} at {}".format(r,haystack))
             counts+=1
         else:
-            print(("not found on {}".format(r)))
+            print("not found on {}".format(r))
 
     plt.legend()
     plt.xlabel('generation')

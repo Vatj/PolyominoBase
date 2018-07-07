@@ -81,7 +81,7 @@ def Plot_Topology_Robustness(R_T,runs):
     return c_r
 
 def Plot_Other(z_in,N=100,alpha=0.95,mark='none'):
-    print(("For a population of {}, with alpha {}".format(N,alpha)))
+    print("For a population of {}, with alpha {}".format(N,alpha))
     COLOURS=[6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 38, 42, 50, 60, 70, 84, 100, 150, 250, 500]
     predicted_divergence=[]
     for C in list(z_in.keys()):
