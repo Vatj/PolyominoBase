@@ -16,7 +16,13 @@ void GP_MapSampler(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_geno
   uint32_t number_of_genomes = 0;
   for(Set_to_Genome::iterator iter = std::begin(set_to_genome); iter != std::end(set_to_genome); iter++)
     number_of_genomes += (iter->second).size();
-  std::cout << "There are " <<+ number_of_genomes << " genomes to jiggle! \n";
+  std::cout << "There are " <<+ number_of_genomes << " genomes to jiggle a ";
+  std::cout <<+ simulation_params::n_jiggle << "times! \n";
+
+  // Create new files and open them for writing (erase previous data)
+  std::ofstream set_metric_out(io_params::set_metric_file);
+  std::ofstream genome_metric_out(io_params::genome_metric_file);
+  header_metric_files(set_metric_out, genome_metric_out);
 
   for(Set_to_Genome::iterator iter = std::begin(set_to_genome); iter != std::end(set_to_genome); iter++)
   {
@@ -67,7 +73,8 @@ void GP_MapSampler(std::vector<Set_Metrics>& metrics, Set_to_Genome& set_to_geno
          }
       }
     }
-    metrics.emplace_back(set_metrics);
+    // metrics.emplace_back(set_metrics);
+    set_metrics.save_to_file(set_metric_out, genome_metric_out);
   }
 }
 
@@ -162,8 +169,23 @@ void JiggleGenotype(Genotype& genotype)
 
   std::uniform_int_distribution<size_t> jiggle_index(0, neutral_colours.size() - 1);
 
+  std::map <uint8_t, uint8_t> dups;
+
+  if(simulation_params::dup_aware)
+    dups = DuplicateGenes(genotype);
+
   for(auto& base : genotype)
     base= (base==0) ? neutral_colours[jiggle_index(simulation_params::RNG_Engine)] : base;
+
+  if(simulation_params::dup_aware)
+  {
+    for(auto dup: dups)
+    {
+      Genotype::const_iterator first = genotype.begin() + (4 * dup.second);
+      Genotype::const_iterator last = genotype.begin() + (4 * (dup.second + 1));
+      std::copy(first, last, std::back_inserter(genotype));
+    }
+  }
 }
 
 std::vector<Genotype> genotype_neighbourhood(const Genotype& genome)

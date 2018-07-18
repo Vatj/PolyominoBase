@@ -1,6 +1,11 @@
 #include "stochastic_model.hpp"
 #include <iostream>
 
+namespace simulation_params
+{
+  extern uint8_t phenotype_builds, preprocess_builds;
+}
+
 std::vector<Phenotype_ID> GetSetPIDs(Genotype genotype, PhenotypeTable* pt_it);
 std::map<Phenotype_ID, uint8_t> GetPIDCounter(Genotype genotype, PhenotypeTable* pt_it);
 

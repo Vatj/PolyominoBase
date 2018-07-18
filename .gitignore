@@ -4,8 +4,8 @@ build/*
 # Ignore any executables
 bin/*
 
-#
-Ignore any pyc from imports
+#Ignore any pyc from imports
+scripts/*.bak
 scripts/*.pyc
 scripts/*.so
 

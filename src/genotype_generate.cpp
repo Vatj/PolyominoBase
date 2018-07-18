@@ -159,25 +159,6 @@ std::vector<Genotype> ExhaustiveMinimalGenotypesFiltered(PhenotypeTable* pt)
 }
 
 // Temporary Fix
-std::vector<Genotype> GeneDuplication2(Genotype& genotype)
-{
-  std::vector <Genotype> duplicates;
-  uint8_t n_genes = simulation_params::n_genes - 1;
-
-  for(uint8_t index=0; index < n_genes; ++index)
-  {
-    Genotype duplicate(4 * n_genes);
-    std::copy(std::begin(genotype), std::end(genotype), std::begin(duplicate));
-
-    for(uint8_t tail=0; tail < 4; tail++)
-      duplicate.emplace_back(genotype[(4 * index) + tail]);
-
-    duplicates.emplace_back(duplicate);
-  }
-
-  return duplicates;
-}
-
 std::vector<Genotype> ExhaustiveMinimalGenotypesFilteredDuplicate(std::vector<Genotype>& genomes, PhenotypeTable* pt)
 {
   std::vector<Genotype> duplicates, dups;
@@ -201,7 +182,7 @@ std::vector<Genotype> ExhaustiveMinimalGenotypesFilteredDuplicate(std::vector<Ge
     if(!ggenerator.valid_genotype(genotype))
       continue;
 
-    dups = GeneDuplication2(genotype);
+    dups = GeneDuplication(genotype);
     keep_original = false;
     for(auto genome: dups)
     {

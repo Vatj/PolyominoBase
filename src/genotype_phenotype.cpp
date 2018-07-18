@@ -27,8 +27,11 @@ void PreProcessSampled(std::vector<Genotype> genomes, Set_to_Genome& set_to_geno
 {
   Genotype genotype;
   std::vector<Phenotype_ID> pIDs;
+  uint8_t save_config_builds = simulation_params::phenotype_builds;
+  simulation_params::phenotype_builds = simulation_params::preprocess_builds;
 
-  std::cout << "PreProcessing " <<+ genomes.size() << " genomes\n";
+  std::cout << "PreProcessing " <<+ genomes.size() << " genomes, building ";
+  std::cout <<+ simulation_params::preprocess_builds << "th times\n";
 
   #pragma omp parallel for schedule(dynamic) firstprivate(pIDs, genotype)
   for(uint64_t index=0; index < genomes.size(); index++)
@@ -42,6 +45,8 @@ void PreProcessSampled(std::vector<Genotype> genomes, Set_to_Genome& set_to_geno
     #pragma omp critical
       set_to_genome[pIDs].emplace_back(genotype);
   }
+  simulation_params::phenotype_builds = save_config_builds;
+  std::cout << "Set back build parameters to config value : " <<+ simulation_params::phenotype_builds << std::endl;
 }
 
 void FilterExhaustive(std::vector<Genotype> genomes, PhenotypeTable* pt)

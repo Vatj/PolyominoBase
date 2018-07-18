@@ -123,8 +123,10 @@ struct PhenotypeTable {
 
   void PrintTable(std::string phenotype_file)
   {
+    uint64_t n_shapes = 0;
     std::cout << "Printing phenotypes to file : " << phenotype_file << "\n";
     std::ofstream fout(phenotype_file);
+
     for(auto known_phens : known_phenotypes)
     {
       uint16_t n_phen=0;
@@ -135,7 +137,9 @@ struct PhenotypeTable {
 	          fout<<+tile<<" ";
 	       fout<<"\n";
       }
+      n_shapes += n_phen;
     }
+    std::cout << "The phenotype table has " <<+ n_shapes << " entries \n";
   }
 
 };

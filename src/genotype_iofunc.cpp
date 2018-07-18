@@ -1,5 +1,4 @@
 #include "genotype_iofunc.hpp"
-#include <python2.7/Python.h>
 #include <sstream>
 #include <iterator>
 #include <string>
@@ -113,6 +112,23 @@ void PrintMetrics(std::string set_metric_file, std::string genome_metric_file, s
   for (auto metric: metrics)
     metric.save_to_file(set_metric_out, genome_metric_out);
 }
+
+void header_metric_files(std::ofstream& set_metric_out, std::ofstream& genome_metric_out)
+{
+  // Logging
+  std::cout << "Print metrics to files : \n";
+  std::cout << io_params::set_metric_file << "\n" << io_params::genome_metric_file << "\n";
+
+  // Header for the metric files
+  set_metric_out << "srobustness irobustness meta_evolvability evolvability";
+  set_metric_out << " rare unbound analysed misclassified neutral_size";
+  set_metric_out << " diversity diversity_tracker originals misclassified_details pIDs\n";
+
+  genome_metric_out << "genome original srobustness irobustness";
+  genome_metric_out << " meta_evolvability evolvability rare unbound diversity";
+  genome_metric_out << " neutral_weight frequencies pIDs\n";
+}
+
 
 
 void LoadGenomeFile(std::string genome_file, std::vector<Genotype>& genomes)
