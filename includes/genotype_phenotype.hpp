@@ -3,7 +3,7 @@
 
 namespace simulation_params
 {
-  extern uint8_t phenotype_builds, preprocess_builds;
+  extern uint16_t phenotype_builds, preprocess_builds;
 }
 
 std::vector<Phenotype_ID> GetSetPIDs(Genotype genotype, PhenotypeTable* pt_it);

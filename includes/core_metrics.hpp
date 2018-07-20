@@ -30,7 +30,7 @@ struct Genotype_Metrics
   std::vector <Shape_Metrics> shapes;
   std::set <Phenotype_ID> diversity;
 
-  Genotype_Metrics(uint8_t ngenes, uint8_t colours);
+  Genotype_Metrics(uint16_t ngenes, uint16_t colours);
 
   void set_reference(Genotype& genotype, std::vector <Phenotype_ID> pIDs, double neutral);
 
@@ -60,7 +60,7 @@ struct Set_Metrics
 
   std::set <Phenotype_ID> diversity;
 
-  Set_Metrics(uint8_t n_genes, uint8_t colours);
+  Set_Metrics(uint16_t n_genes, uint16_t colours);
 
   void add_genotype_metrics(Genotype_Metrics& gmetrics);
 

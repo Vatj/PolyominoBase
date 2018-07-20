@@ -1,7 +1,7 @@
 #include "core_metrics.hpp"
 
 // Constructor of the Genotype_Metrics structure
-Genotype_Metrics::Genotype_Metrics(uint8_t n_genes, uint8_t colours):
+Genotype_Metrics::Genotype_Metrics(uint16_t n_genes, uint16_t colours):
 n_genes(n_genes), colours(colours)
 {
   number_of_neighbours = (colours - 1) * n_genes * 4.;
@@ -114,7 +114,7 @@ void Shape_Metrics::robust_pID(std::vector <Phenotype_ID> pIDs)
 
 
 // Constructor of the Set_Metrics structure
-Set_Metrics::Set_Metrics(uint8_t n_genes, uint8_t colours):
+Set_Metrics::Set_Metrics(uint16_t n_genes, uint16_t colours):
 n_genes(n_genes), colours(colours), analysed(0)
 {
   diversity_tracker.emplace_back(0);

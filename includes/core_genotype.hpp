@@ -17,5 +17,5 @@ bool Disjointed_Check(Genotype& genome);
 void Search_Next_Tile(Genotype& genome, std::vector<uint8_t>& Unvisited, std::vector<uint8_t>& Connected_Components,uint8_t tile);
 
 /*Converting methods*/
-uint64_t genotype_to_index(Genotype& genotype, uint8_t n_genes, uint8_t colours);
-void index_to_genotype(uint64_t index, Genotype& genotype, uint8_t n_genes, uint8_t colours);
+uint64_t genotype_to_index(Genotype& genotype, uint16_t n_genes, uint16_t colours);
+void index_to_genotype(uint64_t index, Genotype& genotype, uint16_t n_genes, uint16_t colours);

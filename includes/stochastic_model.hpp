@@ -4,7 +4,7 @@
 namespace simulation_params
 {
   extern std::mt19937 RNG_Engine;
-  extern uint8_t phenotype_builds;
+  extern uint16_t phenotype_builds;
   extern double UND_threshold;
   extern bool STERIC_FORBIDDEN;
 }

@@ -3,9 +3,9 @@
 
 namespace simulation_params
 {
-  extern uint8_t n_genes, colours;
+  extern uint16_t n_genes, colours;
   extern std::mt19937 RNG_Engine;
-  extern uint8_t phenotype_builds;
+  extern uint16_t phenotype_builds;
   extern uint32_t n_samples;
   extern bool allow_duplicates;
 }
@@ -13,7 +13,7 @@ namespace simulation_params
 std::vector<Genotype> ExhaustiveMinimalGenotypesIL(PhenotypeTable* pt);
 std::vector<Genotype> ExhaustiveMinimalGenotypesFiltered(PhenotypeTable* pt);
 std::vector<Genotype> SampleMinimalGenotypes(PhenotypeTable* pt);
-std::vector<Genotype> ExhaustiveFullGenotypes2(uint8_t colours, PhenotypeTable* pt);
+// std::vector<Genotype> ExhaustiveFullGenotypes2(uint16_t colours, PhenotypeTable* pt);
 
 // Temporary Fix
 std::vector<Genotype> ExhaustiveMinimalGenotypesFilteredDuplicate(std::vector<Genotype>& genomes, PhenotypeTable* pt);

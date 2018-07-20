@@ -39,10 +39,10 @@ void GetMinPhenRepresentation(Phenotype& phen);
 
 namespace simulation_params
 {
-  extern uint8_t n_genes, colours, metric_colours;
+  extern uint16_t n_genes, colours, metric_colours;
   extern std::mt19937 RNG_Engine;
   extern double UND_threshold;
-  extern uint8_t phenotype_builds;
+  extern uint16_t phenotype_builds;
 }
 
 struct PhenotypeTable {

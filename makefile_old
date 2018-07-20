@@ -20,7 +20,6 @@ PROFDIR	    := profiling
 SRCEXT      := cpp
 DEPEXT      := d
 OBJEXT      := o
-BOOSTDIR    := /rscratch/vatj2/library/boost_1_67_0
 
 #Flags, Libraries and Includes
 CXXFLAGS    := -std=gnu++14 -Wall -Wextra -pedantic -pipe -march=native -flto-partition=none $(cmdflag)
@@ -29,11 +28,8 @@ CXXFLAGS += -O3 -fopenmp
 else
 CXXFLAGS += -p -g -ggdb
 endif
-INC         := -I$(INCDIR) -I$(BOOSTDIR)
-INCDEP      := -I$(INCDIR) -I$(BOOSTDIR)
-# INCBOOST    := /scratch/vatj2/boost_1_67_0/stage/lib/libboost_regex.a
-# INCBOOST    := -L$(BOOSTDIR)/stage/lib/ -lboost_regex
-INCBOOST    := -L$(BOOSTDIR)/stage/lib/ -lboost_program_options
+INC         := -I$(INCDIR)
+INCDEP      := -I$(INCDIR)
 
 #---------------------------------------------------------------------------------
 #DO NOT EDIT BELOW THIS LINE
@@ -95,7 +91,7 @@ Pe: $(PE_OBJECTS) $(CORE_OBJECTS)
 
 GP: $(GP_OBJECTS)  $(ST_OBJECTS) $(CORE_OBJECTS)
 	@mkdir -p $(TARGETDIR)
-	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(GP_TARGET) $^ $(INCBOOST)
+	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(GP_TARGET) $^
 
 SO: $(GP_OBJECTS) $(ST_OBJECTS) $(CORE_OBJECTS)
 	@mkdir -p $(TARGETDIR)

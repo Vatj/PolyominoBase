@@ -1,60 +1,184 @@
 #include "genotype_mains.hpp"
+// #include <boost/lambda/lambda.hpp>
+// #include <boost/regex.hpp>
+#include <iostream>
+#include <fstream>
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
+#include <iterator>
+
 
 namespace simulation_params
 {
-  uint8_t n_genes=4, colours=7, metric_colours=9;
-  uint8_t phenotype_builds=40, preprocess_builds=250;
-  uint32_t n_samples = 10, n_jiggle = 3;
+  uint16_t n_genes, colours, metric_colours;
+  uint16_t phenotype_builds, preprocess_builds;
+  uint32_t n_samples, n_jiggle;
+  double UND_threshold;
+  bool allow_duplicates, STERIC_FORBIDDEN, iso, dup_aware;
+  bool exhaustive, metrics, duplicate_exhaustive;
+
   std::mt19937 RNG_Engine(std::random_device{}());
-  double UND_threshold=0.25;
-  bool allow_duplicates = true, STERIC_FORBIDDEN = false, dup_aware=false;
-}
-
-namespace io_params
-{
-  std::string file_path = "/rscratch/vatj2/public_html/Polyominoes/data/gpmap/V6/experiment/";
-  std::string threshold = "_T" + std::to_string((int) ceil(100 * simulation_params::UND_threshold));
-  std::string builds = "_B" + std::to_string(simulation_params::phenotype_builds);
-  std::string file_details = "_N" + std::to_string(simulation_params::n_genes) + "_C" + std::to_string(simulation_params::colours) + threshold + builds;
-  std::string extra="_Cx" + std::to_string(simulation_params::metric_colours) + "_J" + std::to_string(simulation_params::n_jiggle);
-  std::string ending=".txt", iso_ending="_Iso.txt";
-  // std::string file_path3 = "/rscratch/vatj2/public_html/Polyominoes/data/gpmap/V6/reproducibility/";
-
-  std::string out_genome_file = file_path + "SampledGenotypes" + file_details + ending;
-  std::string in_genome_file = file_path + "SampledGenotypes" + file_details + ending;
-  std::string out_phenotype_file = file_path + "/PhenotypeTables/PhenotypeTable" + file_details + ending;
-  std::string in_phenotype_file = file_path + "PhenotypeTable" + ending;
-  std::string set_file = file_path + "SetTable" + file_details + ending;
-  std::string preprocess_file = file_path + "PreProcessGenotypes" + file_details + ending;
-  std::string set_metric_file = file_path + "SetMetrics" + file_details + extra + ending;
-  std::string genome_metric_file = file_path + "GenomeMetrics" + file_details + extra + ending;
-
-  // std::string file_path2 = "/rscratch/vatj2/public_html/Polyominoes/data/gpmap/V6/duplication/";
-  std::string file_details2 = "_N" + std::to_string(simulation_params::n_genes) + "_C" + std::to_string(simulation_params::colours) + threshold + builds;
-  // std::string duplicate_file = file_path + "DuplicateGenotypes" + file_details2 + ending;
-  std::string duplicate_file = file_path + "SampledDuplicateGenotypes" + file_details2 + ending;
-  std::string dup_set_metric_file = file_path + "DuplicateSetMetrics" + file_details2 + extra + ending;
-  std::string dup_genome_metric_file = file_path + "DuplicateGenomeMetrics" + file_details2 + extra + ending;
-
-  std::string jiggle_file = file_path + "JiggleGenotypes" + file_details + extra + ending;
-  std::string jiggle_set_metric_file = file_path + "JiggleSetMetrics" + file_details + extra + ending;
-  std::string jiggle_genome_metric_file = file_path + "JiggleGenomeMetrics" + file_details + extra + ending;
 }
 
 int main (int argc, char *argv[])
 {
+
+  try {
+
+    po::options_description config("Configuration");
+    config.add_options()
+      ("help", "produce help message")
+      ("config",
+        po::value<std::string>(&io_params::config_file)->default_value("configuration.cfg"),
+        "Specify a configuration file")
+      ("n_genes,n",
+        po::value<uint16_t>(&simulation_params::n_genes)->default_value(3),
+        "Number of gene in genome (modulo 4)")
+      ("generate_colours,c",
+        po::value<uint16_t>(&simulation_params::colours)->default_value(7),
+        "Allowed colours in generated genomes")
+      ("metric_colours,m",
+        po::value<uint16_t>(&simulation_params::metric_colours)->default_value(9),
+        "Allowed colours to jiggle genomes")
+      ("builds,b",
+        po::value<uint16_t>(&simulation_params::phenotype_builds)->default_value(40),
+        "Number of random assembly trial per gene")
+      ("threshold,t",
+        po::value<double>(&simulation_params::UND_threshold)->default_value(0.25),
+        "Threshold percentage to save a shape")
+      ("n_jiggle,j",
+        po::value<uint32_t>(&simulation_params::n_jiggle)->default_value(3),
+        "Number of analysed genome per representant")
+      ("n_samples",
+        po::value<uint32_t>(&simulation_params::n_samples)->default_value(10),
+        "Number of minimal represant to save. Only apply to random sampling")
+      ("dup_aware",
+        po::value<bool>(&simulation_params::dup_aware)->default_value(false),
+        "Duplicate genes in a genome are jiggled in the same way")
+      ("iso",
+        po::value<bool>(&simulation_params::iso)->default_value(false),
+        "Run for isomorphism trimmed files")
+    ;
+
+    po::options_description execution("Execution");
+    execution.add_options()
+      ("exhaustive",
+        po::value<bool>(&simulation_params::exhaustive)->default_value(false),
+        "Generate all minimal genomes and save pseudo-deterministic")
+      ("metrics",
+        po::value<bool>(&simulation_params::metrics)->default_value(false),
+        "Compute the metric distributions by jiggling minimal genomes")
+      ("duplicate_exhaustive",
+        po::value<bool>(&simulation_params::duplicate_exhaustive)->default_value(false),
+        "Generate all minimal genomes and save pseudo-deterministic genomes with a dupicate gene")
+    ;
+
+    po::options_description io_options("IO");
+    io_options.add_options()
+      ("file_path",
+        po::value<std::string>(&io_params::file_path),
+        "Main file path")
+      ("in_genome_file",
+        po::value<std::string>(&io_params::in_genome_file),
+        "file containing the input genomes")
+      ("out_genome_file",
+        po::value<std::string>(&io_params::out_genome_file),
+        "file containing the output genomes")
+      ("duplicate_genome_file",
+        po::value<std::string>(&io_params::duplicate_file),
+        "file containing the output genomes with a duplicated gene")
+      ("in_phenotype_file",
+        po::value<std::string>(&io_params::in_phenotype_file),
+        "file containing the input phenotype table")
+      ("out_phenotype_file",
+        po::value<std::string>(&io_params::out_phenotype_file),
+        "file containing the output phenotype table")
+      ("genome_metric_file",
+        po::value<std::string>(&io_params::genome_metric_file),
+        "file containing the output genome metrics")
+      ("set_metric_file",
+        po::value<std::string>(&io_params::set_metric_file),
+        "file containing the output set metrics")
+      ("set_file",
+        po::value<std::string>(&io_params::set_file),
+        "file containing allowed set found when preprocessing")
+      ("preprocess_file",
+        po::value<std::string>(&io_params::preprocess_file),
+        "file containing the output map between pID set and genomes")
+    ;
+
+    po::options_description hidden("Hidden");
+    hidden.add_options()
+      ("preprocess_builds",
+        po::value<uint16_t>(&simulation_params::preprocess_builds)->default_value(250),
+        "Same as builds but only for preprocessing function")
+      ("allow_duplicates",
+        po::value<bool>(&simulation_params::allow_duplicates)->default_value(false),
+        "Gene duplication is allowed when generating minimal genomes")
+      ("steric_forbidden",
+        po::value<bool>(&simulation_params::STERIC_FORBIDDEN)->default_value(false),
+        "Steric constraint is relaxed in the assembly process")
+    ;
+
+    po::options_description cmdline_options;
+    cmdline_options.add(config).add(execution).add(io_options).add(hidden);
+
+    po::options_description config_file_options;
+    config_file_options.add(config).add(execution).add(io_options).add(hidden);
+
+    po::options_description visible("Allowed options");
+    visible.add(config).add(execution).add(io_options);
+
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, cmdline_options), vm);
+    po::notify(vm);
+
+    std::ifstream ifs(io_params::config_file.c_str());
+    if (!ifs)
+    {
+        std::cout << "can not open config file: " << io_params::config_file << "\n";
+        return 0;
+    }
+    else
+    {
+        po::store(parse_config_file(ifs, config_file_options), vm);
+        po::notify(vm);
+    }
+
+    if (vm.count("help")) {
+          std::cout << visible << "\n";
+          return 0;
+    }
+
+    all_files_to_full_names();
+
+    if(vm["exhaustive"].as<bool>())
+      JustExhaustive();
+    else if(vm["metrics"].as<bool>())
+      QuickFromFile();
+    else if(vm["duplicate_exhaustive"].as<bool>())
+      DuplicateExhaustive();
+    else
+      std::cout << "Why waking me up?" << std::endl;
+    }
+    catch(std::exception& e) {
+        std::cerr << "error: " << e.what() << "\n";
+        return 1;
+    }
+    catch(...) {
+        std::cerr << "Exception of unknown type!\n";
+    }
+
   std::cout << "Global path : " << io_params::file_path  << "\n";
 
+
   // JustExhaustive();
-  // ExhaustiveMetricsPrintAll();
-  QuickFromFile();
-  // QuickRandom();
-  // DuplicateJiggle();
-  // DuplicateExhaustive();
-
+  // // ExhaustiveMetricsPrintAll();
+  // // QuickFromFile();
+  // // QuickRandom();
+  // // DuplicateExhaustive();
+  //
   std::cout << "Back to sleep!" << std::endl;
-
-  // PrintConfigFile(io_params::config_file);
 
   return 0;
 }
@@ -77,7 +201,6 @@ void ExhaustiveMetricsPrintAll()
   PhenotypeTable pt;
   std::vector<Genotype> genomes;
   Set_to_Genome set_to_genome;
-  std::vector<Set_Metrics> metrics;
 
   // genomes = ExhaustiveMinimalGenotypesIL(&pt);
   genomes = ExhaustiveMinimalGenotypesFiltered(&pt);
@@ -91,8 +214,7 @@ void ExhaustiveMetricsPrintAll()
   PrintPreProcessFile(io_params::preprocess_file, set_to_genome);
   PrintSetTable(io_params::set_file, set_to_genome);
 
-  GP_MapSampler(metrics, set_to_genome, &pt);
-  PrintMetrics(io_params::set_metric_file, io_params::genome_metric_file, metrics);
+  GP_MapSampler(set_to_genome, &pt);
 }
 
 void QuickRandom()
@@ -100,13 +222,11 @@ void QuickRandom()
   PhenotypeTable pt;
   std::vector<Genotype> genomes;
   Set_to_Genome set_to_genome;
-  std::vector<Set_Metrics> metrics;
 
   genomes = SampleMinimalGenotypes(&pt);
   PrintGenomeFile(io_params::out_genome_file, genomes);
   PreProcessSampled(genomes, set_to_genome, &pt);
-  GP_MapSampler(metrics, set_to_genome, &pt);
-  PrintMetrics(io_params::set_metric_file, io_params::genome_metric_file, metrics);
+  GP_MapSampler(set_to_genome, &pt);
 }
 
 void QuickFromFile()
@@ -114,39 +234,13 @@ void QuickFromFile()
   PhenotypeTable pt;
   std::vector<Genotype> genomes;
   Set_to_Genome set_to_genome;
-  std::vector<Set_Metrics> metrics;
 
   LoadPhenotypeTable(io_params::in_phenotype_file, &pt);
   LoadGenomeFile(io_params::in_genome_file, genomes);
   PreProcessSampled(genomes, set_to_genome, &pt);
-  GP_MapSampler(metrics, set_to_genome, &pt);
-  // PrintMetrics(io_params::set_metric_file, io_params::genome_metric_file, metrics);
+  GP_MapSampler(set_to_genome, &pt);
 }
 
-// void DuplicateJiggle()
-// {
-//   PhenotypeTable pt, pt2;
-//   std::vector<Genotype> genomes, genomes_jiggle, duplicates;
-//   Set_to_Genome set_to_genome;
-//   std::vector<Set_Metrics> metrics;
-//
-//   LoadGenomeFile(io_params::in_genome_file, genomes);
-//   GenomesJiggleDuplication(genomes, genomes_jiggle, duplicates);
-//   genomes.clear();
-//
-//   LoadPhenotypeTable(io_params::in_phenotype_file, &pt);
-//   PreProcessSampled(genomes_jiggle, set_to_genome, &pt);
-//   GP_MapSimple(metrics, set_to_genome, &pt);
-//   PrintMetrics(io_params::jiggle_set_metric_file, io_params::jiggle_genome_metric_file, metrics);
-//
-//   simulation_params::n_genes++;
-//   genomes_jiggle.clear(), set_to_genome.clear(), metrics.clear();
-//
-//   LoadPhenotypeTable(io_params::in_phenotype_file, &pt2);
-//   PreProcessSampled(duplicates, set_to_genome, &pt2);
-//   GP_MapSimple(metrics, set_to_genome, &pt2);
-//   PrintMetrics(io_params::dup_set_metric_file, io_params::dup_genome_metric_file, metrics);
-// }
 
 void DuplicateExhaustive()
 {

@@ -4,31 +4,73 @@
 #include <string>
 #include <utility>
 
-// void IsoCall(std::string file_name)
-// {
-//   Py_Initialize();
-//   PyObject* graph_string = PyString_FromString((char *) "./scripts/graph_methods.py");
-//   PyObject* graph_script = PyImport_Import(graph_string);
-//
-//   PyObject* trim_topo = PyObject_GetAttrString(graph_script, (char*) "Trim_Topologies");
-//   PyObject* args = PyString_FromString(file_name.c_str());
-//
-//   PyObject_CallObject(trim_topo, args);
-//   Py_Finalize();
-// }
-
-void PrintConfigFile(std::string config_file)
+namespace io_params
 {
-  std::ofstream fout(config_file);
-
-  fout << "n_genes : " <<+ simulation_params::n_genes << "\n";
-  fout << "colours : " <<+ simulation_params::colours << "\n";
-  fout << "metric_colours : " <<+ simulation_params::metric_colours << "\n";
-  fout << "n_samples : " <<+ simulation_params::n_samples << "\n";
-  fout << "Threshold : " <<+ simulation_params::UND_threshold << "\n";
-  fout << "Phenotype builds : " <<+ simulation_params::phenotype_builds << "\n";
-  fout << "n_jiggle : " <<+ simulation_params::n_jiggle << "\n";
+  std::string file_path, file_details, extra, config_file;
+  std::string out_genome_file, in_genome_file;
+  std::string duplicate_file;
+  std::string out_phenotype_file, in_phenotype_file;
+  std::string set_file, preprocess_file;
+  std::string set_metric_file, genome_metric_file;
+  std::string ending=".txt", iso_ending="_Iso.txt";
 }
+
+void infer_file_details()
+{
+  using namespace simulation_params;
+
+  std::string file_details = "_N" + std::to_string(n_genes);
+  file_details += "_C" + std::to_string(colours);
+  file_details += "_T" + std::to_string((int) ceil(100 * UND_threshold));
+  file_details += "_B" + std::to_string(phenotype_builds);
+  io_params::file_details = file_details;
+
+  std::string extra = "_Cx" + std::to_string(metric_colours);
+  extra += "_J" + std::to_string(n_jiggle);
+  io_params::extra = extra;
+}
+
+void all_files_to_full_names()
+{
+  using namespace io_params;
+  infer_file_details();
+
+  in_phenotype_file = file_path + in_phenotype_file + ending;
+
+  in_genome_file = full_filename(in_genome_file, false, simulation_params::iso);
+  out_genome_file = full_filename(out_genome_file, false, false);
+  out_phenotype_file = full_filename(out_phenotype_file, false, false);
+  genome_metric_file = full_filename(genome_metric_file, true, simulation_params::iso);
+  set_metric_file = full_filename(set_metric_file, true, simulation_params::iso);
+  set_file = full_filename(set_file, false, simulation_params::iso);
+  preprocess_file = full_filename(preprocess_file, false, simulation_params::iso);
+}
+
+std::string full_filename(std::string file_name, bool extra, bool iso)
+{
+  std::string full = io_params::file_path + file_name + io_params::file_details;
+  if(extra)
+    full += io_params::extra;
+  if(iso)
+    full += io_params::iso_ending;
+  else
+    full += io_params::ending;
+
+  return full;
+}
+
+// void PrintConfigFile(std::string config_file)
+// {
+//   std::ofstream fout(config_file);
+//
+//   fout << "n_genes : " <<+ simulation_params::n_genes << "\n";
+//   fout << "colours : " <<+ simulation_params::colours << "\n";
+//   fout << "metric_colours : " <<+ simulation_params::metric_colours << "\n";
+//   fout << "n_samples : " <<+ simulation_params::n_samples << "\n";
+//   fout << "Threshold : " <<+ simulation_params::UND_threshold << "\n";
+//   fout << "Phenotype builds : " <<+ simulation_params::phenotype_builds << "\n";
+//   fout << "n_jiggle : " <<+ simulation_params::n_jiggle << "\n";
+// }
 
 void PrintGenomeFile(std::string genome_file, std::vector<Genotype>& genomes)
 {
@@ -88,29 +130,6 @@ void PrintSetTable(std::string set_file, Set_to_Genome& set_to_genome)
     fout.seekp((long) fout.tellp() - 1);
     fout << "]\n";
   }
-}
-
-void PrintMetrics(std::string set_metric_file, std::string genome_metric_file, std::vector<Set_Metrics> metrics)
-{
-  // Create new files and open them for writing (erase previous data)
-  std::ofstream set_metric_out(set_metric_file);
-  std::ofstream genome_metric_out(genome_metric_file);
-
-  // Logging
-  std::cout << "Print metrics to files : \n";
-  std::cout << set_metric_file << "\n" << genome_metric_file << "\n";
-
-  // Header for the metric files
-  set_metric_out << "srobustness irobustness meta_evolvability evolvability";
-  set_metric_out << " rare unbound analysed misclassified neutral_size";
-  set_metric_out << " diversity diversity_tracker originals misclassified_details pIDs\n";
-
-  genome_metric_out << "genome original srobustness irobustness";
-  genome_metric_out << " meta_evolvability evolvability rare unbound diversity";
-  genome_metric_out << " neutral_weight frequencies pIDs\n";
-
-  for (auto metric: metrics)
-    metric.save_to_file(set_metric_out, genome_metric_out);
 }
 
 void header_metric_files(std::ofstream& set_metric_out, std::ofstream& genome_metric_out)
