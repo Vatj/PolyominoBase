@@ -38,12 +38,20 @@ void all_files_to_full_names()
   in_phenotype_file = file_path + in_phenotype_file + ending;
 
   in_genome_file = full_filename(in_genome_file, false, simulation_params::iso);
-  out_genome_file = full_filename(out_genome_file, false, false);
   out_phenotype_file = full_filename(out_phenotype_file, false, false);
   genome_metric_file = full_filename(genome_metric_file, true, simulation_params::iso);
   set_metric_file = full_filename(set_metric_file, true, simulation_params::iso);
   set_file = full_filename(set_file, false, simulation_params::iso);
   preprocess_file = full_filename(preprocess_file, false, simulation_params::iso);
+  duplicate_file = full_filename(duplicate_file, false, simulation_params::iso);
+
+  if(simulation_params::duplicate_exhaustive) {
+    simulation_params::n_genes -= 1;
+    infer_file_details();
+    out_genome_file = full_filename(out_genome_file, false, false);
+    simulation_params::n_genes += 1;
+  } else
+    out_genome_file = full_filename(out_genome_file, false, false);
 }
 
 std::string full_filename(std::string file_name, bool extra, bool iso)
@@ -58,6 +66,7 @@ std::string full_filename(std::string file_name, bool extra, bool iso)
 
   return full;
 }
+
 
 // void PrintConfigFile(std::string config_file)
 // {

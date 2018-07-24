@@ -7,7 +7,7 @@ namespace simulation_params
   extern uint16_t phenotype_builds;
   extern uint32_t n_samples, n_jiggle;
   extern double UND_threshold;
-  extern bool allow_duplicates, iso;
+  extern bool allow_duplicates, iso, duplicate_exhaustive;
 }
 
 std::string full_filename(std::string file_name, bool extra, bool iso);

@@ -150,6 +150,8 @@ int main (int argc, char *argv[])
           return 0;
     }
 
+    std::cout << "Global path : " << io_params::file_path  << "\n";
+
     all_files_to_full_names();
 
     if(vm["exhaustive"].as<bool>())
@@ -169,15 +171,6 @@ int main (int argc, char *argv[])
         std::cerr << "Exception of unknown type!\n";
     }
 
-  std::cout << "Global path : " << io_params::file_path  << "\n";
-
-
-  // JustExhaustive();
-  // // ExhaustiveMetricsPrintAll();
-  // // QuickFromFile();
-  // // QuickRandom();
-  // // DuplicateExhaustive();
-  //
   std::cout << "Back to sleep!" << std::endl;
 
   return 0;
