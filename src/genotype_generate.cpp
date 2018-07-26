@@ -143,7 +143,23 @@ std::vector<Genotype> ExhaustiveMinimalGenotypesFiltered(PhenotypeTable* pt)
     if(!ggenerator.valid_genotype(genotype))
       continue;
 
+    // for(auto base: genotype)
+    //   std::cout <<+ base << " ";
+    // std::cout << std::endl;
+
     pIDs = GetSetPIDs(genotype, pt);
+    std::map<Phenotype_ID, uint8_t> pID_counter = GetPIDCounter(genotype, pt);
+
+    // std::cout << "pIDs : ";
+    // for(auto pID: pIDs)
+    //   std::cout <<+ pID.first << " " << pID.second << " ";
+    // std::cout << std::endl;
+
+    // std::cout << "frequencies : ";
+    // for(auto pair: pID_counter)
+    //   std::cout <<+ pair.second << " ";
+    // std::cout << std::endl;
+
     if(pIDs.front() == rare_pID || pIDs.back() == unbound_pID)
       continue;
 

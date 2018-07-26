@@ -1,7 +1,8 @@
 #include "core_genotype.hpp"
-#include <iostream>
 #include <fstream>
 #include <unordered_map>
+#include <iostream>
+
 
 /*! free vs one-sided polyominoes and tile vs orientation determinism */
 constexpr uint8_t FREE_POLYOMINO = true ? 2 : 1, DETERMINISM_LEVEL=1;
@@ -47,23 +48,25 @@ namespace simulation_params
 
 struct PhenotypeTable {
   std::unordered_map<uint8_t,std::vector<Phenotype> > known_phenotypes,undiscovered_phenotypes;
-  std::unordered_map<uint8_t,std::vector<uint16_t> > new_phenotype_xfer;
-  std::vector<uint16_t> undiscovered_phenotype_counts;
+  std::vector<size_t> new_phenotype_xfer;
+  std::unordered_map<uint8_t, std::vector<uint16_t> > undiscovered_phenotype_counts;
+
 
   Phenotype_ID GetPhenotypeID(Phenotype& phen) {
     uint8_t phenotype_size=std::count_if(phen.tiling.begin(),phen.tiling.end(),[](const int c){return c != 0;});
-    for(uint16_t phenotype_index=0; phenotype_index != known_phenotypes[phenotype_size].size();++phenotype_index) {
+
+    /*! compare against existing table entries*/
+    for(uint16_t phenotype_index=0; phenotype_index != known_phenotypes[phenotype_size].size();++phenotype_index)
       if(ComparePolyominoes(phen,known_phenotypes[phenotype_size][phenotype_index]))
 	return std::make_pair(phenotype_size,phenotype_index);
-    }
+
+    /*! compare against temporary table entries*/
     uint8_t new_phenotype_index=0;
     for(Phenotype phen_p : undiscovered_phenotypes[phenotype_size]) {
       if(ComparePolyominoes(phen,phen_p)) {
-	if(++undiscovered_phenotype_counts[new_phenotype_index]>=ceil(simulation_params::UND_threshold*simulation_params::phenotype_builds)) {
-	  new_phenotype_xfer[phenotype_size].emplace_back(known_phenotypes[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
+	if(++undiscovered_phenotype_counts[phenotype_size][new_phenotype_index]>=ceil(simulation_params::UND_threshold*simulation_params::phenotype_builds)) {
 	  known_phenotypes[phenotype_size].emplace_back(phen);
-	  new_phenotype_xfer[phenotype_size].emplace_back(known_phenotypes[phenotype_size].size()-1);
-
+          new_phenotype_xfer.insert(new_phenotype_xfer.end(),{phenotype_size,known_phenotypes[phenotype_size].size()-1+new_phenotype_index+simulation_params::phenotype_builds,known_phenotypes[phenotype_size].size()-1});
 	  return std::make_pair(phenotype_size,known_phenotypes[phenotype_size].size()-1);
 	}
 	else
@@ -71,31 +74,32 @@ struct PhenotypeTable {
       }
       ++new_phenotype_index;
     }
-    GetMinPhenRepresentation(phen);
 
+    /*! brand new phenotype, get minimal representation and add to temporary table (or existing if limit was 1) */
+    GetMinPhenRepresentation(phen);
     if(static_cast<uint8_t>(ceil(simulation_params::UND_threshold*simulation_params::phenotype_builds))<=1) {
       known_phenotypes[phenotype_size].emplace_back(phen);
       return std::make_pair(phenotype_size,known_phenotypes[phenotype_size].size()-1);
     }
 
     undiscovered_phenotypes[phenotype_size].emplace_back(phen);
-    undiscovered_phenotype_counts.emplace_back(1);
+    undiscovered_phenotype_counts[phenotype_size].emplace_back(1);
     return std::make_pair(phenotype_size,known_phenotypes[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
   }
 
 
   void RelabelPhenotypes(std::vector<Phenotype_ID >& pids) {
-    for(std::unordered_map<uint8_t,std::vector<uint16_t> >::iterator x_iter=new_phenotype_xfer.begin();x_iter!=new_phenotype_xfer.end();++x_iter)
-      for(std::vector<uint16_t>::iterator r_iter=x_iter->second.begin();r_iter!=x_iter->second.end();r_iter+=2)
-	std::replace(pids.begin(),pids.end(),std::make_pair(x_iter->first,*(r_iter)),std::make_pair(x_iter->first,*(r_iter+1)));
+    /*! relabels stored in tuple (size, swap_from, swap_to) */
+    for(auto x_iter=new_phenotype_xfer.begin(); x_iter!=new_phenotype_xfer.end();x_iter+=3)
+      std::replace(pids.begin(),pids.end(),std::make_pair(static_cast<uint8_t>(*(x_iter)),static_cast<uint16_t>(*(x_iter+1))),std::make_pair(static_cast<uint8_t>(*(x_iter)),static_cast<uint16_t>(*(x_iter+2))));
+
     undiscovered_phenotypes.clear();
     undiscovered_phenotype_counts.clear();
     new_phenotype_xfer.clear();
-
   }
 
   /* Count each ID frequency */
-  std::map<Phenotype_ID,uint8_t> PhenotypeFrequencies(std::vector<Phenotype_ID >& pids, uint8_t& rare_phenotypes) {
+  std::map<Phenotype_ID,uint8_t> PhenotypeFrequencies(std::vector<Phenotype_ID >& pids, uint16_t& rare_phenotypes) {
     std::map<Phenotype_ID, uint8_t> ID_counter;
     for(std::vector<Phenotype_ID >::const_iterator ID_iter = pids.begin(); ID_iter!=pids.end(); ++ID_iter) {
       if(ID_iter->second < known_phenotypes[ID_iter->first].size())

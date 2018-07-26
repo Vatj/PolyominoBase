@@ -9,10 +9,16 @@ void PrintShape(Phenotype& phen) {
   std::cout<<std::endl;
 }
 
-
 bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2) {
+  if(phen1.dy > phen1.dx)
+    ClockwiseRotation(phen1);
+  MinimizePhenRep(phen1.tiling);
+
+  /*! test same size of phenotypes*/
   if(phen1.tiling.size()!=phen2.tiling.size() || std::count(phen1.tiling.begin(),phen1.tiling.end(),0)!=std::count(phen2.tiling.begin(),phen2.tiling.end(),0))
-    return false; //different sized polyominoes
+    return false;
+
+  /*! square phenotypes*/
   if(phen1.dx==phen2.dx && phen1.dy==phen2.dy && phen1.dx==phen2.dy) {
     for(uint8_t flip=0; flip<FREE_POLYOMINO;++flip) {
       if(phen1.tiling==phen2.tiling)
@@ -29,6 +35,7 @@ bool ComparePolyominoes(Phenotype& phen1, const Phenotype& phen2) {
       MinimizePhenRep(phen1.tiling);
     }
   }
+  /*! rectangular phenotypes*/
   if(phen1.dx==phen2.dx && phen1.dy==phen2.dy) {
     for(uint8_t flip=0; flip<FREE_POLYOMINO;++flip) {
       if(phen1.tiling==phen2.tiling)
@@ -63,15 +70,22 @@ void ClockwisePiRotation(Phenotype& phen) {
 void ChiralFlip(Phenotype& phen) {
   for(uint8_t row=0;row<phen.dy;++row)
     std::reverse(phen.tiling.begin()+row*phen.dx,phen.tiling.begin()+(row+1)*phen.dx);
-    if(DETERMINISM_LEVEL==3)
-       for(uint8_t& element : phen.tiling)
-         if(element && element%2==0)
-   	      element+=-(element-1)%4+((element-1)%4+2)%4;
+  if(DETERMINISM_LEVEL==3)
+    for(uint8_t& element : phen.tiling)
+      if(element && element%2==0)
+	element+=-(element-1)%4+((element-1)%4+2)%4;
 }
 
 void MinimizePhenRep(std::vector<uint8_t>& tiling) {
-  if(tiling.size()==1 || DETERMINISM_LEVEL==1)
+  if(tiling.size()==1) {
+    tiling={1};
     return;
+  }
+  if(DETERMINISM_LEVEL==1) {
+    for(uint8_t& t : tiling)
+      t= t ? 1:0;
+    return;
+  }
   for(uint8_t& t:tiling)
     t+=128*(t!=0);
   uint8_t swap_count=1;
@@ -113,6 +127,6 @@ void GetMinPhenRepresentation(Phenotype& phen) {
       break;
     ChiralFlip(phen);
   }
-  std::sort(min_tilings.begin(),min_tilings.end());
+  std::nth_element(min_tilings.begin(),min_tilings.begin(),min_tilings.end());
   phen.tiling=min_tilings.front();
 }
