@@ -13,6 +13,7 @@ namespace simulation_params
 std::vector<Genotype> ExhaustiveMinimalGenotypesIL(PhenotypeTable* pt);
 std::vector<Genotype> ExhaustiveMinimalGenotypesFiltered(PhenotypeTable* pt);
 std::vector<Genotype> SampleMinimalGenotypes(PhenotypeTable* pt);
+std::vector<Genotype> ExhaustiveMinimalGenotypesFastFiltered(PhenotypeTable* pt);
 // std::vector<Genotype> ExhaustiveFullGenotypes2(uint16_t colours, PhenotypeTable* pt);
 
 // Temporary Fix

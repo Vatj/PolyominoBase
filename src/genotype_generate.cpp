@@ -143,22 +143,8 @@ std::vector<Genotype> ExhaustiveMinimalGenotypesFiltered(PhenotypeTable* pt)
     if(!ggenerator.valid_genotype(genotype))
       continue;
 
-    // for(auto base: genotype)
-    //   std::cout <<+ base << " ";
-    // std::cout << std::endl;
-
     pIDs = GetSetPIDs(genotype, pt);
     std::map<Phenotype_ID, uint8_t> pID_counter = GetPIDCounter(genotype, pt);
-
-    // std::cout << "pIDs : ";
-    // for(auto pID: pIDs)
-    //   std::cout <<+ pID.first << " " << pID.second << " ";
-    // std::cout << std::endl;
-
-    // std::cout << "frequencies : ";
-    // for(auto pair: pID_counter)
-    //   std::cout <<+ pair.second << " ";
-    // std::cout << std::endl;
 
     if(pIDs.front() == rare_pID || pIDs.back() == unbound_pID)
       continue;
@@ -219,55 +205,39 @@ std::vector<Genotype> ExhaustiveMinimalGenotypesFilteredDuplicate(std::vector<Ge
   return duplicates;
 }
 
+std::vector<Genotype> ExhaustiveMinimalGenotypesFastFiltered(PhenotypeTable* pt)
+{
+  std::vector<Genotype> genomes;
 
-// std::vector<Genotype> ExhaustiveFullGenotypes2(uint8_t colours, InterfacePhenotypeTable* pt)
-// {
-//   std::vector<Genotype> genomes;
-//   //
-//   // // GenotypeGenerator ggenerator = GenotypeGenerator(n_genes, colours);
-//   // // ggenerator.init();
-//   // // Genotype genotype(2 * 4);
-//   // Phenotype_ID rare_pID = {0, 0}, unbound_pID = {255, 0};
-//   // std::vector<Phenotype_ID> pIDs;
-//   // uint64_t good_genotypes = 0, generated_genotypes = 0;
-//
-//   // for(int i=0;i<colours;++i) {
-//   //   for(int j=0;j<colours;++j) {
-//   //     for(int k=0;k<colours;++k) {
-//   //       for(int l=0;l<colours;++l) {
-//   //         for(int q=0;q<colours;++q) {
-//   //           for(int w=0;w<colours;++w) {
-//   //             for(int e=0;e<colours;++e) {
-//   //               for(int r=0;r<colours;++r) {
-//   //
-//   //                 Genotype genotype = {i,j,k,l,q,w,e,r};
-//   //                 Genotype copy = {i,j,k,l,q,w,e,r};
-//   //                 generated_genotypes++;
-//   //
-//   //                 pIDs = GetSetPIDs(genotype, pt);
-//   //
-//   //                 if (pIDs.front() != rare_pID && pIDs.back() != unbound_pID)
-//   //                 {
-//   //                   good_genotypes++;
-//   //                   genomes.emplace_back(copy);
-//   //
-//   //                   if(good_genotypes % 10000 == 0)
-//   //                     std::cout << "Found " <<+ good_genotypes << " out of " <<+ generated_genotypes << " generated \n";
-//   //                 }
-//   //               }
-//   //             }
-//   //           }
-//   //         }
-//   //       }
-//   //     }
-//   //   }
-//   // }
-//
-//   // std::cout << "Final Values : Found " <<+ genomes.size() << " out of " <<+ generated_genotypes << " generated \n";
-//   return genomes;
-// }
+  std::cout << "Generating all minimal samples\n";
 
+  GenotypeGenerator ggenerator = GenotypeGenerator(simulation_params::n_genes, simulation_params::colours);
+  ggenerator.init();
+  Genotype genotype, nullg;
+  uint64_t good_genotypes = 0, generated_genotypes = 0;
 
+  std::cout << "Threshold is : " << (ceil(simulation_params::phenotype_builds * simulation_params::UND_threshold));
+  std::cout << " out of " <<+ simulation_params::phenotype_builds << " builds \n";
+
+  while((genotype=ggenerator())!=nullg)
+  {
+    generated_genotypes++;
+    if(!ggenerator.valid_genotype(genotype))
+      continue;
+
+    if(FastNoPIDs(genotype, pt))
+      continue;
+
+    good_genotypes++;
+    genomes.emplace_back(genotype);
+
+    if(good_genotypes % 100 == 0)
+      std::cout << "Found " <<+ good_genotypes << " out of " <<+ generated_genotypes << " generated \n";
+  }
+
+  std::cout << "Final Values : Found " <<+ genomes.size() << " out of " <<+ generated_genotypes << " generated \n";
+  return genomes;
+}
 
 
 // Member functions of the NecklaceFactory structure

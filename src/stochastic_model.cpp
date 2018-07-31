@@ -94,6 +94,49 @@ namespace Stochastic
     return pID_counter_plastic;
   }
 
+  bool FastNoPIDs(Genotype genotype, PhenotypeTable* pt) {
+    /* Return true if unbound or rare, interrupting the process */
+    std::map<Phenotype_ID,uint8_t> pID_counter_plastic;
+    std::map<Phenotype_ID,uint8_t> ID_counter;
+
+    // Looping the building using each gene as a seed
+    for(uint8_t seed=0;seed<genotype.size()/4;++seed) {
+      std::vector<Phenotype> raw_phenotypes;raw_phenotypes.reserve(simulation_params::phenotype_builds);
+      std::vector<Phenotype_ID> Phenotype_IDs;Phenotype_IDs.reserve(simulation_params::phenotype_builds);
+
+      // Build everything first, before matching with pIDs
+      for(uint8_t kth=0;kth<simulation_params::phenotype_builds;++kth) {
+	       std::vector<int8_t> placed_tiles=Stochastic_Polyomino_Builder(genotype, seed);
+	        if(placed_tiles.size()>0)
+	         raw_phenotypes.emplace_back(Generate_Spatial_Occupancy(placed_tiles));
+	        else
+            // If the genotype is unbound we are not keeping it
+	         return true;
+      }
+
+      // Match shapes with pID and compute frequencies
+      #pragma omp critical(phenotype_lookup)
+      {
+	       for(Phenotype& phen : raw_phenotypes)
+          Phenotype_IDs.emplace_back(pt->GetPhenotypeID(phen));
+	       pt->RelabelPhenotypes(Phenotype_IDs);
+	       ID_counter=pt->PhenotypeFrequencies(Phenotype_IDs, rare_phenotypes);
+      }
+
+      for(auto kv : ID_counter) {
+        // Check there are no rare shape formed
+	       if(kv.second <=static_cast<uint16_t>(simulation_params::phenotype_builds*simulation_params::UND_threshold)) {
+           (pt->known_phenotypes).clear()
+           return true;
+         }
+
+      }
+    }
+    // Clear all known shapes for next iteration
+    (pt->known_phenotypes).clear()
+    return false;
+  }
+
   std::vector<int8_t> Stochastic_Polyomino_Builder(const Genotype& genome, uint8_t initial_Tile) {
     const uint8_t THRESHOLD_SIZE=(genome.size()*genome.size())/4;
     std::vector<int8_t> Placed_Tiles{0,0,static_cast<int8_t>(initial_Tile),0},next_binds; //DEFINED AS (X,Y,Tile Type Number, Tile Rotation[in CW rotation])

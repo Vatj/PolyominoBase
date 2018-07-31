@@ -87,7 +87,6 @@ struct PhenotypeTable {
     return std::make_pair(phenotype_size,known_phenotypes[phenotype_size].size()+new_phenotype_index+simulation_params::phenotype_builds);
   }
 
-
   void RelabelPhenotypes(std::vector<Phenotype_ID >& pids) {
     /*! relabels stored in tuple (size, swap_from, swap_to) */
     for(auto x_iter=new_phenotype_xfer.begin(); x_iter!=new_phenotype_xfer.end();x_iter+=3)
