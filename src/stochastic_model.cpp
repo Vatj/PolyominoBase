@@ -178,8 +178,6 @@ namespace Stochastic
     }
     if(rare_phenotypes)
       plastic_phenotypes.emplace_back(std::make_pair(0,0));
-    if(unbound_phenotypes)
-      plastic_phenotypes.emplace_back(std::make_pair(255,0));
 
     return plastic_phenotypes;
   }
