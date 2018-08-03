@@ -17,3 +17,5 @@ void QuickFromFile();
 void ExhaustiveMetricsPrintAll();
 // void DuplicateJiggle();
 void DuplicateExhaustive();
+void QuickMapFromFile();
+void MakePhenotypeTableFromFile();

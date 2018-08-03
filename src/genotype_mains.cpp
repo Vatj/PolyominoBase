@@ -16,6 +16,7 @@ namespace simulation_params
   double UND_threshold;
   bool allow_duplicates, STERIC_FORBIDDEN, iso, dup_aware;
   bool exhaustive, metrics, duplicate_exhaustive;
+  bool table, quick_map;
 
   std::mt19937 RNG_Engine(std::random_device{}());
 }
@@ -71,6 +72,12 @@ int main (int argc, char *argv[])
       ("duplicate_exhaustive",
         po::value<bool>(&simulation_params::duplicate_exhaustive)->default_value(false),
         "Generate all minimal genomes and save pseudo-deterministic genomes with a dupicate gene")
+      ("quick_map",
+        po::value<bool>(&simulation_params::quick_map)->default_value(false),
+        "Quick GP_map from a file of genomes")
+      ("table",
+        po::value<bool>(&simulation_params::table)->default_value(false),
+        "Make a Phenotype Table from a file of genomes")
     ;
 
     po::options_description io_options("IO");
@@ -160,8 +167,14 @@ int main (int argc, char *argv[])
       QuickFromFile();
     else if(vm["duplicate_exhaustive"].as<bool>())
       DuplicateExhaustive();
+    else if(vm["quick_map"].as<bool>())
+      QuickMapFromFile();
+    else if(vm["table"].as<bool>())
+      MakePhenotypeTableFromFile();
     else
       std::cout << "Why waking me up?" << std::endl;
+
+
     }
     catch(std::exception& e) {
         std::cerr << "error: " << e.what() << "\n";
@@ -183,10 +196,10 @@ void JustExhaustive()
   Set_to_Genome set_to_genome;
 
   // genomes = ExhaustiveMinimalGenotypesIL(&pt);
-  genomes = ExhaustiveMinimalGenotypesFiltered(&pt);
+  genomes = ExhaustiveMinimalGenotypesFastFiltered(&pt);
   // genomes = SampleMinimalGenotypes(n_genes, colours, N_SAMPLES, allow_duplicates, &pt);
   PrintGenomeFile(io_params::out_genome_file, genomes);
-  pt.PrintTable(io_params::out_phenotype_file);
+  // pt.PrintTable(io_params::out_phenotype_file);
 }
 
 void ExhaustiveMetricsPrintAll()
@@ -243,4 +256,27 @@ void DuplicateExhaustive()
   duplicates = ExhaustiveMinimalGenotypesFilteredDuplicate(genomes, &pt);
   PrintGenomeFile(io_params::out_genome_file, genomes);
   PrintGenomeFile(io_params::duplicate_file, duplicates);
+}
+
+void QuickMapFromFile()
+{
+  PhenotypeTable pt;
+  std::vector<Genotype> genomes;
+  Set_to_Genome set_to_genome;
+
+  LoadPhenotypeTable(io_params::in_phenotype_file, &pt);
+  LoadGenomeFile(io_params::in_genome_file, genomes);
+  PreProcessSampled(genomes, set_to_genome, &pt);
+  PrintPreProcessFile2(io_params::preprocess_file, set_to_genome);
+}
+
+void MakePhenotypeTableFromFile()
+{
+  PhenotypeTable pt;
+  std::vector<Genotype> genomes;
+  Set_to_Genome set_to_genome;
+
+  LoadGenomeFile(io_params::in_genome_file, genomes);
+  PreProcessSampled(genomes, set_to_genome, &pt);
+  pt.PrintTable(io_params::out_phenotype_file);
 }

@@ -13,6 +13,7 @@ namespace Stochastic
 {
   std::vector<Phenotype_ID> AssemblePlasticGenotype(Genotype genotype, PhenotypeTable* pt);
   std::map<Phenotype_ID, uint8_t> AssemblePlasticGenotypeFrequency(Genotype genotype, PhenotypeTable* pt);
+  bool FastNoPIDs(Genotype genotype, PhenotypeTable* pt);
 
   Phenotype Generate_Spatial_Occupancy(std::vector<int8_t>& Placed_Tiles_Check);
   std::vector<int8_t> Stochastic_Polyomino_Builder(const Genotype& genome, uint8_t initial_Tile);

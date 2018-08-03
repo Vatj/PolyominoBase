@@ -165,7 +165,7 @@ std::vector<Genotype> ExhaustiveMinimalGenotypesFilteredDuplicate(std::vector<Ge
 {
   std::vector<Genotype> duplicates, dups;
 
-  std::cout << "Generating all minimal samples\n";
+  std::cout << "Generating all minimal samples and adding duplicate gene\n";
 
   GenotypeGenerator ggenerator = GenotypeGenerator(simulation_params::n_genes - 1, simulation_params::colours);
   ggenerator.init();
@@ -225,7 +225,7 @@ std::vector<Genotype> ExhaustiveMinimalGenotypesFastFiltered(PhenotypeTable* pt)
     if(!ggenerator.valid_genotype(genotype))
       continue;
 
-    if(FastNoPIDs(genotype, pt))
+    if(Stochastic::FastNoPIDs(genotype, pt))
       continue;
 
     good_genotypes++;

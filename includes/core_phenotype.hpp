@@ -104,7 +104,7 @@ struct PhenotypeTable {
       if(ID_iter->second < known_phenotypes[ID_iter->first].size())
 	++ID_counter[std::make_pair(ID_iter->first,ID_iter->second)];
       else
-	rare_phenotypes=true;
+	rare_phenotypes++;
     }
     return ID_counter;
   }

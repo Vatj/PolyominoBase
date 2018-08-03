@@ -114,6 +114,25 @@ void PrintPreProcessFile(std::string preprocess_file, Set_to_Genome& set_to_geno
   }
 }
 
+void PrintPreProcessFile2(std::string preprocess_file, Set_to_Genome& set_to_genome)
+{
+  std::cout << "Printing preprocessed genomes to file : " << preprocess_file << "\n";
+  std::ofstream fout(preprocess_file);
+
+  for(Set_to_Genome::iterator iter = std::begin(set_to_genome); iter != std::end(set_to_genome); iter++)
+  {
+    for(auto genome: iter->second)
+    {
+      for(auto index: genome)
+        fout <<+ index << " ";
+      fout << "{";
+      for (auto pID: iter->first)
+        fout <<+ pID.first << " " <<+ pID.second << " ";
+      fout << "}\n";
+    }
+  }
+}
+
 void PrintSetTable(std::string set_file, Set_to_Genome& set_to_genome)
 {
   std::cout << "Printing set table to file : " << set_file << "\n";
