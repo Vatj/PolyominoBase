@@ -38,7 +38,7 @@ void Genotype_Metrics::analyse_pIDs(std::vector <Phenotype_ID>& pIDs)
   if (std::find(std::begin(pIDs), std::end(pIDs), rare_pID) != std::end(pIDs))
   {
     rare += 1.;
-    pIDs.erase(rare_pID);
+    pIDs.erase(std::find(std::begin(pIDs), std::end(pIDs), rare_pID), std::end(pIDs));
   }
 
   std::vector <Phenotype_ID> intersection, union_set;
