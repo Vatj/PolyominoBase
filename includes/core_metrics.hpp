@@ -26,7 +26,7 @@ struct Genotype_Metrics
 
   double number_of_neighbours;
   double strict_robustness = 0, intersection_robustness = 0;
-  double union_evolvability = 0, corrected_evolvability = 0;
+  double union_evolvability = 0;
   double robust_evolvability = 0, complex_evolvability = 0;
   double rare = 0, unbound = 0, neutral_weight=0;
 
@@ -57,7 +57,7 @@ struct Set_Metrics
 
   std::vector <double> strict_robustnesses, intersection_robustnesses;
   std::vector <double> complex_evolvabilities, robust_evolvabilities;
-  std::vector <double> union_evolvabilities, corrected_evolvabilities;
+  std::vector <double> union_evolvabilities;
   std::vector<double> rares, unbounds;
   std::vector <double> neutral_weightings;
   std::vector <Genotype_Metrics> genome_metrics;
