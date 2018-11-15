@@ -2,6 +2,7 @@
 #include <fstream>
 #include <unordered_map>
 #include <iostream>
+#include <random>
 
 
 /*! free vs one-sided polyominoes and tile vs orientation determinism */

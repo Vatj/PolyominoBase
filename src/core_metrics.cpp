@@ -13,6 +13,10 @@ void Genotype_Metrics::set_reference(Genotype& genotype, std::vector<Phenotype_I
   ref_pIDs = pIDs;
   original = genotype;
   Clean_Genome(original, false);
+  max_size = 0;
+
+  for(auto pID: ref_pIDs)
+    max_size = std::max(max_size, pID.first);
 
   neutral_weight = neutral;
 
@@ -35,7 +39,12 @@ void Genotype_Metrics::analyse_pIDs(std::vector <Phenotype_ID>& pIDs)
   else
     intersection_robustness = 0;
 
-  union_evolvability += (double) (union_set.size() - ref_pIDs.size());
+  if(union_set.size() > ref_pIDs.size())
+  {
+    union_evolvability += 1;
+    if(intersection.size() > 0)
+      robust_evolvability += 1;
+  }
 
   if (std::find(std::begin(pIDs), std::end(pIDs), rare_pID) != std::end(pIDs))
     rare += 1.;
@@ -46,8 +55,16 @@ void Genotype_Metrics::analyse_pIDs(std::vector <Phenotype_ID>& pIDs)
   // for (auto shape: shapes)
   //   shape.robust_pID(pIDs);
 
+  uint8_t new_max = 0;
+
   for (auto pID: pIDs)
+  {
     diversity.insert(pID);
+    new_max = std::max(new_max, pID.first);
+  }
+
+  if(new_max > max_size)
+    complex_evolvability += 1.;
 }
 
 void Genotype_Metrics::save_to_file(std::ofstream& fout)
@@ -67,7 +84,9 @@ void Genotype_Metrics::save_to_file(std::ofstream& fout)
   fout <<+ strict_robustness / number_of_neighbours << " ";
   fout <<+ intersection_robustness / number_of_neighbours << " ";
   fout <<+ union_evolvability / number_of_neighbours << " ";
-  fout <<+ (union_evolvability - rare - unbound) / number_of_neighbours << " ";
+  fout <<+ (union_evolvability - rare - unbound) << " ";
+  fout <<+ complex_evolvability / number_of_neighbours << " ";
+  fout <<+ robust_evolvability / number_of_neighbours << " ";
   fout <<+ rare / number_of_neighbours << " ";
   fout <<+ unbound / number_of_neighbours << " ";
   fout <<+ diversity.size() << " ";
@@ -94,8 +113,9 @@ void Genotype_Metrics::save_to_file(std::ofstream& fout)
 
 void Genotype_Metrics::clear()
 {
-  strict_robustness = 0, union_evolvability = 0, rare = 0;
-  intersection_robustness = 0, unbound = 0;
+  strict_robustness = 0, intersection_robustness = 0, union_evolvability = 0;
+  robust_evolvability = 0, complex_evolvability = 0;
+  rare = 0, unbound = 0;
 
   // shapes.clear();
   diversity.clear();
@@ -131,6 +151,9 @@ void Set_Metrics::add_genotype_metrics(Genotype_Metrics& genome_metric)
   strict_robustnesses.emplace_back(genome_metric.strict_robustness / number_of_neighbours);
   intersection_robustnesses.emplace_back(genome_metric.intersection_robustness / number_of_neighbours);
   union_evolvabilities.emplace_back(genome_metric.union_evolvability / number_of_neighbours);
+  corrected_evolvabilities.emplace_back(genome_metric.corrected_evolvability / number_of_neighbours);
+  robust_evolvabilities.emplace_back(genome_metric.complex_evolvability / number_of_neighbours);
+  complex_evolvabilities.emplace_back(genome_metric.robust_evolvability / number_of_neighbours);
   rares.emplace_back(genome_metric.rare / number_of_neighbours);
   unbounds.emplace_back(genome_metric.unbound / number_of_neighbours);
 
@@ -153,12 +176,16 @@ void Set_Metrics::save_to_file(std::ofstream& set_out, std::ofstream& genome_out
   double average_strict_robustness = std::inner_product(std::begin(strict_robustnesses), std::end(strict_robustnesses), std::begin(neutral_weightings), 0) / total_neutral_size;
   double average_intersection_robustness = std::inner_product(std::begin(intersection_robustnesses), std::end(intersection_robustnesses), std::begin(neutral_weightings), 0) / total_neutral_size;
   double average_union_evolvability = std::inner_product(std::begin(union_evolvabilities), std::end(union_evolvabilities), std::begin(neutral_weightings), 0) / total_neutral_size;
+  double average_complex_evolvability = std::inner_product(std::begin(complex_evolvabilities), std::end(complex_evolvabilities), std::begin(neutral_weightings), 0) / total_neutral_size;
+  double average_robust_evolvability = std::inner_product(std::begin(robust_evolvabilities), std::end(robust_evolvabilities), std::begin(neutral_weightings), 0) / total_neutral_size;
   double average_rare = std::inner_product(std::begin(rares), std::end(rares), std::begin(neutral_weightings), 0) / total_neutral_size;
   double average_unbound = std::inner_product(std::begin(unbounds), std::end(unbounds), std::begin(neutral_weightings), 0) / total_neutral_size;
 
   set_out <<+ average_strict_robustness << " " <<+ average_intersection_robustness << " ";
   set_out <<+ average_union_evolvability << " ";
   set_out <<+ average_union_evolvability - average_unbound - average_rare << " ";
+  set_out <<+ average_robust_evolvability << " ";
+  set_out <<+ average_complex_evolvability << " ";
   set_out <<+ average_rare << " " <<+ average_unbound << " ";
   set_out <<+ analysed << " " <<+ misclassified.size() << " ";
   set_out <<+ total_neutral_size << " " << diversity.size() << " ";
@@ -211,6 +238,7 @@ void Set_Metrics::save_to_file(std::ofstream& set_out, std::ofstream& genome_out
 void Set_Metrics::clear()
 {
   strict_robustnesses.clear(), union_evolvabilities.clear(), rares.clear();
+  robust_evolvabilities.clear(), complex_evolvabilities.clear();
   intersection_robustnesses.clear(), neutral_weightings.clear(), unbounds.clear();
 
   genome_metrics.clear();
