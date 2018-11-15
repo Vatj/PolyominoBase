@@ -26,18 +26,31 @@ void Genotype_Metrics::set_reference(Genotype& genotype, std::vector<Phenotype_I
 
 void Genotype_Metrics::analyse_pIDs(std::vector <Phenotype_ID>& pIDs)
 {
+  if (std::find(std::begin(pIDs), std::end(pIDs), unbound_pID) != std::end(pIDs))
+  {
+    unbound += 1.;
+    return;  // Unbound is an exclusive label
+  }
+
   if (pIDs == ref_pIDs)
-    strict_robustness+= 1.;
+    strict_robustness += 1.;
+
+  if (std::find(std::begin(pIDs), std::end(pIDs), rare_pID) != std::end(pIDs))
+  {
+    rare += 1.;
+    pIDs.erase(rare_pID);
+  }
 
   std::vector <Phenotype_ID> intersection, union_set;
 
   std::set_intersection(std::begin(pIDs), std::end(pIDs), std::begin(ref_pIDs), std::end(ref_pIDs), std::back_inserter(intersection));
   std::set_union(std::begin(pIDs), std::end(pIDs), std::begin(ref_pIDs), std::end(ref_pIDs), std::back_inserter(union_set));
 
-  if(ref_pIDs.size() > 0)
-    intersection_robustness += (double) intersection.size() / (double) ref_pIDs.size();
+  if(intersection.size() > 0)
+    // intersection_robustness += (double) intersection.size() / (double) ref_pIDs.size();
+    intersection_robustness += 1;
   else
-    intersection_robustness = 0;
+    intersection_robustness += 0;
 
   if(union_set.size() > ref_pIDs.size())
   {
@@ -45,12 +58,6 @@ void Genotype_Metrics::analyse_pIDs(std::vector <Phenotype_ID>& pIDs)
     if(intersection.size() > 0)
       robust_evolvability += 1;
   }
-
-  if (std::find(std::begin(pIDs), std::end(pIDs), rare_pID) != std::end(pIDs))
-    rare += 1.;
-
-  if (std::find(std::begin(pIDs), std::end(pIDs), unbound_pID) != std::end(pIDs))
-    unbound += 1.;
 
   // for (auto shape: shapes)
   //   shape.robust_pID(pIDs);
@@ -84,7 +91,6 @@ void Genotype_Metrics::save_to_file(std::ofstream& fout)
   fout <<+ strict_robustness / number_of_neighbours << " ";
   fout <<+ intersection_robustness / number_of_neighbours << " ";
   fout <<+ union_evolvability / number_of_neighbours << " ";
-  fout <<+ (union_evolvability - rare - unbound) << " ";
   fout <<+ complex_evolvability / number_of_neighbours << " ";
   fout <<+ robust_evolvability / number_of_neighbours << " ";
   fout <<+ rare / number_of_neighbours << " ";
@@ -151,7 +157,6 @@ void Set_Metrics::add_genotype_metrics(Genotype_Metrics& genome_metric)
   strict_robustnesses.emplace_back(genome_metric.strict_robustness / number_of_neighbours);
   intersection_robustnesses.emplace_back(genome_metric.intersection_robustness / number_of_neighbours);
   union_evolvabilities.emplace_back(genome_metric.union_evolvability / number_of_neighbours);
-  corrected_evolvabilities.emplace_back(genome_metric.corrected_evolvability / number_of_neighbours);
   robust_evolvabilities.emplace_back(genome_metric.complex_evolvability / number_of_neighbours);
   complex_evolvabilities.emplace_back(genome_metric.robust_evolvability / number_of_neighbours);
   rares.emplace_back(genome_metric.rare / number_of_neighbours);
@@ -183,7 +188,6 @@ void Set_Metrics::save_to_file(std::ofstream& set_out, std::ofstream& genome_out
 
   set_out <<+ average_strict_robustness << " " <<+ average_intersection_robustness << " ";
   set_out <<+ average_union_evolvability << " ";
-  set_out <<+ average_union_evolvability - average_unbound - average_rare << " ";
   set_out <<+ average_robust_evolvability << " ";
   set_out <<+ average_complex_evolvability << " ";
   set_out <<+ average_rare << " " <<+ average_unbound << " ";
