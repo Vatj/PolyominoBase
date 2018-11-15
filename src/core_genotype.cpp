@@ -1,4 +1,5 @@
 #include "core_genotype.hpp"
+#include <cmath>
 
 uint8_t Interaction_Matrix(uint8_t input_face) {
   return input_face>0 ?  (1-input_face%2)*(input_face-1)+(input_face%2)*(input_face+1) : input_face;
@@ -106,15 +107,15 @@ uint64_t genotype_to_index(Genotype& genotype, uint8_t n_genes, uint8_t colours)
 {
   uint64_t count=0;
   for(uint8_t index=0;index<n_genes*4;++index)
-    count+= genotype[index] * pow(colours,n_genes*4-index-1);
+    count+= genotype[index] * std::pow(colours,n_genes*4-index-1);
   return count;
 }
 
 void index_to_genotype(uint64_t index, Genotype& genotype, uint8_t n_genes, uint8_t colours)
 {
   for(uint8_t count=0;count<n_genes*4;++count) {
-    uint64_t value=index/pow(colours,n_genes*4-count-1);
+    uint64_t value=index/std::pow(colours,n_genes*4-count-1);
     genotype[count]=value;
-    index-= value * pow(colours,n_genes*4-count-1);
+    index-= value * std::pow(colours,n_genes*4-count-1);
   }
 }

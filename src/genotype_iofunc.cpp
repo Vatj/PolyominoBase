@@ -168,11 +168,13 @@ void header_metric_files(std::ofstream& set_metric_out, std::ofstream& genome_me
 
   // Header for the metric files
   set_metric_out << "srobustness irobustness meta_evolvability evolvability";
-  set_metric_out << " rare unbound analysed misclassified neutral_size";
+  set_metric_out << " robust_evolvability complex_evolvability rare unbound analysed misclassified neutral_size";
   set_metric_out << " diversity diversity_tracker originals misclassified_details pIDs\n";
 
   genome_metric_out << "genome original srobustness irobustness";
-  genome_metric_out << " meta_evolvability evolvability rare unbound diversity";
+  genome_metric_out << " meta_evolvability evolvability";
+  genome_metric_out << " robust_evolvability complex_evolvability";
+  genome_metric_out << " rare unbound diversity";
   genome_metric_out << " neutral_weight frequencies pIDs\n";
 }
 
