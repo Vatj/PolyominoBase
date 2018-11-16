@@ -182,7 +182,7 @@ void PlainMetrics()
   LoadPhenotypeTable(io_params::in_phenotype_file, &pt);
   LoadGenomeFile(io_params::in_genome_file, genomes);
 
-  multiple_genomes_to_metric(genomes, pt);
+  multiple_genomes_to_metric(genomes, &pt);
 }
 
 void DistributionMetrics()
@@ -193,5 +193,5 @@ void DistributionMetrics()
   LoadPhenotypeTable(io_params::in_phenotype_file, &pt);
   LoadGenomeFile(io_params::in_genome_file, genomes);
 
-  genome_to_pID_distribution(genomes[0], pt);
+  genome_to_pID_distribution(genomes[0], &pt);
 }

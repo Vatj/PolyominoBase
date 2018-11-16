@@ -25,7 +25,7 @@ struct Phenotype {
 };
 typedef std::pair<uint8_t,uint16_t> Phenotype_ID;
 typedef std::map<std::vector<Phenotype_ID>, std::vector<Genotype>> Set_to_Genome;
-typedef std::map<std::vector<Genotype>, std::vector<Phenotype_ID>> Genome_to_Set;
+typedef std::map<Genotype, std::vector<Phenotype_ID>> Genome_to_Set;
 
 /*! print phenotype to stdout */
 void PrintShape(Phenotype& phen);

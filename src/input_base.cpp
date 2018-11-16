@@ -7,11 +7,11 @@ std::pair<Genotype_Metrics, Genome_to_Set> single_genome_to_metric(Genotype geno
 
   std::map<Phenotype_ID, uint8_t> pID_counter = GetPIDCounter(genotype, pt);
 
-  std::vector<Phenotype_ID> pIDs;
+  std::vector<Phenotype_ID> ref_pIDs;
   for(auto pID: pID_counter)
-    pIDs.emplace_back(pID.first);
+    ref_pIDs.emplace_back(pID.first);
 
-  neutral_weight = ((double) NeutralSize(genotype, 1, simulation_params::metric_colours - 1));
+  double neutral_weight = ((double) NeutralSize(genotype, 1, simulation_params::metric_colours - 1));
 
   Genotype_Metrics genome_metric(simulation_params::n_genes, simulation_params::metric_colours);
   genome_metric.pID_counter.insert(std::begin(pID_counter), std::end(pID_counter));
@@ -34,15 +34,15 @@ void multiple_genomes_to_metric
 {
   std::vector<std::pair<Genotype_Metrics, Genome_to_Set>> data_genomes;
 
-  for (std::vector<Genotype>::iterator iter = std::begin(genome); iter != std::end(genomes); iter++)
-    data_genomes.emplace_back(single_genome_to_metric(genome, pt));
-
+  for (std::vector<Genotype>::iterator iter = std::begin(genomes); iter != std::end(genomes); iter++)
+    data_genomes.emplace_back(single_genome_to_metric(*iter, pt));
 
   std::cout << "Printing to files : \n";
-  std::cout << genome_metric_file << std::endl << neighbour_file << std::endl;
+  std::cout << io_params::genome_metric_file << std::endl;
+  std::cout << io_params::neighbour_file << std::endl;
 
-  std::ofstream genome_metric_out(genome_metric_file);
-  std::ofstream neighbour_out(neighbour_file);
+  std::ofstream genome_metric_out(io_params::genome_metric_file);
+  std::ofstream neighbour_out(io_params::neighbour_file);
 
   for(std::vector<std::pair<Genotype_Metrics, Genome_to_Set>>::iterator iter = std::begin(data_genomes);
   iter != std::end(data_genomes); iter++)
@@ -60,9 +60,8 @@ void genome_to_pID_distribution(Genotype genome, PhenotypeTable* pt)
   std::vector <Phenotype_ID> ref_pIDs = GetSetPIDs(genotype, pt);
 
   std::cout << "Metric distribution of {";
-  for(auto pID: iter->first)
+  for(auto pID: ref_pIDs)
     std::cout << "(" <<+ pID.first << ", " <<+ pID.second << "), ";
-  number_of_genomes -= (iter->second).size();
   std::cout << "} over " <<+ simulation_params::n_jiggle << " jiggles! \n";
 
   // Create new files and open them for writing (erase previous data)

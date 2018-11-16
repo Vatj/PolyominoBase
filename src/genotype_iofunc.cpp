@@ -8,7 +8,7 @@ namespace io_params
 {
   std::string file_path, file_details, extra, config_file;
   std::string out_genome_file, in_genome_file;
-  std::string duplicate_file;
+  std::string duplicate_file, neighbour_file;
   std::string out_phenotype_file, in_phenotype_file;
   std::string set_file, preprocess_file;
   std::string set_metric_file, genome_metric_file;
@@ -162,7 +162,7 @@ void PrintSetTable(std::string set_file, Set_to_Genome& set_to_genome)
 
 void PrintNeighbourhood(std::ofstream& fout, Genome_to_Set& neighbourhood)
 {
-  for (Genome_to_Set::iterator iter = std::begin(neighbourhood); iter != std::end(neighbourhood); iter++))
+  for (Genome_to_Set::iterator iter = std::begin(neighbourhood); iter != std::end(neighbourhood); iter++)
   {
     fout << "(";
     for (auto face: iter->first)

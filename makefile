@@ -7,6 +7,7 @@ ST_TARGET   := StochasticAssembler
 PR_TARGET   := BulkProcessor
 PE_TARGET   := ProteinEvolution
 GP_TARGET   := GP_Mapping
+IN_TARGET   := Interactive
 SO_TARGET   := AGF.so
 
 
@@ -20,8 +21,8 @@ PROFDIR	    := profiling
 SRCEXT      := cpp
 DEPEXT      := d
 OBJEXT      := o
-#BOOSTDIR    := /rscratch/vatj2/library/boost_1_67_0
-BOOSTDIR    := /usr/local/lib/boost_1_67_0
+BOOSTDIR    := /rscratch/vatj2/library/boost_1_67_0
+#BOOSTDIR    := /usr/local/lib/boost_1_67_0
 
 #Flags, Libraries and Includes
 CXXFLAGS    := -std=c++14 -Wall -Wextra -pedantic -pipe -march=native -flto-partition=none $(cmdflag)
@@ -45,6 +46,7 @@ ST_SOURCES := $(shell find $(SRCDIR) -type f -name stochastic_m*.$(SRCEXT))
 PR_SOURCES := $(shell find $(SRCDIR) -type f -name processing_*.$(SRCEXT))
 PE_SOURCES := $(shell find $(SRCDIR) -type f -name interface_*.$(SRCEXT))
 GP_SOURCES := $(shell find $(SRCDIR) -type f -name genotype_*.$(SRCEXT))
+IN_SOURCES := $(shell find $(SRCDIR) -type f -name input_*.$(SRCEXT))
 CORE_SOURCES := $(shell find $(SRCDIR) -type f -name core_*.$(SRCEXT))
 
 
@@ -54,6 +56,7 @@ ST_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(ST_SOURCES:.$(SRCEXT)=.
 PR_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(PR_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 PE_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(PE_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 GP_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(GP_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
+IN_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(IN_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 CORE_OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(CORE_SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 
 
@@ -97,6 +100,10 @@ Pe: $(PE_OBJECTS) $(CORE_OBJECTS)
 GP: $(GP_OBJECTS)  $(ST_OBJECTS) $(CORE_OBJECTS)
 	@mkdir -p $(TARGETDIR)
 	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(GP_TARGET) $^ $(INCBOOST)
+
+IN: $(IN_OBJECTS) $(GP_OBJECTS) $(ST_OBJECTS) $(CORE_OBJECTS)
+	@mkdir -p $(TARGETDIR)
+	$(CXX) $(CXXFLAGS) -o $(TARGETDIR)/$(IN_TARGET) $^ $(INCBOOST)
 
 SO: $(GP_OBJECTS) $(ST_OBJECTS) $(CORE_OBJECTS)
 	@mkdir -p $(TARGETDIR)
