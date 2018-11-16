@@ -160,6 +160,21 @@ void PrintSetTable(std::string set_file, Set_to_Genome& set_to_genome)
   }
 }
 
+void PrintNeighbourhood(std::string neighbour_file, std::vector< vector<Phenotype_ID> > neighbourhood)
+{
+  std::cout << "Printing neighbourhood to file : " << neighbour_file << std::endl;
+  std::ofstream fout(neighbour_file);
+
+  for (auto vec_pID: neighbourhood)
+  {
+    fout << "{";
+    for (auto pID: vec_pID)
+      fout <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
+    fout.seekp((long) fout.tellp() - 1);
+    fout << "} " << std::endl;
+  }
+}
+
 void header_metric_files(std::ofstream& set_metric_out, std::ofstream& genome_metric_out)
 {
   // Logging
