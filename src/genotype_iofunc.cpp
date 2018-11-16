@@ -160,11 +160,8 @@ void PrintSetTable(std::string set_file, Set_to_Genome& set_to_genome)
   }
 }
 
-void PrintNeighbourhood(std::string neighbour_file, Genome_to_Set& neighbourhood)
+void PrintNeighbourhood(std::ofstream& fout, Genome_to_Set& neighbourhood)
 {
-  std::cout << "Printing neighbourhood to file : " << neighbour_file << std::endl;
-  std::ofstream fout(neighbour_file);
-
   for (Genome_to_Set::iterator iter = std::begin(neighbourhood); iter != std::end(neighbourhood); iter++))
   {
     fout << "(";
