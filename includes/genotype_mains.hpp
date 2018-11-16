@@ -9,7 +9,7 @@ namespace io_params
   extern std::string set_metric_file, genome_metric_file;
 }
 
-int main(int argc, char *argv[]);
+// int main(int argc, char *argv[]);
 
 void JustExhaustive();
 void QuickRandom();
