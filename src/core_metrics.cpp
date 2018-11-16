@@ -88,6 +88,10 @@ void Genotype_Metrics::save_to_file(std::ofstream& fout)
   fout.seekp((long) fout.tellp() - 1);
   fout << ") ";
 
+  for (auto pID: diversity)
+    if (pID.first > max_size)
+      complex_diversity++;
+
   fout <<+ strict_robustness / number_of_neighbours << " ";
   fout <<+ intersection_robustness / number_of_neighbours << " ";
   fout <<+ union_evolvability / number_of_neighbours << " ";
