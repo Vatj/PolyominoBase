@@ -160,15 +160,21 @@ void PrintSetTable(std::string set_file, Set_to_Genome& set_to_genome)
   }
 }
 
-void PrintNeighbourhood(std::string neighbour_file, std::vector< vector<Phenotype_ID> > neighbourhood)
+void PrintNeighbourhood(std::string neighbour_file, Genome_to_Set& neighbourhood)
 {
   std::cout << "Printing neighbourhood to file : " << neighbour_file << std::endl;
   std::ofstream fout(neighbour_file);
 
-  for (auto vec_pID: neighbourhood)
+  for (Genome_to_Set::iterator iter = std::begin(neighbourhood); iter != std::end(neighbourhood); iter++))
   {
+    fout << "(";
+    for (auto face: iter->first)
+      fout <<+ face << ",";
+    fout.seekp((long) fout.tellp() - 1);
+    fout << ") ";
+
     fout << "{";
-    for (auto pID: vec_pID)
+    for (auto pID: iter->second)
       fout <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
     fout.seekp((long) fout.tellp() - 1);
     fout << "} " << std::endl;
