@@ -29,22 +29,27 @@ std::pair<Genotype_Metrics, Genome_to_Set> single_genome_to_metric(Genotype geno
    return std::make_pair(genome_metric, neighbourhood);
 }
 
-std::vector <std::pair<Genotype_Metrics, Genome_to_Set>> multiple_genomes_to_metric
+void multiple_genomes_to_metric
 (std::vector<Genotype> genomes, PhenotypeTable* pt)
 {
-  std::vector <std::pair<Genotype_Metrics, Genome_to_Set>> data_genomes;
+  std::vector<std::pair<Genotype_Metrics, Genome_to_Set>> data_genomes;
 
-  #pragma omp parallel for schedule(dynamic)
   for (std::vector<Genotype>::iterator iter = std::begin(genome); iter != std::end(genomes); iter++)
-  {
-    std::pair<Genotype_Metrics, Genome_to_Set> data_genome = single_genome_to_metric(genome, pt);
+    data_genomes.emplace_back(single_genome_to_metric(genome, pt));
 
-    #pragma omp critical
-    {
-      data_genomes.emplace_back(data_genome);
-    }
+
+  std::cout << "Printing to files : \n";
+  std::cout << genome_metric_file << std::endl << neighbour_file << std::endl;
+
+  std::ofstream genome_metric_out(genome_metric_file);
+  std::ofstream neighbour_out(neighbour_file);
+
+  for(std::vector<std::pair<Genotype_Metrics, Genome_to_Set>>::iterator iter = std::begin(data_genomes);
+  iter != std::end(data_genomes); iter++)
+  {
+    (iter->first).save_to_file(genome_metric_out);
+    PrintNeighbourhood(neighbour_out, iter->second);
   }
-  return data_genomes;
 }
 
 void genome_to_pID_distribution(Genotype genome, PhenotypeTable* pt)

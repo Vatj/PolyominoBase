@@ -16,7 +16,6 @@ namespace io_params
 
 void single_genome_to_metric(Genotype genome, PhenotypeTable* pt);
 
-std::vector <std::pair<Genotype_Metrics, Genome_to_Set>> multiple_genomes_to_metric
-(std::vector<Genotype> genomes, PhenotypeTable* pt);
+void multiple_genomes_to_metric(std::vector<Genotype> genomes, PhenotypeTable* pt);
 
 void genome_to_pID_distribution(Genotype genome, PhenotypeTable* pt);
