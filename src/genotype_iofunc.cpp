@@ -44,13 +44,16 @@ void all_files_to_full_names()
   set_file = full_filename(set_file, false, simulation_params::iso);
   preprocess_file = full_filename(preprocess_file, false, simulation_params::iso);
   duplicate_file = full_filename(duplicate_file, false, simulation_params::iso);
+  neighbour_file = full_filename(neighbour_file, true, simulation_params::iso);
 
-  if(simulation_params::duplicate_exhaustive) {
+  if(simulation_params::duplicate_exhaustive)
+  {
     simulation_params::n_genes -= 1;
     infer_file_details();
     out_genome_file = full_filename(out_genome_file, false, false);
     simulation_params::n_genes += 1;
-  } else
+  }
+  else
     out_genome_file = full_filename(out_genome_file, false, false);
 }
 

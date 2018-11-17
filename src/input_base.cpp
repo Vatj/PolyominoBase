@@ -26,22 +26,35 @@ std::pair<Genotype_Metrics, Genome_to_Set> single_genome_to_metric(Genotype geno
      genome_metric.analyse_pIDs(neighbour_pIDs);
    }
 
+   // std::pair<Genotype_Metrics, Genome_to_Set> data = std::make_pair(genome_metric, neighbourhood);
+   //
+   // std::ofstream genome_metric_out(io_params::genome_metric_file, std::ios_base::app);
+   // genome_metric.save_to_file(genome_metric_out);
+   // genome_metric_out.close();
+   //
+   // return data;
    return std::make_pair(genome_metric, neighbourhood);
 }
 
-void multiple_genomes_to_metric
-(std::vector<Genotype> genomes, PhenotypeTable* pt)
+void multiple_genomes_to_metric(std::vector<Genotype> genomes, PhenotypeTable* pt)
 {
   std::vector<std::pair<Genotype_Metrics, Genome_to_Set>> data_genomes;
 
-  for (std::vector<Genotype>::iterator iter = std::begin(genomes); iter != std::end(genomes); iter++)
-    data_genomes.emplace_back(single_genome_to_metric(*iter, pt));
+  for (auto genome: genomes)
+    // single_genome_to_metric(genome, pt);
+    data_genomes.emplace_back(single_genome_to_metric(genome, pt));
+
+  //
+  // for (std::vector<Genotype>::iterator iter = std::begin(genomes); iter != std::end(genomes); iter++)
+  //   data_genomes.emplace_back(single_genome_to_metric(*iter, pt));
 
   std::cout << "Printing to files : \n";
   std::cout << io_params::genome_metric_file << std::endl;
   std::cout << io_params::neighbour_file << std::endl;
 
+  std::ofstream set_metric_out(io_params::set_metric_file);
   std::ofstream genome_metric_out(io_params::genome_metric_file);
+  header_metric_files(set_metric_out, genome_metric_out);
   std::ofstream neighbour_out(io_params::neighbour_file);
 
   for(std::vector<std::pair<Genotype_Metrics, Genome_to_Set>>::iterator iter = std::begin(data_genomes);

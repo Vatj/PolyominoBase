@@ -102,7 +102,7 @@ int main (int argc, char *argv[])
         po::value<std::string>(&io_params::preprocess_file),
         "file containing the output map between pID set and genomes")
       ("neighbour_file",
-        po::value<std::string>(&io_params::preprocess_file),
+        po::value<std::string>(&io_params::neighbour_file),
         "file containing the output map between neighbourhood genome and pIDs")
     ;
 
