@@ -46,6 +46,13 @@ void Genotype_Metrics::analyse_pIDs(std::vector <Phenotype_ID>& pIDs)
   std::set_intersection(std::begin(pIDs), std::end(pIDs), std::begin(ref_pIDs), std::end(ref_pIDs), std::back_inserter(intersection));
   std::set_union(std::begin(pIDs), std::end(pIDs), std::begin(ref_pIDs), std::end(ref_pIDs), std::back_inserter(union_set));
 
+  std::cout << "intersection : " << ref_pIDs.first << " " << ref_pIDs.second << std::endl;
+  for(auto pair: intersection)
+  {
+    std::cout << pair.first << " " << pair.second << " ";
+  }
+  std::cout << "\n"; 
+
   if(intersection.size() > 0)
     // intersection_robustness += (double) intersection.size() / (double) ref_pIDs.size();
     intersection_robustness += 1;
