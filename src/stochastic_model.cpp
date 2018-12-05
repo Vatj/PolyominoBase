@@ -17,8 +17,12 @@ namespace Stochastic
 	       std::vector<int8_t> placed_tiles=Stochastic_Polyomino_Builder(genotype, seed);
 	        if(placed_tiles.size()>0)
 	         raw_phenotypes.emplace_back(Generate_Spatial_Occupancy(placed_tiles));
-	        else
-	         unbound_phenotypes++;
+	        else {
+            plastic_phenotypes.clear()
+            plastic_phenotypes.emplace_back(std::make_pair(255,0));
+
+            return plastic_phenotypes
+          }
       }
 
       #pragma omp critical(phenotype_lookup)
@@ -41,8 +45,10 @@ namespace Stochastic
     }
     if(rare_phenotypes)
       plastic_phenotypes.emplace_back(std::make_pair(0,0));
-    if(unbound_phenotypes)
-      plastic_phenotypes.emplace_back(std::make_pair(255,0));
+    if(unbound_phenotypes){
+
+    }
+
 
     return plastic_phenotypes;
   }
@@ -50,7 +56,7 @@ namespace Stochastic
   std::map<Phenotype_ID, uint8_t> AssemblePlasticGenotypeFrequency(Genotype genotype, PhenotypeTable* pt) {
 
     std::map<Phenotype_ID,uint8_t> pID_counter_plastic;
-    uint16_t rare_phenotypes=0, unbound_phenotypes=0;
+    uint16_t rare_phenotypes=0;
     std::map<Phenotype_ID,uint8_t> ID_counter;
 
     for(uint8_t seed=0;seed<genotype.size()/4;++seed) {
@@ -61,8 +67,12 @@ namespace Stochastic
 	       std::vector<int8_t> placed_tiles=Stochastic_Polyomino_Builder(genotype, seed);
 	        if(placed_tiles.size()>0)
 	         raw_phenotypes.emplace_back(Generate_Spatial_Occupancy(placed_tiles));
-	        else
-	         unbound_phenotypes++;
+	        else {
+            pID_counter_plastic.clear()
+            pID_counter_plastic[std::make_pair(255,0)] = 0;
+
+            return pID_counter_plastic
+          }
       }
 
       #pragma omp critical(phenotype_lookup)
@@ -88,8 +98,6 @@ namespace Stochastic
 
     if(rare_phenotypes)
       pID_counter_plastic[std::make_pair(0,0)] = rare_phenotypes;
-    if(unbound_phenotypes)
-      pID_counter_plastic[std::make_pair(255,0)] = unbound_phenotypes;
 
     return pID_counter_plastic;
   }
