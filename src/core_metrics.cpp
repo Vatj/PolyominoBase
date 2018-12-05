@@ -109,17 +109,17 @@ void Genotype_Metrics::save_to_file(std::ofstream& fout)
   fout.seekp((long) fout.tellp() - 1);
   fout << ") ";
 
-  fout << "{";
-  for (auto paired: pID_counter)
-    fout <<+ "(" <<+ paired.first.first << "," <<+ paired.first.second << "),";
-  fout.seekp((long) fout.tellp() - 1);
-  fout << "}\n";
-
   // fout << "{";
-  // for (auto pID: ref_pIDs)
-  //   fout <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
+  // for (auto paired: pID_counter)
+  //   fout <<+ "(" <<+ paired.first.first << "," <<+ paired.first.second << "),";
   // fout.seekp((long) fout.tellp() - 1);
   // fout << "}\n";
+
+  fout << "{";
+  for (auto pID: ref_pIDs)
+    fout <<+ "(" <<+ pID.first << "," <<+ pID.second << "),";
+  fout.seekp((long) fout.tellp() - 1);
+  fout << "}\n";
 }
 
 void Genotype_Metrics::clear()
@@ -162,8 +162,8 @@ void Set_Metrics::add_genotype_metrics(Genotype_Metrics& genome_metric)
   strict_robustnesses.emplace_back(genome_metric.strict_robustness / number_of_neighbours);
   intersection_robustnesses.emplace_back(genome_metric.intersection_robustness / number_of_neighbours);
   union_evolvabilities.emplace_back(genome_metric.union_evolvability / number_of_neighbours);
-  robust_evolvabilities.emplace_back(genome_metric.complex_evolvability / number_of_neighbours);
-  complex_evolvabilities.emplace_back(genome_metric.robust_evolvability / number_of_neighbours);
+  robust_evolvabilities.emplace_back(genome_metric.robust_evolvability / number_of_neighbours);
+  complex_evolvabilities.emplace_back(genome_metric.complex_evolvability / number_of_neighbours);
   complex_diversities.emplace_back(genome_metric.complex_diversity);
   rares.emplace_back(genome_metric.rare / number_of_neighbours);
   unbounds.emplace_back(genome_metric.unbound / number_of_neighbours);
