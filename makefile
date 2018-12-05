@@ -20,8 +20,8 @@ PROFDIR	    := profiling
 SRCEXT      := cpp
 DEPEXT      := d
 OBJEXT      := o
-#BOOSTDIR    := /rscratch/vatj2/library/boost_1_67_0
-BOOSTDIR    := /usr/local/lib/boost_1_67_0
+BOOSTDIR    := /rscratch/vatj2/library/boost_1_67_0
+#BOOSTDIR    := /usr/local/lib/boost_1_67_0
 
 #Flags, Libraries and Includes
 CXXFLAGS    := -std=c++14 -Wall -Wextra -pedantic -pipe -march=native -flto-partition=none $(cmdflag)
