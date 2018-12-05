@@ -1,6 +1,4 @@
 #include "genotype_mains.hpp"
-// #include <boost/lambda/lambda.hpp>
-// #include <boost/regex.hpp>
 #include <iostream>
 #include <fstream>
 #include <boost/program_options.hpp>
