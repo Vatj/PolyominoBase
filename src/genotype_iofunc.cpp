@@ -45,7 +45,8 @@ void all_files_to_full_names()
   preprocess_file = full_filename(preprocess_file, false, simulation_params::iso);
   duplicate_file = full_filename(duplicate_file, false, simulation_params::iso);
 
-  if(simulation_params::duplicate_exhaustive) {
+  if(simulation_params::duplicate_exhaustive)
+  {
     simulation_params::n_genes -= 1;
     infer_file_details();
     out_genome_file = full_filename(out_genome_file, false, false);

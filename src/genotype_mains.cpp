@@ -246,12 +246,23 @@ void QuickFromFile()
 }
 
 
+// void DuplicateExhaustive()
+// {
+//   PhenotypeTable pt;
+//   std::vector<Genotype> genomes, duplicates;
+//
+//   duplicates = ExhaustiveMinimalGenotypesFilteredDuplicate(genomes, &pt);
+//   PrintGenomeFile(io_params::out_genome_file, genomes);
+//   PrintGenomeFile(io_params::duplicate_file, duplicates);
+// }
+
 void DuplicateExhaustive()
 {
   PhenotypeTable pt;
   std::vector<Genotype> genomes, duplicates;
 
-  duplicates = ExhaustiveMinimalGenotypesFilteredDuplicate(genomes, &pt);
+  LoadGenomeFile(io_params::in_genome_file, genomes);
+  duplicates = GenomesDuplication(genomes, &pt);
   PrintGenomeFile(io_params::out_genome_file, genomes);
   PrintGenomeFile(io_params::duplicate_file, duplicates);
 }
