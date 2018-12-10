@@ -170,7 +170,7 @@ def Trim_Topologies(fin):
                     del_count+=1
             unique_C+=1
     print(unique_C)
-    with open(fin.decode('utf-8').rstrip('.txt')+'_Iso.txt', 'w') as outfile:
+    with open(fin.rstrip('.txt')+'_Iso.txt', 'w') as outfile:
         for zero_set in list(TD.values()):
             for genotype in zero_set:
                 genotype_str= ' '.join(map(str,genotype))+'\n'
